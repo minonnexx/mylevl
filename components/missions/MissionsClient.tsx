@@ -280,7 +280,7 @@ function MissionSection({
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="flex md:grid md:grid-cols-2 gap-3 overflow-x-auto md:overflow-x-visible snap-x snap-mandatory md:snap-none scrollbar-hide pb-1 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0">
           {[...missions]
             .sort((a, b) => {
               const aDone = completedIds.has(a.id) ? 1 : 0
@@ -289,7 +289,9 @@ function MissionSection({
               return (a.sort_order ?? 999) - (b.sort_order ?? 999)
             })
             .map(m => (
-              <MissionCard key={m.id} mission={m} isCompleted={completedIds.has(m.id)} />
+              <div key={m.id} className="min-w-[280px] md:min-w-0 flex-shrink-0 md:flex-shrink snap-start">
+                <MissionCard mission={m} isCompleted={completedIds.has(m.id)} />
+              </div>
             ))}
         </div>
       )}

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 
-export function ShareButton() {
+export function ShareButton({ className }: { className?: string }) {
   const [copied, setCopied] = useState(false)
 
   const handleShare = async () => {
@@ -19,14 +19,15 @@ export function ShareButton() {
     <button
       type="button"
       onClick={handleShare}
-      className="
-        flex items-center gap-2 h-10 px-4 rounded-component
+      className={`
+        flex items-center justify-center gap-2 h-10 px-4 rounded-component
         bg-surface border border-border
         text-text-secondary text-sm font-medium
         hover:text-text-primary hover:border-border/80
         transition-all duration-150 cursor-pointer
         active:scale-[0.98]
-      "
+        ${className ?? ''}
+      `}
     >
       {copied ? (
         <>

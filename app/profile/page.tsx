@@ -66,11 +66,11 @@ function ProfileHeader({ profile, completedCount }: { profile: Profile; complete
 
   return (
     <section
-      className="bg-surface rounded-card p-6 border border-border/60 flex items-center justify-between gap-6"
+      className="bg-surface rounded-card p-6 border border-border/60 flex flex-col md:flex-row md:items-center md:justify-between gap-5 md:gap-6"
       aria-label="Perfil del jugador"
     >
-      <div className="flex items-center gap-6 min-w-0">
-        {/* Avatar — border uses Tailwind token, background uses CSS var */}
+      <div className="flex flex-col md:flex-row items-center md:items-center gap-4 md:gap-6 min-w-0 text-center md:text-left">
+        {/* Avatar */}
         <div
           className="w-20 h-20 rounded-full flex items-center justify-center flex-shrink-0 text-accent font-bold text-2xl select-none border-2 border-accent/35"
           style={{ background: 'linear-gradient(135deg, var(--color-accent-glow) 0%, transparent 100%)' }}
@@ -79,10 +79,9 @@ function ProfileHeader({ profile, completedCount }: { profile: Profile; complete
           {initials}
         </div>
 
-        <div className="flex flex-col gap-1.5 min-w-0">
-          <div className="flex items-center gap-3 flex-wrap">
-            {/* h2 — h1 is the page title "Perfil" above */}
-            <h2 className="text-xl font-semibold text-text-primary tracking-tight truncate">
+        <div className="flex flex-col gap-1.5 min-w-0 items-center md:items-start">
+          <div className="flex items-center gap-3 flex-wrap justify-center md:justify-start">
+            <h2 className="text-xl font-semibold text-text-primary tracking-tight">
               {profile.username}
             </h2>
             <span className="text-xs font-bold text-accent bg-accent/12 border border-accent/20 px-3 py-1 rounded-pill tabular-nums flex-shrink-0">
@@ -94,8 +93,8 @@ function ProfileHeader({ profile, completedCount }: { profile: Profile; complete
         </div>
       </div>
 
-      <div className="flex-shrink-0">
-        <ShareButton />
+      <div className="w-full md:w-auto md:flex-shrink-0">
+        <ShareButton className="w-full md:w-auto" />
       </div>
     </section>
   )
@@ -121,18 +120,25 @@ function ClassProgressCard({ classProgress }: { classProgress: ClassProgress[] }
           return (
             <div
               key={lc}
-              className={`flex items-center gap-5 px-6 py-5 ${idx < 2 ? 'border-b border-border/40' : ''}`}
+              className={`flex flex-col md:flex-row md:items-center gap-2 md:gap-5 px-4 md:px-6 py-4 md:py-5 ${idx < 2 ? 'border-b border-border/40' : ''}`}
             >
-              <div className="flex items-center gap-3 w-32 flex-shrink-0">
-                <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: meta.color }} aria-hidden />
-                <span className="text-sm font-semibold text-text-primary">{meta.label}</span>
+              {/* Top row on mobile: dot + label + badge + pts */}
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="flex items-center gap-3 md:w-32 flex-shrink-0">
+                  <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: meta.color }} aria-hidden />
+                  <span className="text-sm font-semibold text-text-primary">{meta.label}</span>
+                </div>
+                <span className={`inline-flex text-xs font-semibold px-2.5 py-1 rounded-pill ${meta.badgeClasses} flex-shrink-0`}>
+                  {title}
+                </span>
+                <span className="ml-auto text-xs text-text-muted tabular-nums md:hidden">
+                  {cp.points.toLocaleString()} pts
+                  {nextAt && <span className="opacity-60"> / {nextAt.toLocaleString()}</span>}
+                </span>
               </div>
 
-              <span className={`inline-flex text-xs font-semibold px-2.5 py-1 rounded-pill ${meta.badgeClasses} flex-shrink-0`}>
-                {title}
-              </span>
-
-              <div className="flex-1 flex flex-col gap-1.5 min-w-0">
+              {/* Progress bar — full width on mobile, flex-1 on desktop */}
+              <div className="w-full md:flex-1 min-w-0">
                 <div className="w-full bg-background rounded-pill h-2 overflow-hidden">
                   <div
                     className="h-full rounded-pill transition-all duration-500"
@@ -146,7 +152,8 @@ function ClassProgressCard({ classProgress }: { classProgress: ClassProgress[] }
                 </div>
               </div>
 
-              <span className="text-xs text-text-muted tabular-nums flex-shrink-0 w-28 text-right">
+              {/* Points — desktop only (shown inline on mobile above) */}
+              <span className="hidden md:inline text-xs text-text-muted tabular-nums flex-shrink-0 w-28 text-right">
                 {cp.points.toLocaleString()} pts
                 {nextAt && <span className="opacity-60"> / {nextAt.toLocaleString()}</span>}
               </span>
