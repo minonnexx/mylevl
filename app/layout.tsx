@@ -8,7 +8,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Logros Reales",
+  title: "mylevl",
   description: "Sube de nivel en la vida real",
 };
 
