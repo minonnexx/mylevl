@@ -103,7 +103,7 @@ export default async function MissionsPage() {
         </header>
 
         {/* ── Content ─────────────────────────────────────────────────── */}
-        <main className="flex-1 py-6 px-4 md:py-8 md:px-8 pb-28 md:pb-8">
+        <main className="flex-1 py-6 px-4 md:py-8 md:px-8 pb-28 md:pb-8 overflow-x-hidden">
           <div className="max-w-[1100px] mx-auto">
             <MissionsClient
               missions={missions ?? []}

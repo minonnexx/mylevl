@@ -357,7 +357,7 @@ export default function MissionsClient({
   const allDailyDone = dailyMissions.length > 0 && dailyMissions.every(m => completedSet.has(m.id))
 
   return (
-    <div className="flex flex-col gap-8 overflow-x-hidden">
+    <div className="flex flex-col gap-8">
 
       {/* ── Page title ──────────────────────────────────────────────────── */}
       <div className="flex items-end justify-between gap-4">
