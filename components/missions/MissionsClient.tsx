@@ -289,7 +289,7 @@ function MissionSection({
               return (a.sort_order ?? 999) - (b.sort_order ?? 999)
             })
             .map(m => (
-              <div key={m.id} className="min-w-[280px] md:min-w-0 flex-shrink-0 md:flex-shrink snap-start">
+              <div key={m.id} className="w-[calc(100vw-32px)] md:min-w-0 md:w-auto flex-shrink-0 snap-start">
                 <MissionCard mission={m} isCompleted={completedIds.has(m.id)} />
               </div>
             ))}

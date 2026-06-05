@@ -4,7 +4,6 @@ import { useActionState, useEffect, useRef, useState } from 'react'
 import type { Mission } from '@/types/supabase'
 import { CLASS_META } from '@/lib/constants/classes'
 import { CompleteButton } from './CompleteButton'
-import { LevelUpOverlay } from '@/components/LevelUpOverlay'
 import { completeMission, type MissionActionResult } from '@/app/dashboard/actions'
 
 function ClassBadge({ lifeClass }: { lifeClass: keyof typeof CLASS_META }) {
@@ -16,12 +15,11 @@ function ClassBadge({ lifeClass }: { lifeClass: keyof typeof CLASS_META }) {
   )
 }
 
-export function FeaturedMissionCard({ mission }: { mission: Mission }) {
+export function FeaturedMissionCard({ mission, onLevelUp }: { mission: Mission; onLevelUp: (level: number) => void }) {
   const [result, formAction] = useActionState<MissionActionResult, FormData>(completeMission, null)
   const meta = CLASS_META[mission.life_class]
   const [showXp, setShowXp] = useState(false)
   const [completing, setCompleting] = useState(false)
-  const [levelUpData, setLevelUpData] = useState<{ level: number } | null>(null)
   const prevTsRef = useRef<number | null>(null)
   const xpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -29,9 +27,9 @@ export function FeaturedMissionCard({ mission }: { mission: Mission }) {
     if (!result || result.ts === prevTsRef.current) return
     prevTsRef.current = result.ts
     if (result.levelUp) {
-      setLevelUpData({ level: result.newLevel })
+      onLevelUp(result.newLevel)
     }
-  }, [result])
+  }, [result, onLevelUp])
 
   // Reset animation state when the mission changes (after server revalidation)
   useEffect(() => {
@@ -52,61 +50,53 @@ export function FeaturedMissionCard({ mission }: { mission: Mission }) {
   }
 
   return (
-    <>
-      {levelUpData && (
-        <LevelUpOverlay
-          level={levelUpData.level}
-          onClose={() => setLevelUpData(null)}
-        />
-      )}
-      <div
-        className="rounded-card p-6 border border-border/60 flex flex-col gap-5 relative overflow-hidden bg-surface"
-        style={{
-          transition: 'opacity 300ms ease, transform 300ms ease',
-          opacity: completing ? 0.45 : 1,
-          transform: completing ? 'scale(0.985)' : 'scale(1)',
-        }}
-      >
-        <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ backgroundColor: meta.color }} aria-hidden />
+    <div
+      className="rounded-card p-6 border border-border/60 flex flex-col gap-5 relative overflow-hidden bg-surface"
+      style={{
+        transition: 'opacity 300ms ease, transform 300ms ease',
+        opacity: completing ? 0.45 : 1,
+        transform: completing ? 'scale(0.985)' : 'scale(1)',
+      }}
+    >
+      <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ backgroundColor: meta.color }} aria-hidden />
 
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex flex-col gap-2 flex-1 min-w-0">
-            <ClassBadge lifeClass={mission.life_class} />
-            <h3 className="font-semibold text-text-primary text-lg leading-snug">
-              {mission.title}
-            </h3>
-            {mission.description && (
-              <p className="text-sm text-text-muted leading-relaxed">{mission.description}</p>
-            )}
-          </div>
-          <div className="flex-shrink-0 text-right">
-            <span className="text-2xl font-bold text-accent tabular-nums">+{mission.xp_reward}</span>
-            <p className="text-xs text-text-muted font-medium">XP</p>
-          </div>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-2 flex-1 min-w-0">
+          <ClassBadge lifeClass={mission.life_class} />
+          <h3 className="font-semibold text-text-primary text-lg leading-snug">
+            {mission.title}
+          </h3>
+          {mission.description && (
+            <p className="text-sm text-text-muted leading-relaxed">{mission.description}</p>
+          )}
+        </div>
+        <div className="flex-shrink-0 text-right">
+          <span className="text-2xl font-bold text-accent tabular-nums">+{mission.xp_reward}</span>
+          <p className="text-xs text-text-muted font-medium">XP</p>
+        </div>
+      </div>
+
+      <form action={formAction} onSubmit={handleSubmit} className="flex items-center gap-3">
+        <input type="hidden" name="missionId"  value={mission.id} />
+        <input type="hidden" name="xpReward"   value={mission.xp_reward} />
+        <input type="hidden" name="lifeClass"  value={mission.life_class} />
+        <input type="hidden" name="difficulty" value={mission.difficulty} />
+
+        <div className="relative">
+          <CompleteButton />
+          {showXp && (
+            <span
+              className="absolute left-1/2 bottom-full mb-1 text-sm font-bold text-accent pointer-events-none whitespace-nowrap"
+              style={{ animation: 'xp-float 650ms ease forwards' }}
+              aria-hidden
+            >
+              +{mission.xp_reward} XP
+            </span>
+          )}
         </div>
 
-        <form action={formAction} onSubmit={handleSubmit} className="flex items-center gap-3">
-          <input type="hidden" name="missionId"  value={mission.id} />
-          <input type="hidden" name="xpReward"   value={mission.xp_reward} />
-          <input type="hidden" name="lifeClass"  value={mission.life_class} />
-          <input type="hidden" name="difficulty" value={mission.difficulty} />
-
-          <div className="relative">
-            <CompleteButton />
-            {showXp && (
-              <span
-                className="absolute left-1/2 bottom-full mb-1 text-sm font-bold text-accent pointer-events-none whitespace-nowrap"
-                style={{ animation: 'xp-float 650ms ease forwards' }}
-                aria-hidden
-              >
-                +{mission.xp_reward} XP
-              </span>
-            )}
-          </div>
-
-          <span className="text-xs text-text-muted">Verificación manual</span>
-        </form>
-      </div>
-    </>
+        <span className="text-xs text-text-muted">Verificación manual</span>
+      </form>
+    </div>
   )
 }
