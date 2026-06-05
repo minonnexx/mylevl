@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import type { Mission, Profile } from '@/types/supabase'
 import Sidebar from '@/components/dashboard/Sidebar'
+import BottomNav from '@/components/dashboard/BottomNav'
 import { MissionAreaWrapper } from '@/components/dashboard/MissionAreaWrapper'
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
@@ -84,11 +85,11 @@ export default async function DashboardPage() {
 
       <Sidebar />
 
-      <div className="ml-16 flex-1 flex flex-col min-h-screen">
+      <div className="md:ml-16 flex-1 flex flex-col min-h-screen">
 
         {/* ── Header ─────────────────────────────────────────────────────── */}
         <header
-          className="sticky top-0 z-20 h-14 px-8 flex items-center justify-between"
+          className="sticky top-0 z-20 h-14 px-4 md:px-8 flex items-center justify-between"
           style={{
             background: 'rgba(14,14,16,0.9)',
             backdropFilter: 'blur(16px)',
@@ -111,7 +112,7 @@ export default async function DashboardPage() {
         </header>
 
         {/* ── Content ─────────────────────────────────────────────────────── */}
-        <main className="flex-1 py-8 px-8">
+        <main className="flex-1 py-6 px-4 md:py-8 md:px-8 pb-28 md:pb-8">
           <div className="max-w-[1100px] mx-auto">
 
             {/* Page title — standardized: text-2xl font-semibold, Spanish */}
@@ -120,7 +121,7 @@ export default async function DashboardPage() {
               <p className="text-sm text-text-muted mt-0.5">Bienvenido de vuelta, {profile.username}</p>
             </div>
 
-            <div className="grid grid-cols-[1fr_360px] gap-6 items-start">
+            <div className="grid grid-cols-1 md:grid-cols-[1fr_360px] gap-6 items-start">
 
               {/* ── LEFT: Daily mission queue ───────────────────────────── */}
               <div className="flex flex-col gap-5">
@@ -255,6 +256,8 @@ export default async function DashboardPage() {
         </main>
 
       </div>
+
+      <BottomNav />
     </div>
   )
 }

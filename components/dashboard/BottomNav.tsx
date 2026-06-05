@@ -69,7 +69,7 @@ export default function BottomNav() {
   return (
     /* Floating nav: mx-4 mb-4 rounded, backdrop blur */
     <nav
-      className="fixed bottom-0 left-0 right-0 z-20 px-4 pb-4"
+      className="fixed bottom-0 left-0 right-0 z-20 px-4 pb-4 md:hidden"
       aria-label="Navegación principal"
     >
       <div

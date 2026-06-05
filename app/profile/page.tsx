@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import type { Profile, ClassProgress, LifeClass } from '@/types/supabase'
 import { CLASS_META, getMilestoneProgress, getMilestoneTier } from '@/lib/constants/classes'
 import Sidebar from '@/components/dashboard/Sidebar'
+import BottomNav from '@/components/dashboard/BottomNav'
 import { ShareButton } from '@/components/profile/ShareButton'
 import { resetProfileAction } from './actions'
 
@@ -294,7 +295,7 @@ function ClassBalance({ classProgress }: { classProgress: ClassProgress[] }) {
     <section aria-labelledby="section-equilibrio">
       <SectionTitle id="section-equilibrio">Equilibrio de clases</SectionTitle>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {classes.map(lc => {
           const cp      = getClass(lc)
           const meta    = CLASS_META[lc]
@@ -402,11 +403,11 @@ export default async function ProfilePage() {
 
       <Sidebar />
 
-      <div className="ml-16 flex-1 flex flex-col min-h-screen">
+      <div className="md:ml-16 flex-1 flex flex-col min-h-screen">
 
         {/* ── Header ──────────────────────────────────────────────────── */}
         <header
-          className="sticky top-0 z-20 h-14 px-8 flex items-center justify-between"
+          className="sticky top-0 z-20 h-14 px-4 md:px-8 flex items-center justify-between"
           style={{
             background: 'rgba(14,14,16,0.9)',
             backdropFilter: 'blur(16px)',
@@ -429,7 +430,7 @@ export default async function ProfilePage() {
         </header>
 
         {/* ── Content ─────────────────────────────────────────────────── */}
-        <main className="flex-1 py-8 px-8">
+        <main className="flex-1 py-6 px-4 md:py-8 md:px-8 pb-28 md:pb-8">
           <div className="max-w-[1100px] mx-auto flex flex-col gap-8">
 
             {/* Page title — h1, standardized: text-2xl font-semibold */}
@@ -440,7 +441,7 @@ export default async function ProfilePage() {
 
             <ProfileHeader profile={profile} completedCount={completedCount} />
 
-            <div className="grid grid-cols-[1fr_380px] gap-6 items-start">
+            <div className="grid grid-cols-1 md:grid-cols-[1fr_380px] gap-6 items-start">
               <ClassProgressCard classProgress={classProgress} />
               <StatsGrid profile={profile} completedCount={completedCount} totalXp={totalXp} />
             </div>
@@ -463,6 +464,8 @@ export default async function ProfilePage() {
         </main>
 
       </div>
+
+      <BottomNav />
     </div>
   )
 }

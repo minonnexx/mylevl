@@ -280,7 +280,7 @@ function MissionSection({
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {[...missions]
             .sort((a, b) => {
               const aDone = completedIds.has(a.id) ? 1 : 0

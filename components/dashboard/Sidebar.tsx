@@ -50,7 +50,7 @@ export default function Sidebar() {
 
   return (
     <aside
-      className="fixed left-0 top-0 bottom-0 w-16 z-30 flex flex-col items-center py-5 gap-8"
+      className="hidden md:flex fixed left-0 top-0 bottom-0 w-16 z-30 flex-col items-center py-5 gap-8"
       style={{
         background: 'var(--color-background)',
         borderRight: '1px solid var(--color-border)',

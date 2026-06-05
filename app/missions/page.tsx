@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import type { Mission, MissionDifficulty, MissionType, LifeClass } from '@/types/supabase'
 import Sidebar from '@/components/dashboard/Sidebar'
+import BottomNav from '@/components/dashboard/BottomNav'
 import MissionsClient from '@/components/missions/MissionsClient'
 
 // ─── Seed data ──────────────────────────────────────────────────────────────
@@ -75,11 +76,11 @@ export default async function MissionsPage() {
       <Sidebar />
 
       {/* ── Main shell ──────────────────────────────────────────────────── */}
-      <div className="ml-16 flex-1 flex flex-col min-h-screen">
+      <div className="md:ml-16 flex-1 flex flex-col min-h-screen">
 
         {/* ── Header ──────────────────────────────────────────────────── */}
         <header
-          className="sticky top-0 z-20 h-14 px-8 flex items-center justify-between"
+          className="sticky top-0 z-20 h-14 px-4 md:px-8 flex items-center justify-between"
           style={{
             background: 'rgba(14,14,16,0.9)',
             backdropFilter: 'blur(16px)',
@@ -102,7 +103,7 @@ export default async function MissionsPage() {
         </header>
 
         {/* ── Content ─────────────────────────────────────────────────── */}
-        <main className="flex-1 py-8 px-8">
+        <main className="flex-1 py-6 px-4 md:py-8 md:px-8 pb-28 md:pb-8">
           <div className="max-w-[1100px] mx-auto">
             <MissionsClient
               missions={missions ?? []}
@@ -113,6 +114,8 @@ export default async function MissionsPage() {
         </main>
 
       </div>
+
+      <BottomNav />
     </div>
   )
 }
