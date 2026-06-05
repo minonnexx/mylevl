@@ -76,7 +76,7 @@ export default async function MissionsPage() {
       <Sidebar />
 
       {/* ── Main shell ──────────────────────────────────────────────────── */}
-      <div className="md:ml-16 flex-1 flex flex-col min-h-screen">
+      <div className="md:ml-16 flex-1 min-w-0 flex flex-col min-h-screen">
 
         {/* ── Header ──────────────────────────────────────────────────── */}
         <header
@@ -103,7 +103,7 @@ export default async function MissionsPage() {
         </header>
 
         {/* ── Content ─────────────────────────────────────────────────── */}
-        <main className="flex-1 py-6 px-4 md:py-8 md:px-8 pb-28 md:pb-8 overflow-x-hidden">
+        <main className="flex-1 py-6 px-4 md:py-8 md:px-8 pb-28 md:pb-8">
           <div className="max-w-[1100px] mx-auto">
             <MissionsClient
               missions={missions ?? []}

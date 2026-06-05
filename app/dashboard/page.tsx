@@ -85,7 +85,7 @@ export default async function DashboardPage() {
 
       <Sidebar />
 
-      <div className="md:ml-16 flex-1 flex flex-col min-h-screen">
+      <div className="md:ml-16 flex-1 min-w-0 flex flex-col min-h-screen">
 
         {/* ── Header ─────────────────────────────────────────────────────── */}
         <header
