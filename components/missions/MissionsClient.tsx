@@ -269,14 +269,15 @@ function MissionSection({
       </div>
 
       {isBoss ? (
-        <div className="flex flex-col gap-3">
+        <div className="flex md:flex-col gap-3 overflow-x-auto md:overflow-x-visible snap-x snap-mandatory md:snap-none scrollbar-hide pb-1 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0">
           {missions.map(m => (
-            <BossMissionCard
-              key={m.id}
-              mission={m}
-              isCompleted={completedIds.has(m.id)}
-              currentStreak={currentStreak}
-            />
+            <div key={m.id} className="w-[calc(100vw-32px)] md:min-w-0 md:w-auto flex-shrink-0 snap-start">
+              <BossMissionCard
+                mission={m}
+                isCompleted={completedIds.has(m.id)}
+                currentStreak={currentStreak}
+              />
+            </div>
           ))}
         </div>
       ) : (
