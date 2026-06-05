@@ -271,10 +271,10 @@ function RecentAchievements({ recent }: { recent: RecentItem[] }) {
                   {mission.title}
                 </p>
                 <ClassBadge lifeClass={lc} />
-                <span className="text-sm font-bold text-accent tabular-nums flex-shrink-0 w-16 text-right">
+                <span className="text-sm font-bold text-accent tabular-nums flex-shrink-0 text-right">
                   +{mission.xp_reward} XP
                 </span>
-                <span className="text-xs text-text-muted flex-shrink-0 w-28 text-right">
+                <span className="hidden md:block text-xs text-text-muted flex-shrink-0 w-28 text-right">
                   {formatDate(item.completed_at)}
                 </span>
               </div>
@@ -437,7 +437,7 @@ export default async function ProfilePage() {
         </header>
 
         {/* ── Content ─────────────────────────────────────────────────── */}
-        <main className="flex-1 py-6 px-4 md:py-8 md:px-8 pb-28 md:pb-8">
+        <main className="flex-1 py-6 px-4 md:py-8 md:px-8 pb-28 md:pb-8 overflow-x-hidden">
           <div className="max-w-[1100px] mx-auto flex flex-col gap-8">
 
             {/* Page title — h1, standardized: text-2xl font-semibold */}
