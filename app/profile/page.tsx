@@ -75,10 +75,10 @@ function ProfileHeader({ profile, completedCount }: { profile: Profile; complete
       className="bg-surface rounded-card p-6 border border-border/60"
       aria-label="Perfil del jugador"
     >
-      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-5 md:gap-6">
+      <div className="flex flex-col gap-4">
 
-        {/* Left: avatar + shield + name */}
-        <div className="flex items-start gap-4 md:gap-5 min-w-0">
+        {/* Row 1: avatar + text + ShareButton */}
+        <div className="flex items-start gap-4 min-w-0">
           {/* Avatar */}
           <div
             className="w-20 h-20 rounded-full flex items-center justify-center flex-shrink-0 text-accent font-bold text-2xl select-none border-2 border-accent/35"
@@ -88,17 +88,8 @@ function ProfileHeader({ profile, completedCount }: { profile: Profile; complete
             {initials}
           </div>
 
-          {/* Shield indicator — same height as avatar */}
-          <div className="flex-shrink-0 flex items-start pt-1">
-            <ShieldIndicator
-              shieldCount={profile.shield_count}
-              streakProgress={profile.current_streak % 7}
-              size="lg"
-            />
-          </div>
-
           {/* Name + details */}
-          <div className="flex flex-col gap-1.5 min-w-0 pt-1">
+          <div className="flex flex-col gap-1.5 flex-1 min-w-0 pt-1">
             <div className="flex items-center gap-3 flex-wrap">
               <h2 className="text-xl font-semibold text-text-primary tracking-tight">
                 {profile.username}
@@ -110,11 +101,20 @@ function ProfileHeader({ profile, completedCount }: { profile: Profile; complete
             <p className="text-sm text-text-muted">Miembro desde {joinDate}</p>
             <p className="text-sm text-text-secondary font-medium">{hoursLabel}</p>
           </div>
+
+          {/* ShareButton */}
+          <div className="flex-shrink-0">
+            <ShareButton />
+          </div>
         </div>
 
-        {/* Right: ShareButton */}
-        <div className="flex-shrink-0">
-          <ShareButton />
+        {/* Row 2: ShieldIndicator — full width, icons left-aligned */}
+        <div className="w-full">
+          <ShieldIndicator
+            shieldCount={profile.shield_count}
+            streakProgress={profile.current_streak % 7}
+            size="lg"
+          />
         </div>
 
       </div>
