@@ -5,7 +5,8 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { computeLevelUp } from '@/lib/xp'
 import { updateStreak } from '@/lib/streaks'
-import { getDaySummary, type DaySummary } from '@/lib/recap'
+import { getDaySummary } from '@/lib/recap'
+import type { DaySummary } from '@/lib/recap'
 export type { DaySummary }
 
 export type MissionActionResult = {

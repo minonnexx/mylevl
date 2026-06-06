@@ -5,12 +5,16 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { computeLevelUp } from '@/lib/xp'
 import { updateStreak } from '@/lib/streaks'
+import { getDaySummary } from '@/lib/recap'
+import type { DaySummary } from '@/lib/recap'
 
 export type MissionActionResult = {
   levelUp: boolean
   newLevel: number
   xpReward: number
   shieldGranted: boolean
+  allMissionsCompleted: boolean
+  daySummary?: DaySummary
   ts: number
 } | null
 
@@ -91,6 +95,19 @@ export async function completeMission(
   revalidatePath('/dashboard')
   revalidatePath('/profile')
   revalidatePath('/missions')
+  revalidatePath('/recap')
 
-  return { levelUp: didLevelUp, newLevel: newGlobal.level, xpReward, shieldGranted, ts: Date.now() }
+  const summary = await getDaySummary(supabase, user.id)
+  const allMissionsCompleted =
+    summary.missionsTotal > 0 && summary.missionsCompleted >= summary.missionsTotal
+
+  return {
+    levelUp: didLevelUp,
+    newLevel: newGlobal.level,
+    xpReward,
+    shieldGranted,
+    allMissionsCompleted,
+    daySummary: allMissionsCompleted ? summary : undefined,
+    ts: Date.now(),
+  }
 }

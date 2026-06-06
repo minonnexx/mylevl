@@ -1,9 +1,11 @@
 'use client'
 
-import { useActionState, useEffect, useRef, useState } from 'react'
+import { useActionState, useCallback, useEffect, useRef, useState } from 'react'
 import type { Mission } from '@/types/supabase'
+import type { DaySummary } from '@/lib/recap'
 import { FeaturedMissionCard } from './FeaturedMissionCard'
 import { LevelUpOverlay } from '@/components/LevelUpOverlay'
+import { DailyRecapOverlay } from '@/components/dashboard/DailyRecapOverlay'
 import { ShieldToast } from '@/components/ui/ShieldToast'
 import { completeMission, type MissionActionResult } from '@/app/dashboard/actions'
 
@@ -11,7 +13,10 @@ export function MissionAreaWrapper({ missions }: { missions: Mission[] }) {
   const [result, formAction] = useActionState<MissionActionResult, FormData>(completeMission, null)
   const [levelUpData, setLevelUpData] = useState<{ level: number } | null>(null)
   const [showShieldToast, setShowShieldToast] = useState(false)
+  const [recapData, setRecapData] = useState<DaySummary | null>(null)
   const prevTsRef = useRef<number | null>(null)
+
+  const handleRecapClose = useCallback(() => setRecapData(null), [])
 
   useEffect(() => {
     if (!result || result.ts === prevTsRef.current) return
@@ -21,6 +26,11 @@ export function MissionAreaWrapper({ missions }: { missions: Mission[] }) {
       setShowShieldToast(true)
       setTimeout(() => setShowShieldToast(false), 4000)
     }
+    if (result.allMissionsCompleted && result.daySummary) {
+      const summary = result.daySummary
+      const delay = result.levelUp ? 500 : 0
+      setTimeout(() => setRecapData(summary), delay)
+    }
   }, [result])
 
   return (
@@ -29,6 +39,12 @@ export function MissionAreaWrapper({ missions }: { missions: Mission[] }) {
         <LevelUpOverlay
           level={levelUpData.level}
           onClose={() => setLevelUpData(null)}
+        />
+      )}
+      {recapData && (
+        <DailyRecapOverlay
+          daySummary={recapData}
+          onClose={handleRecapClose}
         />
       )}
       <ShieldToast show={showShieldToast} />
