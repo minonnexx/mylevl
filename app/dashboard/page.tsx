@@ -6,6 +6,7 @@ import Sidebar from '@/components/dashboard/Sidebar'
 import BottomNav from '@/components/dashboard/BottomNav'
 import { MissionAreaWrapper } from '@/components/dashboard/MissionAreaWrapper'
 import { XpBar } from '@/components/dashboard/XpBar'
+import { ShieldWidget } from '@/components/ui/ShieldWidget'
 
 function StatRow({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: number; sub: string }) {
   return (
@@ -48,6 +49,8 @@ export default async function DashboardPage() {
     current_streak: 0,
     longest_streak: 0,
     total_days_active: 0,
+    shield_count: 0,
+    shield_active: false,
     created_at: new Date().toISOString(),
   }
 
@@ -173,6 +176,9 @@ export default async function DashboardPage() {
                   </div>
                   <XpBar current={profile.current_xp} total={profile.xp_to_next_level} />
                 </div>
+
+                {/* Shield widget */}
+                <ShieldWidget shieldCount={profile.shield_count} shieldActive={profile.shield_active} />
 
                 {/* Stats card — p-6 standardized */}
                 <div className="bg-surface rounded-card p-6 border border-border/60">

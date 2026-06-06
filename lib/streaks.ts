@@ -1,7 +1,11 @@
 import { SupabaseClient } from '@supabase/supabase-js'
 import { computeLevelUp } from '@/lib/xp'
+import { grantShieldIfEarned } from '@/lib/shields'
 
-export async function updateStreak(supabase: SupabaseClient, userId: string) {
+export async function updateStreak(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<{ shieldGranted: boolean }> {
   const today = new Date().toISOString().slice(0, 10) // UTC YYYY-MM-DD
 
   const { data: existingStreak } = await supabase
@@ -16,7 +20,7 @@ export async function updateStreak(supabase: SupabaseClient, userId: string) {
       .from('streaks')
       .update({ missions_completed: existingStreak.missions_completed + 1 })
       .eq('id', existingStreak.id)
-    return
+    return { shieldGranted: false }
   }
 
   const { data: profile } = await supabase
@@ -46,14 +50,22 @@ export async function updateStreak(supabase: SupabaseClient, userId: string) {
       .eq('id', userId),
   ])
 
-  // Auto-complete boss mission when streak hits a multiple of 7 (7, 14, 21…)
+  let shieldGranted = false
+
+  // Auto-complete boss mission + grant shield when streak hits a multiple of 7
   if (newStreak % 7 === 0) {
-    await autoCompleteBossMission(supabase, userId, {
-      current_xp:       profile?.current_xp       ?? 0,
-      global_level:     profile?.global_level      ?? 1,
-      xp_to_next_level: profile?.xp_to_next_level  ?? 100,
-    })
+    const [granted] = await Promise.all([
+      grantShieldIfEarned(supabase, userId, newStreak),
+      autoCompleteBossMission(supabase, userId, {
+        current_xp:       profile?.current_xp       ?? 0,
+        global_level:     profile?.global_level      ?? 1,
+        xp_to_next_level: profile?.xp_to_next_level  ?? 100,
+      }),
+    ])
+    shieldGranted = granted
   }
+
+  return { shieldGranted }
 }
 
 async function autoCompleteBossMission(

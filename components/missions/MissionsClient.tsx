@@ -6,6 +6,7 @@ import { CLASS_META } from '@/lib/constants/classes'
 import { completeMissionAction, type MissionActionResult } from '@/app/missions/actions'
 import { CompleteButton } from '@/components/dashboard/CompleteButton'
 import { LevelUpOverlay } from '@/components/LevelUpOverlay'
+import { ShieldToast } from '@/components/ui/ShieldToast'
 import { AnimatedBar } from '@/components/ui/AnimatedBar'
 
 const DIFF_META: Record<MissionDifficulty, { label: string; text: string; bg: string; border: string }> = {
@@ -66,7 +67,15 @@ function IconCheck() {
 }
 
 // ─── Standard mission card ───────────────────────────────────────────────────
-function MissionCard({ mission, isCompleted }: { mission: Mission; isCompleted: boolean }) {
+function MissionCard({
+  mission,
+  isCompleted,
+  onShieldGranted,
+}: {
+  mission: Mission
+  isCompleted: boolean
+  onShieldGranted?: () => void
+}) {
   const classMeta = CLASS_META[mission.life_class]
   const [result, formAction] = useActionState<MissionActionResult, FormData>(completeMissionAction, null)
   const [showXp, setShowXp] = useState(false)
@@ -75,14 +84,13 @@ function MissionCard({ mission, isCompleted }: { mission: Mission; isCompleted: 
   const prevTsRef = useRef<number | null>(null)
   const xpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Only use result for level-up — animations fire optimistically from onSubmit
+  // Only use result for level-up/shield — animations fire optimistically from onSubmit
   useEffect(() => {
     if (!result || result.ts === prevTsRef.current) return
     prevTsRef.current = result.ts
-    if (result.levelUp) {
-      setLevelUpData({ level: result.newLevel })
-    }
-  }, [result])
+    if (result.levelUp) setLevelUpData({ level: result.newLevel })
+    if (result.shieldGranted) onShieldGranted?.()
+  }, [result, onShieldGranted])
 
   useEffect(() => {
     return () => { if (xpTimerRef.current) clearTimeout(xpTimerRef.current) }
@@ -242,12 +250,14 @@ function MissionSection({
   completedIds,
   isBoss,
   currentStreak,
+  onShieldGranted,
 }: {
   title: string
   missions: Mission[]
   completedIds: Set<string>
   isBoss: boolean
   currentStreak: number
+  onShieldGranted?: () => void
 }) {
   if (missions.length === 0) return null
 
@@ -290,7 +300,7 @@ function MissionSection({
             })
             .map(m => (
               <div key={m.id} className="w-[calc(100vw-32px)] md:min-w-0 md:w-auto flex-shrink-0 snap-start">
-                <MissionCard mission={m} isCompleted={completedIds.has(m.id)} />
+                <MissionCard mission={m} isCompleted={completedIds.has(m.id)} onShieldGranted={onShieldGranted} />
               </div>
             ))}
         </div>
@@ -332,6 +342,12 @@ export default function MissionsClient({
   currentStreak: number
 }) {
   const [filter, setFilter] = useState<FilterValue>('all')
+  const [showShieldToast, setShowShieldToast] = useState(false)
+
+  function handleShieldGranted() {
+    setShowShieldToast(true)
+    setTimeout(() => setShowShieldToast(false), 4000)
+  }
 
   const completedSet = new Set(completedTodayIds)
 
@@ -356,6 +372,8 @@ export default function MissionsClient({
   const allDailyDone = dailyMissions.length > 0 && dailyMissions.every(m => completedSet.has(m.id))
 
   return (
+    <>
+    <ShieldToast show={showShieldToast} />
     <div className="flex flex-col gap-8">
 
       {/* ── Page title ──────────────────────────────────────────────────── */}
@@ -418,6 +436,7 @@ export default function MissionsClient({
                 completedIds={completedSet}
                 isBoss={sectionMeta.isBoss}
                 currentStreak={currentStreak}
+                onShieldGranted={handleShieldGranted}
               />
             )
           })}
@@ -449,5 +468,6 @@ export default function MissionsClient({
       )}
 
     </div>
+    </>
   )
 }

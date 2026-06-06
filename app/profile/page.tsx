@@ -7,6 +7,7 @@ import BottomNav from '@/components/dashboard/BottomNav'
 import { ShareButton } from '@/components/profile/ShareButton'
 import { resetProfileAction } from './actions'
 import { AnimatedBar } from '@/components/ui/AnimatedBar'
+import { ShieldWidget } from '@/components/ui/ShieldWidget'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function getInitials(username: string): string {
@@ -389,6 +390,7 @@ export default async function ProfilePage() {
     username: user.email?.split('@')[0] ?? 'jugador',
     global_level: 1, current_xp: 0, xp_to_next_level: 100,
     current_streak: 0, longest_streak: 0, total_days_active: 0,
+    shield_count: 0, shield_active: false,
     created_at: new Date().toISOString(),
   }
 
@@ -451,6 +453,7 @@ export default async function ProfilePage() {
               <StatsGrid profile={profile} completedCount={completedCount} totalXp={totalXp} />
             </div>
 
+            <ShieldWidget shieldCount={profile.shield_count} shieldActive={profile.shield_active} />
             <RecentAchievements recent={recent} />
             <ClassBalance classProgress={classProgress} />
 

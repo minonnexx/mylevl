@@ -12,6 +12,8 @@ export interface Profile {
   current_streak: number
   longest_streak: number
   total_days_active: number
+  shield_count: number
+  shield_active: boolean
   created_at: string
 }
 

@@ -51,14 +51,36 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ reset: 0 })
   }
 
-  const { error: updateError } = await supabase
+  // Separate shielded users (keep streak, clear shield) from unshielded (reset streak)
+  const { data: shieldData } = await supabase
     .from('profiles')
-    .update({ current_streak: 0 })
+    .select('id, shield_active')
     .in('id', toReset)
 
-  if (updateError) {
-    return NextResponse.json({ error: updateError.message }, { status: 500 })
+  const shieldedIds = new Set(
+    (shieldData ?? []).filter(p => p.shield_active).map(p => p.id as string),
+  )
+  const unshieldedIds = toReset.filter(id => !shieldedIds.has(id))
+
+  const [resetResult, shieldResult] = await Promise.all([
+    unshieldedIds.length > 0
+      ? supabase.from('profiles').update({ current_streak: 0 }).in('id', unshieldedIds)
+      : Promise.resolve({ error: null }),
+    shieldedIds.size > 0
+      ? supabase.from('profiles').update({ shield_active: false }).in('id', [...shieldedIds])
+      : Promise.resolve({ error: null }),
+  ])
+
+  if (resetResult.error) {
+    return NextResponse.json({ error: resetResult.error.message }, { status: 500 })
+  }
+  if (shieldResult.error) {
+    return NextResponse.json({ error: shieldResult.error.message }, { status: 500 })
   }
 
-  return NextResponse.json({ reset: toReset.length, users: toReset })
+  return NextResponse.json({
+    reset: unshieldedIds.length,
+    shielded: shieldedIds.size,
+    users: toReset,
+  })
 }

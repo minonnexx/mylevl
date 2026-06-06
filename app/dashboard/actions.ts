@@ -10,6 +10,7 @@ export type MissionActionResult = {
   levelUp: boolean
   newLevel: number
   xpReward: number
+  shieldGranted: boolean
   ts: number
 } | null
 
@@ -41,7 +42,7 @@ export async function completeMission(
   if (existing) return null
 
   await supabase.from('completed_missions').insert({ user_id: user.id, mission_id: missionId })
-  await updateStreak(supabase, user.id)
+  const { shieldGranted } = await updateStreak(supabase, user.id)
 
   // Fetch current class points and global profile state in parallel
   const [cpRes, profileRes] = await Promise.all([
@@ -90,5 +91,5 @@ export async function completeMission(
   revalidatePath('/dashboard')
   revalidatePath('/missions')
 
-  return { levelUp: didLevelUp, newLevel: newGlobal.level, xpReward, ts: Date.now() }
+  return { levelUp: didLevelUp, newLevel: newGlobal.level, xpReward, shieldGranted, ts: Date.now() }
 }
