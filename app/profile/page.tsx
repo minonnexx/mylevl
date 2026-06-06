@@ -5,7 +5,7 @@ import { CLASS_META, getMilestoneProgress, getMilestoneTier } from '@/lib/consta
 import Sidebar from '@/components/dashboard/Sidebar'
 import BottomNav from '@/components/dashboard/BottomNav'
 import { ShareButton } from '@/components/profile/ShareButton'
-import { resetProfileAction } from './actions'
+import { ResetProfileButton } from '@/components/profile/ResetProfileButton'
 import { AnimatedBar } from '@/components/ui/AnimatedBar'
 import { ShieldIndicator } from '@/components/ui/ShieldIndicator'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -501,14 +501,9 @@ export default async function ProfilePage() {
             <ClassBalance classProgress={classProgress} />
 
             {process.env.NODE_ENV === 'development' && (
-              <form action={resetProfileAction} className="flex justify-end pt-4">
-                <button
-                  type="submit"
-                  className="text-xs text-text-muted px-3 py-1.5 rounded-component border border-error/30 opacity-40 hover:opacity-100 transition-opacity"
-                >
-                  Reset de perfil (dev)
-                </button>
-              </form>
+              <div className="flex justify-end pt-4">
+                <ResetProfileButton />
+              </div>
             )}
 
           </div>
