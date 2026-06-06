@@ -7,7 +7,7 @@ import BottomNav from '@/components/dashboard/BottomNav'
 import { ShareButton } from '@/components/profile/ShareButton'
 import { resetProfileAction } from './actions'
 import { AnimatedBar } from '@/components/ui/AnimatedBar'
-import { ShieldWidget } from '@/components/ui/ShieldWidget'
+import { ShieldIndicator } from '@/components/ui/ShieldIndicator'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function getInitials(username: string): string {
@@ -68,35 +68,41 @@ function ProfileHeader({ profile, completedCount }: { profile: Profile; complete
 
   return (
     <section
-      className="bg-surface rounded-card p-6 border border-border/60 flex flex-col md:flex-row md:items-center md:justify-between gap-5 md:gap-6"
+      className="bg-surface rounded-card p-6 border border-border/60 flex flex-col gap-5"
       aria-label="Perfil del jugador"
     >
-      <div className="flex flex-col md:flex-row items-center md:items-center gap-4 md:gap-6 min-w-0 text-center md:text-left">
-        {/* Avatar */}
-        <div
-          className="w-20 h-20 rounded-full flex items-center justify-center flex-shrink-0 text-accent font-bold text-2xl select-none border-2 border-accent/35"
-          style={{ background: 'linear-gradient(135deg, var(--color-accent-glow) 0%, transparent 100%)' }}
-          aria-label={`Avatar de ${profile.username}`}
-        >
-          {initials}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5 md:gap-6">
+        <div className="flex flex-col md:flex-row items-center md:items-center gap-4 md:gap-6 min-w-0 text-center md:text-left">
+          {/* Avatar */}
+          <div
+            className="w-20 h-20 rounded-full flex items-center justify-center flex-shrink-0 text-accent font-bold text-2xl select-none border-2 border-accent/35"
+            style={{ background: 'linear-gradient(135deg, var(--color-accent-glow) 0%, transparent 100%)' }}
+            aria-label={`Avatar de ${profile.username}`}
+          >
+            {initials}
+          </div>
+
+          <div className="flex flex-col gap-1.5 min-w-0 items-center md:items-start">
+            <div className="flex items-center gap-3 flex-wrap justify-center md:justify-start">
+              <h2 className="text-xl font-semibold text-text-primary tracking-tight">
+                {profile.username}
+              </h2>
+              <span className="text-xs font-bold text-accent bg-accent/12 border border-accent/20 px-3 py-1 rounded-pill tabular-nums flex-shrink-0">
+                LVL {profile.global_level}
+              </span>
+            </div>
+            <p className="text-sm text-text-muted">Miembro desde {joinDate}</p>
+            <p className="text-sm text-text-secondary font-medium">{hoursLabel}</p>
+          </div>
         </div>
 
-        <div className="flex flex-col gap-1.5 min-w-0 items-center md:items-start">
-          <div className="flex items-center gap-3 flex-wrap justify-center md:justify-start">
-            <h2 className="text-xl font-semibold text-text-primary tracking-tight">
-              {profile.username}
-            </h2>
-            <span className="text-xs font-bold text-accent bg-accent/12 border border-accent/20 px-3 py-1 rounded-pill tabular-nums flex-shrink-0">
-              LVL {profile.global_level}
-            </span>
-          </div>
-          <p className="text-sm text-text-muted">Miembro desde {joinDate}</p>
-          <p className="text-sm text-text-secondary font-medium">{hoursLabel}</p>
+        <div className="w-full md:w-auto md:flex-shrink-0 flex justify-center md:justify-end">
+          <ShareButton className="w-full md:w-auto" />
         </div>
       </div>
 
-      <div className="w-full md:w-auto md:flex-shrink-0">
-        <ShareButton className="w-full md:w-auto" />
+      <div className="border-t border-border/40 pt-4">
+        <ShieldIndicator shieldCount={profile.shield_count} shieldActive={profile.shield_active} />
       </div>
     </section>
   )
@@ -453,7 +459,6 @@ export default async function ProfilePage() {
               <StatsGrid profile={profile} completedCount={completedCount} totalXp={totalXp} />
             </div>
 
-            <ShieldWidget shieldCount={profile.shield_count} shieldActive={profile.shield_active} />
             <RecentAchievements recent={recent} />
             <ClassBalance classProgress={classProgress} />
 

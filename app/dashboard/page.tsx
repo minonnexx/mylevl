@@ -6,7 +6,7 @@ import Sidebar from '@/components/dashboard/Sidebar'
 import BottomNav from '@/components/dashboard/BottomNav'
 import { MissionAreaWrapper } from '@/components/dashboard/MissionAreaWrapper'
 import { XpBar } from '@/components/dashboard/XpBar'
-import { ShieldWidget } from '@/components/ui/ShieldWidget'
+import { ShieldIndicator } from '@/components/ui/ShieldIndicator'
 
 function StatRow({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: number; sub: string }) {
   return (
@@ -174,11 +174,11 @@ export default async function DashboardPage() {
                       <p className="text-xs text-text-muted mt-0.5">Nivel {profile.global_level} · Jugador</p>
                     </div>
                   </div>
+                  <div className="flex justify-end">
+                    <ShieldIndicator shieldCount={profile.shield_count} shieldActive={profile.shield_active} />
+                  </div>
                   <XpBar current={profile.current_xp} total={profile.xp_to_next_level} />
                 </div>
-
-                {/* Shield widget */}
-                <ShieldWidget shieldCount={profile.shield_count} shieldActive={profile.shield_active} />
 
                 {/* Stats card — p-6 standardized */}
                 <div className="bg-surface rounded-card p-6 border border-border/60">
