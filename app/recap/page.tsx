@@ -258,7 +258,7 @@ export default async function RecapPage() {
               {classesWithPoints.length === 0 ? (
                 <div className="bg-surface rounded-card border border-border/60">
                   <EmptyState
-                    icon={Dumbbell}
+                    icon={<Dumbbell size={40} strokeWidth={1.5} aria-hidden />}
                     title="Sin puntos de clase aún"
                     description="Completa misiones para ganar puntos de clase"
                   />
@@ -301,7 +301,7 @@ export default async function RecapPage() {
               {missionsCompletedToday === 0 ? (
                 <div className="bg-surface rounded-card border border-border/60">
                   <EmptyState
-                    icon={Sword}
+                    icon={<Sword size={40} strokeWidth={1.5} aria-hidden />}
                     title="Aún no has completado misiones hoy"
                     action={{ label: 'Ir a misiones', href: '/missions' }}
                   />

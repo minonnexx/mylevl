@@ -1,10 +1,10 @@
 'use client'
 
-import type { LucideIcon } from 'lucide-react'
+import type React from 'react'
 import Link from 'next/link'
 
 interface EmptyStateProps {
-  icon: LucideIcon
+  icon: React.ReactNode
   title: string
   description?: string
   action?: {
@@ -14,15 +14,10 @@ interface EmptyStateProps {
   }
 }
 
-export function EmptyState({ icon: Icon, title, description, action }: EmptyStateProps) {
+export function EmptyState({ icon, title, description, action }: EmptyStateProps) {
   return (
     <div className="flex flex-col items-center justify-center gap-2 py-10 text-center">
-      <Icon
-        size={40}
-        strokeWidth={1.5}
-        className="text-text-muted opacity-40 mb-1"
-        aria-hidden
-      />
+      <span className="text-text-muted opacity-40 mb-1">{icon}</span>
       <p className="text-[15px] font-medium text-text-primary">{title}</p>
       {description && (
         <p className="text-[13px] text-text-muted">{description}</p>

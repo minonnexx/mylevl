@@ -147,7 +147,7 @@ export default async function DashboardPage() {
                 {/* No daily missions seeded yet */}
                 {dailyMissions.length === 0 && (
                   <EmptyState
-                    icon={Sword}
+                    icon={<Sword size={40} strokeWidth={1.5} aria-hidden />}
                     title="Sin misiones por hoy"
                     description="Completa tu primera misión para empezar a ganar XP"
                   />
@@ -197,7 +197,7 @@ export default async function DashboardPage() {
                 {profile.current_streak === 0 && (
                   <div className="bg-surface rounded-card border border-border/60">
                     <EmptyState
-                      icon={Flame}
+                      icon={<Flame size={40} strokeWidth={1.5} aria-hidden />}
                       title="Empieza tu racha hoy"
                       description="Completa una misión cada día para mantenerla"
                     />

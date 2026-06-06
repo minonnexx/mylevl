@@ -278,7 +278,7 @@ function RecentAchievements({ recent }: { recent: RecentItem[] }) {
       {recent.length === 0 ? (
         <div className="bg-surface rounded-card border border-border/60">
           <EmptyState
-            icon={Trophy}
+            icon={<Trophy size={40} strokeWidth={1.5} aria-hidden />}
             title="Aún sin logros"
             description="Completa misiones para ver tu progreso aquí"
             action={{ label: 'Ver misiones', href: '/missions' }}
@@ -489,7 +489,7 @@ export default async function ProfilePage() {
                 <SectionTitle id="section-racha-historica">Historial de racha</SectionTitle>
                 <div className="bg-surface rounded-card border border-border/60">
                   <EmptyState
-                    icon={Calendar}
+                    icon={<Calendar size={40} strokeWidth={1.5} aria-hidden />}
                     title="Sin actividad registrada"
                     description="Tu historial de días activos aparecerá aquí"
                   />

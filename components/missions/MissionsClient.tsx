@@ -470,7 +470,7 @@ export default function MissionsClient({
         </div>
       ) : (
         <EmptyState
-          icon={Filter}
+          icon={<Filter size={40} strokeWidth={1.5} aria-hidden />}
           title="Sin misiones en esta categoría"
           description="Prueba con otro filtro"
         />
