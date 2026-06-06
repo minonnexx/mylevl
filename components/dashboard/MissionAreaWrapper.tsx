@@ -15,21 +15,38 @@ export function MissionAreaWrapper({ missions }: { missions: Mission[] }) {
   const [showShieldToast, setShowShieldToast] = useState(false)
   const [recapData, setRecapData] = useState<DaySummary | null>(null)
   const prevTsRef = useRef<number>(-1)
+  const pendingRecapRef = useRef<DaySummary | null>(null)
 
   const handleRecapClose = useCallback(() => setRecapData(null), [])
+
+  // When level-up closes, show the recap if it was queued
+  const handleLevelUpClose = useCallback(() => {
+    setLevelUpData(null)
+    if (pendingRecapRef.current) {
+      setRecapData(pendingRecapRef.current)
+      pendingRecapRef.current = null
+    }
+  }, [])
 
   useEffect(() => {
     if (!result || result.ts === prevTsRef.current) return
     prevTsRef.current = result.ts
+
     if (result.levelUp) setLevelUpData({ level: result.newLevel })
+
     if (result.shieldGranted) {
       setShowShieldToast(true)
       setTimeout(() => setShowShieldToast(false), 4000)
     }
+
     if (result.allMissionsCompleted && result.daySummary) {
-      const summary = result.daySummary
-      const delay = result.levelUp ? 500 : 0
-      setTimeout(() => setRecapData(summary), delay)
+      if (result.levelUp) {
+        // Level-up overlay comes first — queue the recap for after it closes
+        pendingRecapRef.current = result.daySummary
+      } else {
+        // No level-up: show recap synchronously, same pattern as setLevelUpData
+        setRecapData(result.daySummary)
+      }
     }
   }, [result])
 
@@ -38,7 +55,7 @@ export function MissionAreaWrapper({ missions }: { missions: Mission[] }) {
       {levelUpData && (
         <LevelUpOverlay
           level={levelUpData.level}
-          onClose={() => setLevelUpData(null)}
+          onClose={handleLevelUpClose}
         />
       )}
       {recapData && (
