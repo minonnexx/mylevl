@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { LevelUpParticles } from '@/components/ui/LevelUpParticles'
 
 const PHRASES = [
   'La constancia es la única ventaja injusta.',
@@ -26,6 +27,8 @@ export function LevelUpOverlay({ level, onClose }: Props) {
   }, [])
 
   const content = (
+    <>
+    <LevelUpParticles />
     <div
       className="fixed inset-0 z-[9999] flex items-center justify-center"
       style={{ background: 'rgba(14, 14, 16, 0.95)' }}
@@ -61,6 +64,7 @@ export function LevelUpOverlay({ level, onClose }: Props) {
         </button>
       </div>
     </div>
+    </>
   )
 
   return createPortal(content, document.body)

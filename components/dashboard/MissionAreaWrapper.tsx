@@ -8,7 +8,9 @@ import type { DaySummary } from '@/lib/recap'
 import { FeaturedMissionCard } from './FeaturedMissionCard'
 import { LevelUpOverlay } from '@/components/LevelUpOverlay'
 import { DailyRecapOverlay } from '@/components/dashboard/DailyRecapOverlay'
+import { Confetti } from '@/components/ui/Confetti'
 import { completeMission, type MissionActionResult } from '@/app/dashboard/actions'
+import { initAudio, playLevelUp, playMissionComplete, playShieldGained } from '@/lib/sounds'
 
 function getTodayKey(): string {
   const d = new Date()
@@ -19,12 +21,12 @@ export function MissionAreaWrapper({ missions }: { missions: Mission[] }) {
   const [result, formAction] = useActionState<MissionActionResult, FormData>(completeMission, null)
   const [levelUpData, setLevelUpData] = useState<{ level: number } | null>(null)
   const [recapData, setRecapData] = useState<DaySummary | null>(null)
+  const [showConfetti, setShowConfetti] = useState(false)
   const prevTsRef = useRef<number>(-1)
   const pendingRecapRef = useRef<DaySummary | null>(null)
 
   const handleRecapClose = useCallback(() => setRecapData(null), [])
 
-  // When level-up closes, show the recap if it was queued
   const handleLevelUpClose = useCallback(() => {
     setLevelUpData(null)
     if (pendingRecapRef.current) {
@@ -42,11 +44,16 @@ export function MissionAreaWrapper({ missions }: { missions: Mission[] }) {
       return
     }
 
+    playMissionComplete()
     toast('Misión completada', { description: `+${result.xpReward} XP`, duration: 2500 })
 
-    if (result.levelUp) setLevelUpData({ level: result.newLevel })
+    if (result.levelUp) {
+      playLevelUp()
+      setLevelUpData({ level: result.newLevel })
+    }
 
     if (result.shieldGranted) {
+      playShieldGained()
       toast('Escudo ganado', {
         description: 'Racha de 7 días completada',
         icon: <ShieldCheck size={16} />,
@@ -58,6 +65,7 @@ export function MissionAreaWrapper({ missions }: { missions: Mission[] }) {
       const key = `recap-shown-${getTodayKey()}`
       if (!sessionStorage.getItem(key)) {
         sessionStorage.setItem(key, '1')
+        setShowConfetti(true)
         if (result.levelUp) {
           pendingRecapRef.current = result.daySummary
         } else {
@@ -69,6 +77,7 @@ export function MissionAreaWrapper({ missions }: { missions: Mission[] }) {
 
   return (
     <>
+      {showConfetti && <Confetti key={result?.ts} />}
       {levelUpData && (
         <LevelUpOverlay
           level={levelUpData.level}
@@ -85,7 +94,7 @@ export function MissionAreaWrapper({ missions }: { missions: Mission[] }) {
         <div className="flex md:flex-col gap-3 overflow-x-auto md:overflow-x-visible snap-x snap-mandatory md:snap-none scrollbar-hide pb-1 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0">
           {missions.map(m => (
             <div key={m.id} className="w-[calc(100vw-32px)] md:min-w-0 md:w-auto flex-shrink-0 snap-start">
-              <FeaturedMissionCard mission={m} formAction={formAction} />
+              <FeaturedMissionCard mission={m} formAction={formAction} onBeforeSubmit={initAudio} />
             </div>
           ))}
         </div>

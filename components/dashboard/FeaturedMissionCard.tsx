@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { motion, AnimatePresence } from 'motion/react'
+import { Check } from 'lucide-react'
 import type { Mission } from '@/types/supabase'
 import { CLASS_META } from '@/lib/constants/classes'
 import { CompleteButton } from './CompleteButton'
@@ -17,16 +19,17 @@ function ClassBadge({ lifeClass }: { lifeClass: keyof typeof CLASS_META }) {
 export function FeaturedMissionCard({
   mission,
   formAction,
+  onBeforeSubmit,
 }: {
   mission: Mission
   formAction: (payload: FormData) => void
+  onBeforeSubmit?: () => void
 }) {
   const meta = CLASS_META[mission.life_class]
   const [showXp, setShowXp] = useState(false)
   const [completing, setCompleting] = useState(false)
   const xpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Reset animation state when the mission changes (after server revalidation)
   useEffect(() => {
     setCompleting(false)
     setShowXp(false)
@@ -38,6 +41,8 @@ export function FeaturedMissionCard({
   }, [])
 
   function handleSubmit() {
+    onBeforeSubmit?.()
+    if (navigator.vibrate) navigator.vibrate(40)
     setCompleting(true)
     setShowXp(true)
     if (xpTimerRef.current) clearTimeout(xpTimerRef.current)
@@ -78,7 +83,24 @@ export function FeaturedMissionCard({
         <input type="hidden" name="difficulty" value={mission.difficulty} />
 
         <div className="relative">
-          <CompleteButton />
+          <AnimatePresence mode="wait">
+            {completing ? (
+              <motion.div
+                key="check"
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: [0, 1.3, 1], opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+                className="flex items-center justify-center w-10 h-10"
+              >
+                <Check size={22} style={{ color: 'var(--color-success)' }} strokeWidth={2.5} />
+              </motion.div>
+            ) : (
+              <motion.div key="button" initial={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                <CompleteButton />
+              </motion.div>
+            )}
+          </AnimatePresence>
           {showXp && (
             <span
               className="absolute left-1/2 bottom-full mb-1 text-sm font-bold text-accent pointer-events-none whitespace-nowrap"

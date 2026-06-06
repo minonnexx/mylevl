@@ -21,7 +21,8 @@
   --color-disciplina-glow:  rgba(186, 117, 23,  0.12);
 
   /* ── Feedback ──────────────────────────────── */
-  --color-error: #E24B4A;
+  --color-error:   #E24B4A;
+  --color-success: #1D9E75;
 
   /* ── Text ──────────────────────────────────── */
   --color-text-primary: #F2F2F0;
