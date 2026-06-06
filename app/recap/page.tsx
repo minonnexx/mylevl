@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import type { Profile, LifeClass } from '@/types/supabase'
 import { CLASS_META } from '@/lib/constants/classes'
+import { getDaySummary } from '@/lib/recap'
 import Sidebar from '@/components/dashboard/Sidebar'
 import BottomNav from '@/components/dashboard/BottomNav'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -24,8 +25,6 @@ const DIFF_CLASSES: Record<string, string> = {
   hard:   'text-error bg-error/8 border-error/20',
   boss:   'text-accent bg-accent/8 border-accent/20',
 }
-
-const DIFF_PTS: Record<string, number> = { easy: 1, medium: 2, hard: 5, boss: 10 }
 
 // ─── Stat card ────────────────────────────────────────────────────────────────
 
@@ -72,15 +71,15 @@ export default async function RecapPage() {
   const todayStart = new Date()
   todayStart.setUTCHours(0, 0, 0, 0)
 
-  const [profileRes, totalDailyRes, completedTodayRes] = await Promise.all([
+  const [profileRes, completedTodayRes, summary] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', user.id).single(),
-    supabase.from('missions').select('id').eq('type', 'daily'),
     supabase
       .from('completed_missions')
       .select('completed_at, missions(id, title, xp_reward, life_class, difficulty)')
       .eq('user_id', user.id)
       .gte('completed_at', todayStart.toISOString())
       .order('completed_at', { ascending: true }),
+    getDaySummary(supabase, user.id),
   ])
 
   const profile = (profileRes.data as Profile | null) ?? {
@@ -91,8 +90,6 @@ export default async function RecapPage() {
     shield_count: 0, shield_used_at: null,
     created_at: new Date().toISOString(),
   }
-
-  const totalDailyCount = (totalDailyRes.data ?? []).length
 
   type CompletedRow = {
     completed_at: string
@@ -106,19 +103,8 @@ export default async function RecapPage() {
   }
   const completedToday = (completedTodayRes.data ?? []) as unknown as CompletedRow[]
 
-  // Compute daily stats from completed missions
-  let xpToday = 0
-  const classPointsToday: Record<string, number> = {}
-  for (const row of completedToday) {
-    if (!row.missions) continue
-    xpToday += row.missions.xp_reward
-    const pts = DIFF_PTS[row.missions.difficulty] ?? 1
-    classPointsToday[row.missions.life_class] =
-      (classPointsToday[row.missions.life_class] ?? 0) + pts
-  }
-
-  const missionsCompletedToday = completedToday.filter(r => r.missions !== null).length
-  const allDone = totalDailyCount > 0 && missionsCompletedToday >= totalDailyCount
+  const { xpEarnedToday: xpToday, classPoints: classPointsToday, missionsCompleted: missionsCompletedToday, missionsTotal: totalDailyCount } = summary
+  const allDone = summary.missionsTotal > 0 && summary.missionsCompleted >= summary.missionsTotal
 
   let footerText: string
   if (profile.current_streak === 0) {

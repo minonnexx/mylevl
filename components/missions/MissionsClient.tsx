@@ -397,10 +397,7 @@ export default function MissionsClient({
     <ShieldToast show={showShieldToast} />
     {recapData && (
       <DailyRecapOverlay
-        xpToday={recapData.xpToday}
-        classPointsToday={recapData.classPointsToday}
-        currentStreak={recapData.currentStreak}
-        shieldCount={recapData.shieldCount}
+        daySummary={recapData}
         onClose={handleRecapClose}
       />
     )}
