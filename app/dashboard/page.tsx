@@ -5,29 +5,7 @@ import type { Mission, Profile } from '@/types/supabase'
 import Sidebar from '@/components/dashboard/Sidebar'
 import BottomNav from '@/components/dashboard/BottomNav'
 import { MissionAreaWrapper } from '@/components/dashboard/MissionAreaWrapper'
-
-// ─── Sub-components ──────────────────────────────────────────────────────────
-function XpBar({ current, total }: { current: number; total: number }) {
-  const pct = Math.min(total > 0 ? (current / total) * 100 : 0, 100)
-  return (
-    <div className="flex flex-col gap-2">
-      <div className="flex justify-between text-xs text-text-muted">
-        <span className="font-medium uppercase tracking-wider">XP</span>
-        <span className="tabular-nums">{current.toLocaleString()} / {total.toLocaleString()}</span>
-      </div>
-      <div className="w-full bg-background rounded-pill h-2 overflow-hidden">
-        <div
-          className="h-full rounded-pill transition-all duration-500"
-          style={{
-            width: `${pct}%`,
-            background: 'linear-gradient(90deg, var(--color-accent) 0%, var(--color-accent-light) 100%)',
-          }}
-        />
-      </div>
-      <p className="text-xs text-text-muted">{Math.round(pct)}% completado</p>
-    </div>
-  )
-}
+import { XpBar } from '@/components/dashboard/XpBar'
 
 function StatRow({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: number; sub: string }) {
   return (

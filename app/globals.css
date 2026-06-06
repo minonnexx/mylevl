@@ -56,6 +56,21 @@ body {
 }
 
 /* ── Animations ────────────────────────────────── */
+@keyframes bar-shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(300%); }
+}
+
+.bar-shimmer-overlay {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    transparent 100%
+  );
+  animation: bar-shimmer 2s ease-in-out infinite;
+}
+
 @keyframes xp-float {
   0%   { opacity: 0; transform: translateX(-50%) translateY(0); }
   20%  { opacity: 1; }

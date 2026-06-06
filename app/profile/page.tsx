@@ -6,6 +6,7 @@ import Sidebar from '@/components/dashboard/Sidebar'
 import BottomNav from '@/components/dashboard/BottomNav'
 import { ShareButton } from '@/components/profile/ShareButton'
 import { resetProfileAction } from './actions'
+import { AnimatedBar } from '@/components/ui/AnimatedBar'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function getInitials(username: string): string {
@@ -139,17 +140,17 @@ function ClassProgressCard({ classProgress }: { classProgress: ClassProgress[] }
 
               {/* Progress bar — full width on mobile, flex-1 on desktop */}
               <div className="w-full md:flex-1 min-w-0">
-                <div className="w-full bg-background rounded-pill h-2 overflow-hidden">
-                  <div
-                    className="h-full rounded-pill transition-all duration-500"
-                    style={{ width: `${pct}%`, backgroundColor: meta.color }}
-                    role="progressbar"
-                    aria-valuenow={cp.points}
-                    aria-valuemin={0}
-                    aria-valuemax={nextAt ?? cp.points}
-                    aria-label={`Puntos de ${meta.label}`}
-                  />
-                </div>
+                <AnimatedBar
+                  value={pct / 100}
+                  color={meta.color}
+                  height="h-2"
+                  delay={idx * 0.1}
+                  role="progressbar"
+                  aria-valuenow={cp.points}
+                  aria-valuemin={0}
+                  aria-valuemax={nextAt ?? cp.points}
+                  aria-label={`Puntos de ${meta.label}`}
+                />
               </div>
 
               {/* Points — desktop only (shown inline on mobile above) */}
@@ -303,7 +304,7 @@ function ClassBalance({ classProgress }: { classProgress: ClassProgress[] }) {
       <SectionTitle id="section-equilibrio">Equilibrio de clases</SectionTitle>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {classes.map(lc => {
+        {classes.map((lc, idx) => {
           const cp      = getClass(lc)
           const meta    = CLASS_META[lc]
           const lagging = isLagging(cp.points)
@@ -345,15 +346,12 @@ function ClassBalance({ classProgress }: { classProgress: ClassProgress[] }) {
                 <p className="text-xs text-text-muted mt-1">{title}</p>
               </div>
 
-              <div className="w-full bg-background rounded-pill h-1.5 overflow-hidden">
-                <div
-                  className="h-full rounded-pill transition-all duration-500"
-                  style={{
-                    width: `${pct}%`,
-                    backgroundColor: lagging ? 'var(--color-error)' : meta.color,
-                  }}
-                />
-              </div>
+              <AnimatedBar
+                value={pct / 100}
+                color={lagging ? 'var(--color-error)' : meta.color}
+                height="h-1.5"
+                delay={idx * 0.1}
+              />
 
               {lagging && (
                 <p className="text-xs text-error font-medium leading-snug">

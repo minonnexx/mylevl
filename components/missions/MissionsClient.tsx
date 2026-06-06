@@ -6,6 +6,7 @@ import { CLASS_META } from '@/lib/constants/classes'
 import { completeMissionAction, type MissionActionResult } from '@/app/missions/actions'
 import { CompleteButton } from '@/components/dashboard/CompleteButton'
 import { LevelUpOverlay } from '@/components/LevelUpOverlay'
+import { AnimatedBar } from '@/components/ui/AnimatedBar'
 
 const DIFF_META: Record<MissionDifficulty, { label: string; text: string; bg: string; border: string }> = {
   easy:   { label: 'Fácil',  text: 'text-fisico',     bg: 'bg-fisico/8',     border: 'border-fisico/20'     },
@@ -178,6 +179,8 @@ function BossMissionCard({
   const classMeta = CLASS_META[mission.life_class]
   // Days completed in the current 7-day cycle (0–7)
   const daysProgress = currentStreak % 7 === 0 && currentStreak > 0 ? 7 : currentStreak % 7
+  const isWeekComplete = daysProgress === 7
+  const barColor = isWeekComplete ? 'var(--color-fisico)' : 'var(--color-accent)'
 
   return (
     <article
@@ -219,15 +222,11 @@ function BossMissionCard({
                 <span>Progreso semanal — se completa automáticamente</span>
                 <span className="tabular-nums font-medium text-text-primary">{daysProgress}/7 días</span>
               </div>
-              <div className="w-full bg-background rounded-pill h-1.5 overflow-hidden">
-                <div
-                  className="h-full rounded-pill transition-all duration-500"
-                  style={{
-                    width: `${(daysProgress / 7) * 100}%`,
-                    backgroundColor: 'var(--color-accent)',
-                  }}
-                />
-              </div>
+              <AnimatedBar
+                value={daysProgress / 7}
+                color={barColor}
+                height="h-1.5"
+              />
             </div>
           )}
         </div>
