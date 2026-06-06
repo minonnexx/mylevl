@@ -5,7 +5,8 @@ export type VerificationType = 'healthkit' | 'health_connect' | 'manual'
 
 export interface Profile {
   id: string
-  username: string
+  username: string | null
+  onboarding_completed: boolean
   global_level: number
   current_xp: number
   xp_to_next_level: number

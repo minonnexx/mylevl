@@ -18,15 +18,10 @@ export async function authenticate(
   if (mode === 'login') {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) return { error: error.message }
+    redirect('/dashboard')
   } else {
-    const username = (formData.get('username') as string).trim()
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { username } },
-    })
+    const { error } = await supabase.auth.signUp({ email, password })
     if (error) return { error: error.message }
+    redirect('/onboarding')
   }
-
-  redirect('/dashboard')
 }

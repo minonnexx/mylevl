@@ -31,21 +31,6 @@ export default function AuthForm() {
     <form action={formAction} className="flex flex-col gap-5">
       <input type="hidden" name="mode" value={mode} />
 
-      {!isLogin && (
-        <div className="flex flex-col gap-1.5">
-          <FieldLabel htmlFor="username">Usuario</FieldLabel>
-          <input
-            id="username"
-            name="username"
-            type="text"
-            placeholder="tu_nombre"
-            required
-            autoComplete="username"
-            className={inputClass}
-          />
-        </div>
-      )}
-
       <div className="flex flex-col gap-1.5">
         <FieldLabel htmlFor="email">Email</FieldLabel>
         <input
