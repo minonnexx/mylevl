@@ -1,10 +1,9 @@
 'use client'
 
-import { useActionState, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { Mission } from '@/types/supabase'
 import { CLASS_META } from '@/lib/constants/classes'
 import { CompleteButton } from './CompleteButton'
-import { completeMission, type MissionActionResult } from '@/app/dashboard/actions'
 
 function ClassBadge({ lifeClass }: { lifeClass: keyof typeof CLASS_META }) {
   const { label, badgeClasses } = CLASS_META[lifeClass]
@@ -15,21 +14,17 @@ function ClassBadge({ lifeClass }: { lifeClass: keyof typeof CLASS_META }) {
   )
 }
 
-export function FeaturedMissionCard({ mission, onLevelUp }: { mission: Mission; onLevelUp: (level: number) => void }) {
-  const [result, formAction] = useActionState<MissionActionResult, FormData>(completeMission, null)
+export function FeaturedMissionCard({
+  mission,
+  formAction,
+}: {
+  mission: Mission
+  formAction: (payload: FormData) => void
+}) {
   const meta = CLASS_META[mission.life_class]
   const [showXp, setShowXp] = useState(false)
   const [completing, setCompleting] = useState(false)
-  const prevTsRef = useRef<number | null>(null)
   const xpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  useEffect(() => {
-    if (!result || result.ts === prevTsRef.current) return
-    prevTsRef.current = result.ts
-    if (result.levelUp) {
-      onLevelUp(result.newLevel)
-    }
-  }, [result, onLevelUp])
 
   // Reset animation state when the mission changes (after server revalidation)
   useEffect(() => {

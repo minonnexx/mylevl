@@ -6,7 +6,15 @@
       "PowerShell(cd \"d:\\\\PROYECTO APP\\\\logros-reales-app\"; npx tsc --noEmit 2>&1; Write-Host \"Exit: $LASTEXITCODE\")",
       "PowerShell(Get-ChildItem -Path \"d:\\\\PROYECTO APP\\\\logros-reales-app\" -Force | Where-Object { $_.PSIsContainer } | Select-Object -ExpandProperty Name)",
       "PowerShell(New-Item -ItemType Directory -Force \"d:\\\\PROYECTO APP\\\\logros-reales-app\\\\app\\\\api\\\\cron\\\\reset-streaks\")",
-      "PowerShell($gitPaths = @\\(\"C:\\\\Program Files\\\\Git\\\\bin\\\\git.exe\", \"C:\\\\Program Files \\(x86\\)\\\\Git\\\\bin\\\\git.exe\", \"C:\\\\Users\\\\minonne\\\\AppData\\\\Local\\\\Programs\\\\Git\\\\bin\\\\git.exe\"\\); foreach \\($p in $gitPaths\\) { if \\(Test-Path $p\\) { Write-Output \"Found: $p\" } })"
+      "PowerShell($gitPaths = @\\(\"C:\\\\Program Files\\\\Git\\\\bin\\\\git.exe\", \"C:\\\\Program Files \\(x86\\)\\\\Git\\\\bin\\\\git.exe\", \"C:\\\\Users\\\\minonne\\\\AppData\\\\Local\\\\Programs\\\\Git\\\\bin\\\\git.exe\"\\); foreach \\($p in $gitPaths\\) { if \\(Test-Path $p\\) { Write-Output \"Found: $p\" } })",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(Get-ChildItem -Path \"d:\\\\PROYECTO APP\\\\logros-reales-app\" -Force)",
+      "PowerShell(ls \"d:\\\\PROYECTO APP\\\\logros-reales-app\\\\.claude\\\\skills\\\\\" -ErrorAction SilentlyContinue)",
+      "PowerShell(if \\(-not $?\\) { \"no skills dir\" })",
+      "PowerShell(npx playwright --version 2>&1)",
+      "PowerShell(node -e \"require\\('playwright'\\)\" 2>&1)"
     ]
   }
 }
