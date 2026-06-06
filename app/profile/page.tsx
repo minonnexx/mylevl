@@ -6,6 +6,7 @@ import Sidebar from '@/components/dashboard/Sidebar'
 import BottomNav from '@/components/dashboard/BottomNav'
 import { ShareButton } from '@/components/profile/ShareButton'
 import { ResetProfileButton } from '@/components/profile/ResetProfileButton'
+import { ClassRadarChart } from '@/components/profile/ClassRadarChart'
 import { AnimatedBar } from '@/components/ui/AnimatedBar'
 import { ShieldIndicator } from '@/components/ui/ShieldIndicator'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -133,6 +134,14 @@ function ClassProgressCard({ classProgress }: { classProgress: ClassProgress[] }
       <SectionTitle id="section-clases">Clases de vida</SectionTitle>
 
       <div className="bg-surface rounded-card border border-border/60 overflow-hidden">
+        <div className="px-4 md:px-6 pt-5 pb-2">
+          <ClassRadarChart
+            fisico={getClass('fisico').points}
+            mental={getClass('mental').points}
+            disciplina={getClass('disciplina').points}
+          />
+        </div>
+
         {classes.map((lc, idx) => {
           const cp        = getClass(lc)
           const meta      = CLASS_META[lc]
