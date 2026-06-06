@@ -47,7 +47,7 @@ function UsernameStep() {
   }
 
   const handleSubmit = () => {
-    const trimmed = username.trim()
+    const trimmed = (username ?? '').trim()
     if (trimmed.length < 3) {
       setError('Mínimo 3 caracteres')
       return
