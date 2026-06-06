@@ -3,11 +3,14 @@
 import { useActionState, useEffect, useRef, useState } from 'react'
 import type { Mission, MissionDifficulty, MissionType } from '@/types/supabase'
 import { CLASS_META } from '@/lib/constants/classes'
-import { completeMissionAction, type MissionActionResult } from '@/app/missions/actions'
+import { completeMissionAction, type MissionActionResult, type DaySummary } from '@/app/missions/actions'
 import { CompleteButton } from '@/components/dashboard/CompleteButton'
 import { LevelUpOverlay } from '@/components/LevelUpOverlay'
+import { DailyRecapOverlay } from '@/components/dashboard/DailyRecapOverlay'
 import { ShieldToast } from '@/components/ui/ShieldToast'
 import { AnimatedBar } from '@/components/ui/AnimatedBar'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { Filter } from 'lucide-react'
 
 const DIFF_META: Record<MissionDifficulty, { label: string; text: string; bg: string; border: string }> = {
   easy:   { label: 'Fácil',  text: 'text-fisico',     bg: 'bg-fisico/8',     border: 'border-fisico/20'     },
@@ -71,10 +74,12 @@ function MissionCard({
   mission,
   isCompleted,
   onShieldGranted,
+  onAllCompleted,
 }: {
   mission: Mission
   isCompleted: boolean
   onShieldGranted?: () => void
+  onAllCompleted?: (summary: DaySummary) => void
 }) {
   const classMeta = CLASS_META[mission.life_class]
   const [result, formAction] = useActionState<MissionActionResult, FormData>(completeMissionAction, null)
@@ -90,7 +95,12 @@ function MissionCard({
     prevTsRef.current = result.ts
     if (result.levelUp) setLevelUpData({ level: result.newLevel })
     if (result.shieldGranted) onShieldGranted?.()
-  }, [result, onShieldGranted])
+    if (result.allMissionsCompleted && result.daySummary) {
+      const summary = result.daySummary
+      const delay = result.levelUp ? 500 : 0
+      setTimeout(() => onAllCompleted?.(summary), delay)
+    }
+  }, [result, onShieldGranted, onAllCompleted])
 
   useEffect(() => {
     return () => { if (xpTimerRef.current) clearTimeout(xpTimerRef.current) }
@@ -251,6 +261,7 @@ function MissionSection({
   isBoss,
   currentStreak,
   onShieldGranted,
+  onAllCompleted,
 }: {
   title: string
   missions: Mission[]
@@ -258,6 +269,7 @@ function MissionSection({
   isBoss: boolean
   currentStreak: number
   onShieldGranted?: () => void
+  onAllCompleted?: (summary: DaySummary) => void
 }) {
   if (missions.length === 0) return null
 
@@ -300,7 +312,7 @@ function MissionSection({
             })
             .map(m => (
               <div key={m.id} className="w-[calc(100vw-32px)] md:min-w-0 md:w-auto flex-shrink-0 snap-start">
-                <MissionCard mission={m} isCompleted={completedIds.has(m.id)} onShieldGranted={onShieldGranted} />
+                <MissionCard mission={m} isCompleted={completedIds.has(m.id)} onShieldGranted={onShieldGranted} onAllCompleted={onAllCompleted} />
               </div>
             ))}
         </div>
@@ -343,10 +355,15 @@ export default function MissionsClient({
 }) {
   const [filter, setFilter] = useState<FilterValue>('all')
   const [showShieldToast, setShowShieldToast] = useState(false)
+  const [recapData, setRecapData] = useState<DaySummary | null>(null)
 
   function handleShieldGranted() {
     setShowShieldToast(true)
     setTimeout(() => setShowShieldToast(false), 4000)
+  }
+
+  function handleAllCompleted(summary: DaySummary) {
+    setRecapData(summary)
   }
 
   const completedSet = new Set(completedTodayIds)
@@ -374,6 +391,15 @@ export default function MissionsClient({
   return (
     <>
     <ShieldToast show={showShieldToast} />
+    {recapData && (
+      <DailyRecapOverlay
+        xpToday={recapData.xpToday}
+        classPointsToday={recapData.classPointsToday}
+        currentStreak={recapData.currentStreak}
+        shieldCount={recapData.shieldCount}
+        onClose={() => setRecapData(null)}
+      />
+    )}
     <div className="flex flex-col gap-8">
 
       {/* ── Page title ──────────────────────────────────────────────────── */}
@@ -437,34 +463,17 @@ export default function MissionsClient({
                 isBoss={sectionMeta.isBoss}
                 currentStreak={currentStreak}
                 onShieldGranted={handleShieldGranted}
+                onAllCompleted={handleAllCompleted}
               />
             )
           })}
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center py-24 text-center">
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            className="w-10 h-10 text-text-muted mb-4"
-            stroke="currentColor"
-            strokeWidth={1.5}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden
-          >
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
-          <p className="text-text-muted text-sm font-medium">Sin misiones con este filtro</p>
-          <button
-            type="button"
-            onClick={() => setFilter('all')}
-            className="mt-3 text-accent text-sm hover:underline underline-offset-2 cursor-pointer"
-          >
-            Ver todas las misiones
-          </button>
-        </div>
+        <EmptyState
+          icon={Filter}
+          title="Sin misiones en esta categoría"
+          description="Prueba con otro filtro"
+        />
       )}
 
     </div>

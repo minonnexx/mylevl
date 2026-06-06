@@ -8,6 +8,9 @@ import { ShareButton } from '@/components/profile/ShareButton'
 import { resetProfileAction } from './actions'
 import { AnimatedBar } from '@/components/ui/AnimatedBar'
 import { ShieldIndicator } from '@/components/ui/ShieldIndicator'
+import { EmptyState } from '@/components/ui/EmptyState'
+import Link from 'next/link'
+import { Trophy, Calendar, ArrowRight } from 'lucide-react'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function getInitials(username: string): string {
@@ -247,6 +250,16 @@ function StatsGrid({ profile, completedCount, totalXp }: {
           </div>
         ))}
       </div>
+
+      <div className="flex justify-end pt-1">
+        <Link
+          href="/recap"
+          className="flex items-center gap-1.5 text-xs text-text-muted hover:text-text-secondary transition-colors"
+        >
+          Ver recap de hoy
+          <ArrowRight size={12} strokeWidth={2} aria-hidden />
+        </Link>
+      </div>
     </section>
   )
 }
@@ -263,13 +276,13 @@ function RecentAchievements({ recent }: { recent: RecentItem[] }) {
       <SectionTitle id="section-recientes">Logros recientes</SectionTitle>
 
       {recent.length === 0 ? (
-        <div className="bg-surface rounded-card border border-border/60 px-6 py-12 flex flex-col items-center gap-3 text-center">
-          <svg viewBox="0 0 24 24" fill="none" className="w-9 h-9 text-text-muted" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-            <circle cx="12" cy="8" r="6" />
-            <path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11" />
-          </svg>
-          <p className="text-sm font-medium text-text-secondary">Sin logros todavía</p>
-          <p className="text-sm text-text-muted">Completa tu primera misión para verla aquí</p>
+        <div className="bg-surface rounded-card border border-border/60">
+          <EmptyState
+            icon={Trophy}
+            title="Aún sin logros"
+            description="Completa misiones para ver tu progreso aquí"
+            action={{ label: 'Ver misiones', href: '/missions' }}
+          />
         </div>
       ) : (
         <div className="bg-surface rounded-card border border-border/60 overflow-hidden">
@@ -470,6 +483,20 @@ export default async function ProfilePage() {
             </div>
 
             <RecentAchievements recent={recent} />
+
+            {profile.current_streak === 0 && (
+              <section aria-labelledby="section-racha-historica">
+                <SectionTitle id="section-racha-historica">Historial de racha</SectionTitle>
+                <div className="bg-surface rounded-card border border-border/60">
+                  <EmptyState
+                    icon={Calendar}
+                    title="Sin actividad registrada"
+                    description="Tu historial de días activos aparecerá aquí"
+                  />
+                </div>
+              </section>
+            )}
+
             <ClassBalance classProgress={classProgress} />
 
             {process.env.NODE_ENV === 'development' && (

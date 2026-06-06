@@ -7,6 +7,8 @@ import BottomNav from '@/components/dashboard/BottomNav'
 import { MissionAreaWrapper } from '@/components/dashboard/MissionAreaWrapper'
 import { XpBar } from '@/components/dashboard/XpBar'
 import { ShieldIndicator } from '@/components/ui/ShieldIndicator'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { Sword, Flame } from 'lucide-react'
 
 function StatRow({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: number; sub: string }) {
   return (
@@ -142,8 +144,17 @@ export default async function DashboardPage() {
                   </div>
                 )}
 
+                {/* No daily missions seeded yet */}
+                {dailyMissions.length === 0 && (
+                  <EmptyState
+                    icon={Sword}
+                    title="Sin misiones por hoy"
+                    description="Completa tu primera misión para empezar a ganar XP"
+                  />
+                )}
+
                 {/* All pending daily missions — completable in any order */}
-                <MissionAreaWrapper missions={pendingDaily} />
+                {dailyMissions.length > 0 && <MissionAreaWrapper missions={pendingDaily} />}
 
                 <Link href="/missions" className="text-xs text-text-muted hover:text-accent transition-colors">
                   Ver todas las misiones →
@@ -181,6 +192,17 @@ export default async function DashboardPage() {
                   </div>
                   <XpBar current={profile.current_xp} total={profile.xp_to_next_level} />
                 </div>
+
+                {/* Streak empty state — shown when user has no active streak */}
+                {profile.current_streak === 0 && (
+                  <div className="bg-surface rounded-card border border-border/60">
+                    <EmptyState
+                      icon={Flame}
+                      title="Empieza tu racha hoy"
+                      description="Completa una misión cada día para mantenerla"
+                    />
+                  </div>
+                )}
 
                 {/* Stats card — p-6 standardized */}
                 <div className="bg-surface rounded-card p-6 border border-border/60">
