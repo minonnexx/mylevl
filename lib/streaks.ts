@@ -25,7 +25,7 @@ export async function updateStreak(
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('current_streak, longest_streak, total_days_active, current_xp, global_level, xp_to_next_level')
+    .select('current_streak, longest_streak, total_days_active, current_xp, global_level, xp_to_next_level, shield_count')
     .eq('id', userId)
     .single()
 
@@ -55,7 +55,7 @@ export async function updateStreak(
   // Auto-complete boss mission + grant shield when streak hits a multiple of 7
   if (newStreak % 7 === 0) {
     const [granted] = await Promise.all([
-      grantShieldIfEarned(supabase, userId, newStreak),
+      grantShieldIfEarned(supabase, userId, newStreak, profile?.shield_count ?? 0),
       autoCompleteBossMission(supabase, userId, {
         current_xp:       profile?.current_xp       ?? 0,
         global_level:     profile?.global_level      ?? 1,

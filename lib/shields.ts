@@ -4,21 +4,14 @@ export async function grantShieldIfEarned(
   supabase: SupabaseClient,
   userId: string,
   newStreak: number,
+  currentShieldCount: number,
 ): Promise<boolean> {
   if (newStreak % 7 !== 0) return false
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('shield_count')
-    .eq('id', userId)
-    .single()
-
-  const current = (profile?.shield_count as number) ?? 0
-  if (current >= 3) return false
+  if (currentShieldCount >= 3) return false
 
   const { error } = await supabase
     .from('profiles')
-    .update({ shield_count: current + 1 })
+    .update({ shield_count: currentShieldCount + 1 })
     .eq('id', userId)
 
   return !error
