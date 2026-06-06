@@ -7,7 +7,6 @@ import { computeLevelUp } from '@/lib/xp'
 import { updateStreak } from '@/lib/streaks'
 import { getDaySummary } from '@/lib/recap'
 import type { DaySummary } from '@/lib/recap'
-export type { DaySummary }
 
 export type MissionActionResult = {
   levelUp: boolean
