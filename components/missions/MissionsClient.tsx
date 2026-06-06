@@ -5,13 +5,13 @@ import type { Mission, MissionDifficulty, MissionType } from '@/types/supabase'
 import { CLASS_META } from '@/lib/constants/classes'
 import { completeMissionAction, type MissionActionResult } from '@/app/missions/actions'
 import type { DaySummary } from '@/lib/recap'
+import { toast } from 'sonner'
 import { CompleteButton } from '@/components/dashboard/CompleteButton'
 import { LevelUpOverlay } from '@/components/LevelUpOverlay'
 import { DailyRecapOverlay } from '@/components/dashboard/DailyRecapOverlay'
-import { ShieldToast } from '@/components/ui/ShieldToast'
 import { AnimatedBar } from '@/components/ui/AnimatedBar'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { Filter } from 'lucide-react'
+import { Filter, ShieldCheck } from 'lucide-react'
 
 const DIFF_META: Record<MissionDifficulty, { label: string; text: string; bg: string; border: string }> = {
   easy:   { label: 'Fácil',  text: 'text-fisico',     bg: 'bg-fisico/8',     border: 'border-fisico/20'     },
@@ -74,12 +74,10 @@ function IconCheck() {
 function MissionCard({
   mission,
   isCompleted,
-  onShieldGranted,
   onAllCompleted,
 }: {
   mission: Mission
   isCompleted: boolean
-  onShieldGranted?: () => void
   onAllCompleted?: (summary: DaySummary) => void
 }) {
   const classMeta = CLASS_META[mission.life_class]
@@ -94,14 +92,30 @@ function MissionCard({
   useEffect(() => {
     if (!result || result.ts === prevTsRef.current) return
     prevTsRef.current = result.ts
+
+    if (result.error) {
+      toast.error('No se pudo completar la misión', { description: 'Inténtalo de nuevo' })
+      return
+    }
+
+    toast('Misión completada', { description: `+${result.xpReward} XP`, duration: 2500 })
+
     if (result.levelUp) setLevelUpData({ level: result.newLevel })
-    if (result.shieldGranted) onShieldGranted?.()
+
+    if (result.shieldGranted) {
+      toast('Escudo ganado', {
+        description: 'Racha de 7 días completada',
+        icon: <ShieldCheck size={16} />,
+        duration: 4000,
+      })
+    }
+
     if (result.allMissionsCompleted && result.daySummary) {
       const summary = result.daySummary
       const delay = result.levelUp ? 500 : 0
       setTimeout(() => onAllCompleted?.(summary), delay)
     }
-  }, [result, onShieldGranted, onAllCompleted])
+  }, [result, onAllCompleted])
 
   useEffect(() => {
     return () => { if (xpTimerRef.current) clearTimeout(xpTimerRef.current) }
@@ -261,7 +275,6 @@ function MissionSection({
   completedIds,
   isBoss,
   currentStreak,
-  onShieldGranted,
   onAllCompleted,
 }: {
   title: string
@@ -269,7 +282,6 @@ function MissionSection({
   completedIds: Set<string>
   isBoss: boolean
   currentStreak: number
-  onShieldGranted?: () => void
   onAllCompleted?: (summary: DaySummary) => void
 }) {
   if (missions.length === 0) return null
@@ -313,7 +325,7 @@ function MissionSection({
             })
             .map(m => (
               <div key={m.id} className="w-[calc(100vw-32px)] md:min-w-0 md:w-auto flex-shrink-0 snap-start">
-                <MissionCard mission={m} isCompleted={completedIds.has(m.id)} onShieldGranted={onShieldGranted} onAllCompleted={onAllCompleted} />
+                <MissionCard mission={m} isCompleted={completedIds.has(m.id)} onAllCompleted={onAllCompleted} />
               </div>
             ))}
         </div>
@@ -355,13 +367,7 @@ export default function MissionsClient({
   currentStreak: number
 }) {
   const [filter, setFilter] = useState<FilterValue>('all')
-  const [showShieldToast, setShowShieldToast] = useState(false)
   const [recapData, setRecapData] = useState<DaySummary | null>(null)
-
-  const handleShieldGranted = useCallback(() => {
-    setShowShieldToast(true)
-    setTimeout(() => setShowShieldToast(false), 4000)
-  }, [])
 
   const handleAllCompleted = useCallback((summary: DaySummary) => {
     setRecapData(summary)
@@ -395,7 +401,6 @@ export default function MissionsClient({
 
   return (
     <>
-    <ShieldToast show={showShieldToast} />
     {recapData && (
       <DailyRecapOverlay
         daySummary={recapData}
@@ -464,7 +469,6 @@ export default function MissionsClient({
                 completedIds={completedSet}
                 isBoss={sectionMeta.isBoss}
                 currentStreak={currentStreak}
-                onShieldGranted={handleShieldGranted}
                 onAllCompleted={handleAllCompleted}
               />
             )
