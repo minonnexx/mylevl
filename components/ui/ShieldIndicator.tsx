@@ -1,7 +1,7 @@
 'use client'
 
 import { motion, useReducedMotion } from 'motion/react'
-import { Shield } from 'lucide-react'
+import { Shield, ShieldCheck } from 'lucide-react'
 
 const MAX_SHIELDS = 3
 const STROKE_WIDTH = 2
@@ -24,14 +24,15 @@ export function ShieldIndicator({
   const s = SIZES[size]
 
   const isMax = shieldCount >= MAX_SHIELDS
-  const progress = isMax ? 1 : streakProgress / 7
+  const isCharged = streakProgress === 0 && shieldCount > 0
+  const progress = (isMax || isCharged) ? 1 : streakProgress / 7
   const center = s.ring / 2
   const radius = center - STROKE_WIDTH - 1
   const circumference = 2 * Math.PI * radius
   const ringOffset = circumference * (1 - progress)
 
-  const ringStroke = isMax ? 'var(--color-fisico)' : 'var(--color-text-primary)'
-  const shieldColor = isMax ? 'var(--color-fisico)' : 'var(--color-text-secondary)'
+  const ringStroke = (isMax || isCharged) ? 'var(--color-fisico)' : 'var(--color-text-primary)'
+  const shieldColor = (isMax || isCharged) ? 'var(--color-fisico)' : 'var(--color-text-secondary)'
 
   return (
     <div className="flex items-center" style={{ gap: s.gap }}>
@@ -79,12 +80,21 @@ export function ShieldIndicator({
             />
           </svg>
 
-          <Shield
-            size={s.shieldIcon}
-            strokeWidth={1.75}
-            style={{ color: shieldColor }}
-            aria-hidden
-          />
+          {isCharged || isMax ? (
+            <ShieldCheck
+              size={s.shieldIcon}
+              strokeWidth={1.75}
+              style={{ color: shieldColor }}
+              aria-hidden
+            />
+          ) : (
+            <Shield
+              size={s.shieldIcon}
+              strokeWidth={1.75}
+              style={{ color: shieldColor }}
+              aria-hidden
+            />
+          )}
         </div>
 
         <span
@@ -93,10 +103,12 @@ export function ShieldIndicator({
           aria-label={
             isMax
               ? 'Escudos al máximo'
+              : isCharged
+              ? 'Ciclo completado'
               : `${streakProgress} de 7 días para el siguiente escudo`
           }
         >
-          {isMax ? 'Máx' : `${streakProgress}/7`}
+          {isMax ? 'Máx' : isCharged ? '7/7' : `${streakProgress}/7`}
         </span>
       </div>
 
