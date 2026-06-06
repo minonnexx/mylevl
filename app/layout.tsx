@@ -1,15 +1,11 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import dynamic from "next/dynamic";
 import "./globals.css";
+import InstallBannerWrapper from "@/components/pwa/InstallBannerWrapper";
 
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
-});
-
-const InstallBanner = dynamic(() => import("@/components/pwa/InstallBanner"), {
-  ssr: false,
 });
 
 export const metadata: Metadata = {
@@ -35,7 +31,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col">
         {children}
-        <InstallBanner />
+        <InstallBannerWrapper />
       </body>
     </html>
   );
