@@ -48,7 +48,7 @@ export default async function DashboardPage() {
 
   const profile: Profile = (profileRes.data as Profile | null) ?? {
     id: user.id,
-    username: user.email?.split('@')[0] ?? 'jugador',
+    username: null,
     onboarding_completed: false,
     global_level: 1,
     current_xp: 0,

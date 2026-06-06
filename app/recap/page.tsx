@@ -84,7 +84,7 @@ export default async function RecapPage() {
 
   const profile = (profileRes.data as Profile | null) ?? {
     id: user.id,
-    username: user.email?.split('@')[0] ?? 'jugador',
+    username: null,
     global_level: 1, current_xp: 0, xp_to_next_level: 100,
     current_streak: 0, longest_streak: 0, total_days_active: 0,
     shield_count: 0, shield_used_at: null,

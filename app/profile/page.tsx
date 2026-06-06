@@ -424,7 +424,7 @@ export default async function ProfilePage() {
 
   const profile: Profile = (profileRes.data as Profile | null) ?? {
     id: user.id,
-    username: user.email?.split('@')[0] ?? 'jugador',
+    username: null,
     onboarding_completed: false,
     global_level: 1, current_xp: 0, xp_to_next_level: 100,
     current_streak: 0, longest_streak: 0, total_days_active: 0,
