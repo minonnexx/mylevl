@@ -19,11 +19,9 @@ function ClassBadge({ lifeClass }: { lifeClass: keyof typeof CLASS_META }) {
 export function FeaturedMissionCard({
   mission,
   formAction,
-  onBeforeSubmit,
 }: {
   mission: Mission
   formAction: (payload: FormData) => void
-  onBeforeSubmit?: () => void
 }) {
   const meta = CLASS_META[mission.life_class]
   const [showXp, setShowXp] = useState(false)
@@ -41,7 +39,6 @@ export function FeaturedMissionCard({
   }, [])
 
   function handleSubmit() {
-    onBeforeSubmit?.()
     if (navigator.vibrate) navigator.vibrate(40)
     setCompleting(true)
     setShowXp(true)
@@ -88,9 +85,9 @@ export function FeaturedMissionCard({
               <motion.div
                 key="check"
                 initial={{ scale: 0, opacity: 0 }}
-                animate={{ scale: [0, 1.3, 1], opacity: 1 }}
+                animate={{ scale: [0, 1.3, 1], opacity: [0, 1, 1] }}
                 exit={{ opacity: 0 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+                transition={{ duration: 0.4, ease: 'easeOut', times: [0, 0.6, 1] }}
                 className="flex items-center justify-center w-10 h-10"
               >
                 <Check size={22} style={{ color: 'var(--color-success)' }} strokeWidth={2.5} />

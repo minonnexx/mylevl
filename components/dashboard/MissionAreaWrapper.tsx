@@ -10,7 +10,7 @@ import { LevelUpOverlay } from '@/components/LevelUpOverlay'
 import { DailyRecapOverlay } from '@/components/dashboard/DailyRecapOverlay'
 import { Confetti } from '@/components/ui/Confetti'
 import { completeMission, type MissionActionResult } from '@/app/dashboard/actions'
-import { initAudio, playLevelUp, playMissionComplete, playShieldGained } from '@/lib/sounds'
+import { playLevelUp, playMissionComplete, playShieldGained } from '@/lib/sounds'
 
 function getTodayKey(): string {
   const d = new Date()
@@ -94,7 +94,7 @@ export function MissionAreaWrapper({ missions }: { missions: Mission[] }) {
         <div className="flex md:flex-col gap-3 overflow-x-auto md:overflow-x-visible snap-x snap-mandatory md:snap-none scrollbar-hide pb-1 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0">
           {missions.map(m => (
             <div key={m.id} className="w-[calc(100vw-32px)] md:min-w-0 md:w-auto flex-shrink-0 snap-start">
-              <FeaturedMissionCard mission={m} formAction={formAction} onBeforeSubmit={initAudio} />
+              <FeaturedMissionCard mission={m} formAction={formAction} />
             </div>
           ))}
         </div>
