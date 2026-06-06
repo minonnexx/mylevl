@@ -89,6 +89,7 @@ export async function completeMission(
   ])
 
   revalidatePath('/dashboard')
+  revalidatePath('/profile')
   revalidatePath('/missions')
 
   return { levelUp: didLevelUp, newLevel: newGlobal.level, xpReward, shieldGranted, ts: Date.now() }

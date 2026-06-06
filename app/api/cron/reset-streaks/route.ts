@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
   }
 
   if (!activeProfiles?.length) {
-    return NextResponse.json({ reset: 0 })
+    return NextResponse.json({ reset: 0, shielded: 0 })
   }
 
   // Users who DID log a streak entry yesterday
@@ -42,32 +42,47 @@ export async function GET(req: NextRequest) {
 
   const activeYesterdayIds = new Set((activeYesterday ?? []).map(r => r.user_id as string))
 
-  // Users who had a streak but missed yesterday → reset
+  // Users who had a streak but missed yesterday
   const toReset = activeProfiles
     .map(p => p.id as string)
     .filter(id => !activeYesterdayIds.has(id))
 
   if (toReset.length === 0) {
-    return NextResponse.json({ reset: 0 })
+    return NextResponse.json({ reset: 0, shielded: 0 })
   }
 
-  // Separate shielded users (keep streak, clear shield) from unshielded (reset streak)
-  const { data: shieldData } = await supabase
+  // Fetch shield inventory for all users who missed yesterday
+  const { data: shieldData, error: shieldError } = await supabase
     .from('profiles')
-    .select('id, shield_active')
+    .select('id, shield_count')
     .in('id', toReset)
 
-  const shieldedIds = new Set(
-    (shieldData ?? []).filter(p => p.shield_active).map(p => p.id as string),
-  )
-  const unshieldedIds = toReset.filter(id => !shieldedIds.has(id))
+  if (shieldError) {
+    return NextResponse.json({ error: shieldError.message }, { status: 500 })
+  }
+
+  const unshieldedIds: string[] = []
+  const now = new Date().toISOString()
+  const shieldUpdates: { id: string; shield_count: number; shield_used_at: string }[] = []
+
+  for (const p of shieldData ?? []) {
+    if ((p.shield_count as number ?? 0) > 0) {
+      shieldUpdates.push({
+        id: p.id as string,
+        shield_count: (p.shield_count as number) - 1,
+        shield_used_at: now,
+      })
+    } else {
+      unshieldedIds.push(p.id as string)
+    }
+  }
 
   const [resetResult, shieldResult] = await Promise.all([
     unshieldedIds.length > 0
       ? supabase.from('profiles').update({ current_streak: 0 }).in('id', unshieldedIds)
       : Promise.resolve({ error: null }),
-    shieldedIds.size > 0
-      ? supabase.from('profiles').update({ shield_active: false }).in('id', [...shieldedIds])
+    shieldUpdates.length > 0
+      ? supabase.from('profiles').upsert(shieldUpdates)
       : Promise.resolve({ error: null }),
   ])
 
@@ -80,7 +95,7 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({
     reset: unshieldedIds.length,
-    shielded: shieldedIds.size,
+    shielded: shieldUpdates.length,
     users: toReset,
   })
 }

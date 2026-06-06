@@ -1,125 +1,124 @@
 'use client'
 
-import { useState, useTransition } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
-import { Shield, ShieldCheck } from 'lucide-react'
-import { activateShieldAction } from '@/app/actions/activateShield'
+import { Shield } from 'lucide-react'
 
 const MAX_SHIELDS = 3
+const STROKE_WIDTH = 2
+
+const SIZES = {
+  sm: { ring: 48, shieldIcon: 22, inventoryIcon: 24, gap: 12 },
+  lg: { ring: 72, shieldIcon: 32, inventoryIcon: 30, gap: 16 },
+} as const
 
 export function ShieldIndicator({
   shieldCount,
-  shieldActive,
+  streakProgress,
+  size = 'sm',
 }: {
   shieldCount: number
-  shieldActive: boolean
+  streakProgress: number  // current_streak % 7, range 0–6
+  size?: 'sm' | 'lg'
 }) {
-  const [localCount, setLocalCount] = useState(shieldCount)
-  const [localActive, setLocalActive] = useState(shieldActive)
-  const [consumingIndex, setConsumingIndex] = useState<number | null>(null)
-  const [isPending, startTransition] = useTransition()
   const prefersReduced = useReducedMotion()
+  const s = SIZES[size]
 
-  function handleActivate() {
-    if (localCount <= 0 || localActive || isPending || consumingIndex !== null) return
+  const isMax = shieldCount >= MAX_SHIELDS
+  const progress = isMax ? 1 : streakProgress / 7
+  const center = s.ring / 2
+  const radius = center - STROKE_WIDTH - 1
+  const circumference = 2 * Math.PI * radius
+  const ringOffset = circumference * (1 - progress)
 
-    const idx = localCount - 1
-    setConsumingIndex(idx)
-
-    startTransition(async () => {
-      const result = await activateShieldAction()
-      setTimeout(() => {
-        setConsumingIndex(null)
-        if (result.success) {
-          setLocalCount(c => c - 1)
-          setLocalActive(true)
-        }
-      }, 300)
-    })
-  }
+  const ringStroke = isMax ? 'var(--color-fisico)' : 'var(--color-text-primary)'
+  const shieldColor = isMax ? 'var(--color-fisico)' : 'var(--color-text-secondary)'
 
   return (
-    <div className="flex items-center gap-2.5 flex-wrap">
-      <div className="flex items-center gap-1.5" aria-label={`Escudos: ${localCount} disponibles${localActive ? ', escudo activo' : ''}`}>
-        {Array.from({ length: MAX_SHIELDS }, (_, i) => {
-          // First slot shows the deployed shield when active
-          if (i === 0 && localActive) {
-            return (
-              <motion.div
-                key={i}
-                animate={prefersReduced ? undefined : { scale: [1, 1.08, 1] }}
-                transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-              >
-                <ShieldCheck
-                  size={18}
-                  strokeWidth={1.75}
-                  style={{ color: 'var(--color-fisico)' }}
-                  aria-hidden
-                />
-              </motion.div>
-            )
-          }
+    <div className="flex items-center" style={{ gap: s.gap }}>
 
-          // Inventory index: when active, slot 0 is taken by ShieldCheck so inventory starts at slot 1
-          const inventoryIndex = localActive ? i - 1 : i
-          const isFilled = inventoryIndex < localCount
-          const isConsuming = i === consumingIndex
-
-          if (isConsuming) {
-            return (
-              <motion.div
-                key={i}
-                initial={{ scale: 1, opacity: 1 }}
-                animate={{ scale: 0, opacity: 0 }}
-                transition={{ duration: 0.3, ease: 'easeIn' }}
-              >
-                <Shield
-                  size={18}
-                  strokeWidth={1.75}
-                  style={{ color: 'var(--color-text-primary)' }}
-                  aria-hidden
-                />
-              </motion.div>
-            )
-          }
-
-          return (
-            <Shield
-              key={i}
-              size={18}
-              strokeWidth={1.75}
-              style={{
-                color: 'var(--color-text-primary)',
-                opacity: isFilled ? 1 : 0.2,
-              }}
-              aria-hidden
+      {/* Charging shield with SVG progress ring */}
+      <div className="flex flex-col items-center gap-1">
+        <div
+          className="relative flex items-center justify-center flex-shrink-0"
+          style={{ width: s.ring, height: s.ring }}
+        >
+          <svg
+            viewBox={`0 0 ${s.ring} ${s.ring}`}
+            width={s.ring}
+            height={s.ring}
+            className="absolute inset-0"
+            style={{ transform: 'rotate(-90deg)' }}
+            aria-hidden
+          >
+            {/* Background ring */}
+            <circle
+              cx={center}
+              cy={center}
+              r={radius}
+              fill="none"
+              stroke="var(--color-border)"
+              strokeWidth={STROKE_WIDTH}
             />
-          )
-        })}
+            {/* Progress ring */}
+            <motion.circle
+              cx={center}
+              cy={center}
+              r={radius}
+              fill="none"
+              stroke={ringStroke}
+              strokeWidth={STROKE_WIDTH}
+              strokeLinecap="round"
+              strokeDasharray={circumference}
+              initial={{ strokeDashoffset: circumference }}
+              animate={{ strokeDashoffset: ringOffset }}
+              transition={
+                prefersReduced
+                  ? { duration: 0 }
+                  : { duration: 0.7, ease: 'easeOut', delay: 0.1 }
+              }
+            />
+          </svg>
+
+          <Shield
+            size={s.shieldIcon}
+            strokeWidth={1.75}
+            style={{ color: shieldColor }}
+            aria-hidden
+          />
+        </div>
+
+        <span
+          className="tabular-nums leading-none text-center"
+          style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}
+          aria-label={
+            isMax
+              ? 'Escudos al máximo'
+              : `${streakProgress} de 7 días para el siguiente escudo`
+          }
+        >
+          {isMax ? 'Máx' : `${streakProgress}/7`}
+        </span>
       </div>
 
-      {localCount > 0 && !localActive && (
-        <button
-          type="button"
-          onClick={handleActivate}
-          disabled={isPending || consumingIndex !== null}
-          className="text-xs font-medium text-text-secondary hover:text-text-primary border border-border/60 hover:border-border px-2.5 py-1 rounded-component transition-all duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Activar escudo
-        </button>
-      )}
+      {/* Inventory */}
+      <div
+        className="flex items-center gap-1.5"
+        aria-label={`${shieldCount} ${shieldCount === 1 ? 'escudo disponible' : 'escudos disponibles'}`}
+      >
+        {Array.from({ length: MAX_SHIELDS }, (_, i) => (
+          <Shield
+            key={i}
+            size={s.inventoryIcon}
+            strokeWidth={1.5}
+            style={{
+              color: 'var(--color-text-primary)',
+              opacity: i < shieldCount ? 1 : 0.2,
+            }}
+            aria-hidden
+          />
+        ))}
+      </div>
 
-      {localActive && (
-        <span className="text-xs font-semibold" style={{ color: 'var(--color-fisico)' }}>
-          Escudo activo
-        </span>
-      )}
-
-      {localCount === 0 && !localActive && (
-        <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
-          Completa 7 días seguidos para ganar un escudo
-        </p>
-      )}
     </div>
   )
 }

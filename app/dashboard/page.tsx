@@ -50,7 +50,7 @@ export default async function DashboardPage() {
     longest_streak: 0,
     total_days_active: 0,
     shield_count: 0,
-    shield_active: false,
+    shield_used_at: null,
     created_at: new Date().toISOString(),
   }
 
@@ -169,13 +169,15 @@ export default async function DashboardPage() {
                         </span>
                       </div>
                     </div>
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <p className="font-semibold text-text-primary truncate">{profile.username}</p>
                       <p className="text-xs text-text-muted mt-0.5">Nivel {profile.global_level} · Jugador</p>
                     </div>
-                  </div>
-                  <div className="flex justify-end">
-                    <ShieldIndicator shieldCount={profile.shield_count} shieldActive={profile.shield_active} />
+                    <ShieldIndicator
+                      shieldCount={profile.shield_count}
+                      streakProgress={profile.current_streak % 7}
+                      size="sm"
+                    />
                   </div>
                   <XpBar current={profile.current_xp} total={profile.xp_to_next_level} />
                 </div>

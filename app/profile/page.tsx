@@ -68,11 +68,13 @@ function ProfileHeader({ profile, completedCount }: { profile: Profile; complete
 
   return (
     <section
-      className="bg-surface rounded-card p-6 border border-border/60 flex flex-col gap-5"
+      className="bg-surface rounded-card p-6 border border-border/60"
       aria-label="Perfil del jugador"
     >
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5 md:gap-6">
-        <div className="flex flex-col md:flex-row items-center md:items-center gap-4 md:gap-6 min-w-0 text-center md:text-left">
+      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-5 md:gap-6">
+
+        {/* Left: avatar + shield + name */}
+        <div className="flex items-start gap-4 md:gap-5 min-w-0">
           {/* Avatar */}
           <div
             className="w-20 h-20 rounded-full flex items-center justify-center flex-shrink-0 text-accent font-bold text-2xl select-none border-2 border-accent/35"
@@ -82,8 +84,18 @@ function ProfileHeader({ profile, completedCount }: { profile: Profile; complete
             {initials}
           </div>
 
-          <div className="flex flex-col gap-1.5 min-w-0 items-center md:items-start">
-            <div className="flex items-center gap-3 flex-wrap justify-center md:justify-start">
+          {/* Shield indicator — same height as avatar */}
+          <div className="flex-shrink-0 flex items-start pt-1">
+            <ShieldIndicator
+              shieldCount={profile.shield_count}
+              streakProgress={profile.current_streak % 7}
+              size="lg"
+            />
+          </div>
+
+          {/* Name + details */}
+          <div className="flex flex-col gap-1.5 min-w-0 pt-1">
+            <div className="flex items-center gap-3 flex-wrap">
               <h2 className="text-xl font-semibold text-text-primary tracking-tight">
                 {profile.username}
               </h2>
@@ -96,13 +108,11 @@ function ProfileHeader({ profile, completedCount }: { profile: Profile; complete
           </div>
         </div>
 
-        <div className="w-full md:w-auto md:flex-shrink-0 flex justify-center md:justify-end">
-          <ShareButton className="w-full md:w-auto" />
+        {/* Right: ShareButton */}
+        <div className="flex-shrink-0">
+          <ShareButton />
         </div>
-      </div>
 
-      <div className="border-t border-border/40 pt-4">
-        <ShieldIndicator shieldCount={profile.shield_count} shieldActive={profile.shield_active} />
       </div>
     </section>
   )
@@ -396,7 +406,7 @@ export default async function ProfilePage() {
     username: user.email?.split('@')[0] ?? 'jugador',
     global_level: 1, current_xp: 0, xp_to_next_level: 100,
     current_streak: 0, longest_streak: 0, total_days_active: 0,
-    shield_count: 0, shield_active: false,
+    shield_count: 0, shield_used_at: null,
     created_at: new Date().toISOString(),
   }
 
