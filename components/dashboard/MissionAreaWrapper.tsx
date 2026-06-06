@@ -14,7 +14,7 @@ export function MissionAreaWrapper({ missions }: { missions: Mission[] }) {
   const [levelUpData, setLevelUpData] = useState<{ level: number } | null>(null)
   const [showShieldToast, setShowShieldToast] = useState(false)
   const [recapData, setRecapData] = useState<DaySummary | null>(null)
-  const prevTsRef = useRef<number | null>(null)
+  const prevTsRef = useRef<number>(-1)
 
   const handleRecapClose = useCallback(() => setRecapData(null), [])
 
