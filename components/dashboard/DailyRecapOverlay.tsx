@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 'motion/react'
 import Link from 'next/link'
@@ -12,11 +12,6 @@ import type { LifeClass } from '@/types/supabase'
 interface Props {
   daySummary: DaySummary
   onClose: () => void
-}
-
-function getTodayKey(): string {
-  const d = new Date()
-  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`
 }
 
 function XpCounter({ value }: { value: number }) {
@@ -41,17 +36,7 @@ function XpCounter({ value }: { value: number }) {
 }
 
 export function DailyRecapOverlay({ daySummary, onClose }: Props) {
-  const [mounted, setMounted] = useState(false)
   const shouldReduceMotion = useReducedMotion()
-
-  useEffect(() => {
-    const key = `recap-shown-${getTodayKey()}`
-    if (sessionStorage.getItem(key)) { onClose(); return }
-    sessionStorage.setItem(key, '1')
-    setMounted(true)
-  }, [onClose])
-
-  if (!mounted) return null
 
   const classEntries = (['fisico', 'mental', 'disciplina'] as LifeClass[]).filter(
     lc => (daySummary.classPoints[lc] ?? 0) > 0,

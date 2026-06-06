@@ -9,6 +9,11 @@ import { DailyRecapOverlay } from '@/components/dashboard/DailyRecapOverlay'
 import { ShieldToast } from '@/components/ui/ShieldToast'
 import { completeMission, type MissionActionResult } from '@/app/dashboard/actions'
 
+function getTodayKey(): string {
+  const d = new Date()
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`
+}
+
 export function MissionAreaWrapper({ missions }: { missions: Mission[] }) {
   const [result, formAction] = useActionState<MissionActionResult, FormData>(completeMission, null)
   const [levelUpData, setLevelUpData] = useState<{ level: number } | null>(null)
@@ -40,12 +45,14 @@ export function MissionAreaWrapper({ missions }: { missions: Mission[] }) {
     }
 
     if (result.allMissionsCompleted && result.daySummary) {
-      if (result.levelUp) {
-        // Level-up overlay comes first — queue the recap for after it closes
-        pendingRecapRef.current = result.daySummary
-      } else {
-        // No level-up: show recap synchronously, same pattern as setLevelUpData
-        setRecapData(result.daySummary)
+      const key = `recap-shown-${getTodayKey()}`
+      if (!sessionStorage.getItem(key)) {
+        sessionStorage.setItem(key, '1')
+        if (result.levelUp) {
+          pendingRecapRef.current = result.daySummary
+        } else {
+          setRecapData(result.daySummary)
+        }
       }
     }
   }, [result])
