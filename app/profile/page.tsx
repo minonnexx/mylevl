@@ -10,7 +10,7 @@ import { AnimatedBar } from '@/components/ui/AnimatedBar'
 import { ShieldIndicator } from '@/components/ui/ShieldIndicator'
 import { EmptyState } from '@/components/ui/EmptyState'
 import Link from 'next/link'
-import { Trophy, Calendar, ArrowRight } from 'lucide-react'
+import { Trophy, Calendar, CalendarCheck, ArrowRight } from 'lucide-react'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function getInitials(username: string): string {
@@ -251,15 +251,16 @@ function StatsGrid({ profile, completedCount, totalXp }: {
         ))}
       </div>
 
-      <div className="flex justify-end pt-1">
-        <Link
-          href="/recap"
-          className="flex items-center gap-1.5 text-xs text-text-muted hover:text-text-secondary transition-colors"
-        >
-          Ver recap de hoy
-          <ArrowRight size={12} strokeWidth={2} aria-hidden />
-        </Link>
-      </div>
+      <Link
+        href="/recap"
+        className="flex items-center justify-between p-4 bg-surface border border-border/60 rounded-component hover:border-border transition-colors mt-3"
+      >
+        <div className="flex items-center gap-3">
+          <CalendarCheck size={18} className="text-text-muted flex-shrink-0" aria-hidden />
+          <span className="text-sm font-medium text-text-primary">Ver recap de hoy</span>
+        </div>
+        <ArrowRight size={16} className="text-text-muted flex-shrink-0" aria-hidden />
+      </Link>
     </section>
   )
 }

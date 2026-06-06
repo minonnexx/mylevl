@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useEffect, useRef, useState } from 'react'
+import { useActionState, useCallback, useEffect, useRef, useState } from 'react'
 import type { Mission, MissionDifficulty, MissionType } from '@/types/supabase'
 import { CLASS_META } from '@/lib/constants/classes'
 import { completeMissionAction, type MissionActionResult, type DaySummary } from '@/app/missions/actions'
@@ -357,14 +357,18 @@ export default function MissionsClient({
   const [showShieldToast, setShowShieldToast] = useState(false)
   const [recapData, setRecapData] = useState<DaySummary | null>(null)
 
-  function handleShieldGranted() {
+  const handleShieldGranted = useCallback(() => {
     setShowShieldToast(true)
     setTimeout(() => setShowShieldToast(false), 4000)
-  }
+  }, [])
 
-  function handleAllCompleted(summary: DaySummary) {
+  const handleAllCompleted = useCallback((summary: DaySummary) => {
     setRecapData(summary)
-  }
+  }, [])
+
+  const handleRecapClose = useCallback(() => {
+    setRecapData(null)
+  }, [])
 
   const completedSet = new Set(completedTodayIds)
 
@@ -397,7 +401,7 @@ export default function MissionsClient({
         classPointsToday={recapData.classPointsToday}
         currentStreak={recapData.currentStreak}
         shieldCount={recapData.shieldCount}
-        onClose={() => setRecapData(null)}
+        onClose={handleRecapClose}
       />
     )}
     <div className="flex flex-col gap-8">
