@@ -42,9 +42,14 @@ export default async function DashboardPage() {
     supabase.from('completed_missions').select('mission_id').eq('user_id', user.id).gte('completed_at', todayUTC.toISOString()),
   ])
 
+  if (profileRes.data && !profileRes.data.onboarding_completed && !profileRes.data.username) {
+    redirect('/onboarding')
+  }
+
   const profile: Profile = (profileRes.data as Profile | null) ?? {
     id: user.id,
     username: user.email?.split('@')[0] ?? 'jugador',
+    onboarding_completed: false,
     global_level: 1,
     current_xp: 0,
     xp_to_next_level: 100,
@@ -87,7 +92,7 @@ export default async function DashboardPage() {
             <span className="font-semibold text-text-primary tracking-tight">mylevl</span>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs text-text-muted">{profile.username}</span>
+            <span className="text-xs text-text-muted">{profile.username ?? 'jugador'}</span>
             <span className="text-xs font-bold text-accent bg-accent/12 border border-accent/20 px-3 py-1 rounded-pill tabular-nums">
               LVL {profile.global_level}
             </span>
@@ -101,7 +106,7 @@ export default async function DashboardPage() {
             {/* Page title — standardized: text-2xl font-semibold, Spanish */}
             <div className="mb-6">
               <h1 className="text-2xl font-semibold text-text-primary">Inicio</h1>
-              <p className="text-sm text-text-muted mt-0.5">Bienvenido de vuelta, {profile.username}</p>
+              <p className="text-sm text-text-muted mt-0.5">Bienvenido de vuelta, {profile.username ?? 'jugador'}</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-[1fr_360px] gap-6 items-start">
@@ -176,12 +181,12 @@ export default async function DashboardPage() {
                     >
                       <div className="w-12 h-12 rounded-full bg-surface flex items-center justify-center">
                         <span className="text-accent font-bold text-sm leading-none select-none">
-                          {profile.username.slice(0, 2).toUpperCase()}
+                          {(profile.username ?? 'JU').slice(0, 2).toUpperCase()}
                         </span>
                       </div>
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-text-primary truncate">{profile.username}</p>
+                      <p className="font-semibold text-text-primary truncate">{profile.username ?? 'Jugador'}</p>
                       <p className="text-xs text-text-muted mt-0.5">Nivel {profile.global_level} · Jugador</p>
                     </div>
                     <ShieldIndicator

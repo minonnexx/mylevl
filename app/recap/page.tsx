@@ -146,7 +146,7 @@ export default async function RecapPage() {
             href="/profile"
             className="text-xs text-text-muted hover:text-text-secondary transition-colors"
           >
-            {profile.username}
+            {profile.username ?? 'Jugador'}
           </Link>
         </header>
 

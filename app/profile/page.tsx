@@ -14,8 +14,8 @@ import Link from 'next/link'
 import { Trophy, Calendar, CalendarCheck, ArrowRight } from 'lucide-react'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-function getInitials(username: string): string {
-  return username.slice(0, 2).toUpperCase()
+function getInitials(username: string | null): string {
+  return (username ?? 'JU').slice(0, 2).toUpperCase()
 }
 
 function formatJoinDate(dateStr: string): string {
@@ -79,7 +79,7 @@ function ProfileHeader({ profile }: { profile: Profile }) {
         <div
           className="w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0 text-accent font-bold text-xl select-none border-2 border-accent/35"
           style={{ background: 'linear-gradient(135deg, var(--color-accent-glow) 0%, transparent 100%)' }}
-          aria-label={`Avatar de ${profile.username}`}
+          aria-label={`Avatar de ${profile.username ?? 'jugador'}`}
         >
           {initials}
         </div>
@@ -87,7 +87,7 @@ function ProfileHeader({ profile }: { profile: Profile }) {
         {/* Name + secondary line */}
         <div className="flex flex-col gap-1 flex-1 min-w-0">
           <h2 className="text-xl font-semibold text-text-primary tracking-tight truncate">
-            {profile.username}
+            {profile.username ?? 'Jugador'}
           </h2>
           <p className="text-[13px] text-text-secondary">
             LVL {profile.global_level} · {streak} {streak === 1 ? 'día' : 'días'} racha
@@ -425,6 +425,7 @@ export default async function ProfilePage() {
   const profile: Profile = (profileRes.data as Profile | null) ?? {
     id: user.id,
     username: user.email?.split('@')[0] ?? 'jugador',
+    onboarding_completed: false,
     global_level: 1, current_xp: 0, xp_to_next_level: 100,
     current_streak: 0, longest_streak: 0, total_days_active: 0,
     shield_count: 0, shield_used_at: null,
@@ -466,7 +467,7 @@ export default async function ProfilePage() {
             <span className="font-semibold text-text-primary tracking-tight">mylevl</span>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs text-text-muted">{profile.username}</span>
+            <span className="text-xs text-text-muted">{profile.username ?? 'jugador'}</span>
             <span className="text-xs font-bold text-accent bg-accent/12 border border-accent/20 px-3 py-1 rounded-pill tabular-nums">
               LVL {profile.global_level}
             </span>
