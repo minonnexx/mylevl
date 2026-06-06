@@ -112,13 +112,14 @@ export function ShieldIndicator({
         </span>
       </div>
 
-      {/* Inventory */}
+      {/* Inventory — always 2 slots; ring counts as the third */}
       <div
         className="flex items-center gap-1.5"
         aria-label={`${shieldCount} ${shieldCount === 1 ? 'escudo disponible' : 'escudos disponibles'}`}
       >
-        {Array.from({ length: MAX_SHIELDS }, (_, i) =>
-          i < shieldCount ? (
+        {Array.from({ length: 2 }, (_, i) => {
+          const filledSlots = isCharged ? shieldCount - 1 : shieldCount
+          return i < filledSlots ? (
             <ShieldCheck
               key={i}
               size={s.inventoryIcon}
@@ -135,7 +136,7 @@ export function ShieldIndicator({
               aria-hidden
             />
           )
-        )}
+        })}
       </div>
 
     </div>
