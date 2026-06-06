@@ -65,58 +65,34 @@ function ClassBadge({ lifeClass }: { lifeClass: LifeClass }) {
 }
 
 // 1 ── Profile header
-function ProfileHeader({ profile, completedCount }: { profile: Profile; completedCount: number }) {
-  const initials   = getInitials(profile.username)
-  const joinDate   = formatJoinDate(profile.created_at)
-  const hoursLabel = formatHours(completedCount)
+function ProfileHeader({ profile }: { profile: Profile }) {
+  const initials = getInitials(profile.username)
+  const streak   = profile.current_streak
 
   return (
     <section
       className="bg-surface rounded-card p-6 border border-border/60"
       aria-label="Perfil del jugador"
     >
-      <div className="flex flex-col gap-4">
-
-        {/* Row 1: avatar + text + ShareButton */}
-        <div className="flex items-start gap-4 min-w-0">
-          {/* Avatar */}
-          <div
-            className="w-20 h-20 rounded-full flex items-center justify-center flex-shrink-0 text-accent font-bold text-2xl select-none border-2 border-accent/35"
-            style={{ background: 'linear-gradient(135deg, var(--color-accent-glow) 0%, transparent 100%)' }}
-            aria-label={`Avatar de ${profile.username}`}
-          >
-            {initials}
-          </div>
-
-          {/* Name + details */}
-          <div className="flex flex-col gap-1.5 flex-1 min-w-0 pt-1">
-            <div className="flex items-center gap-3 flex-wrap">
-              <h2 className="text-xl font-semibold text-text-primary tracking-tight">
-                {profile.username}
-              </h2>
-              <span className="text-xs font-bold text-accent bg-accent/12 border border-accent/20 px-3 py-1 rounded-pill tabular-nums flex-shrink-0">
-                LVL {profile.global_level}
-              </span>
-            </div>
-            <p className="text-sm text-text-muted">Miembro desde {joinDate}</p>
-            <p className="text-sm text-text-secondary font-medium">{hoursLabel}</p>
-          </div>
-
-          {/* ShareButton */}
-          <div className="flex-shrink-0">
-            <ShareButton />
-          </div>
+      <div className="flex items-center gap-4">
+        {/* Avatar */}
+        <div
+          className="w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0 text-accent font-bold text-xl select-none border-2 border-accent/35"
+          style={{ background: 'linear-gradient(135deg, var(--color-accent-glow) 0%, transparent 100%)' }}
+          aria-label={`Avatar de ${profile.username}`}
+        >
+          {initials}
         </div>
 
-        {/* Row 2: ShieldIndicator — full width, icons left-aligned */}
-        <div className="w-full">
-          <ShieldIndicator
-            shieldCount={profile.shield_count}
-            streakProgress={profile.current_streak % 7}
-            size="lg"
-          />
+        {/* Name + secondary line */}
+        <div className="flex flex-col gap-1 flex-1 min-w-0">
+          <h2 className="text-xl font-semibold text-text-primary tracking-tight truncate">
+            {profile.username}
+          </h2>
+          <p className="text-[13px] text-text-secondary">
+            LVL {profile.global_level} · {streak} {streak === 1 ? 'día' : 'días'} racha
+          </p>
         </div>
-
       </div>
     </section>
   )
@@ -199,6 +175,9 @@ function ClassProgressCard({ classProgress }: { classProgress: ClassProgress[] }
 function StatsGrid({ profile, completedCount, totalXp }: {
   profile: Profile; completedCount: number; totalXp: number
 }) {
+  const hours = completedCount * 0.5
+  const hoursValue = hours % 1 === 0 ? hours.toString() : hours.toFixed(1)
+
   const stats = [
     {
       label: 'XP total ganado', value: totalXp.toLocaleString(), sub: 'puntos de experiencia',
@@ -236,6 +215,25 @@ function StatsGrid({ profile, completedCount, totalXp }: {
           <line x1="16" y1="2" x2="16" y2="6" />
           <line x1="8" y1="2" x2="8" y2="6" />
           <line x1="3" y1="10" x2="21" y2="10" />
+        </svg>
+      ),
+    },
+    {
+      label: 'Horas en la vida real', value: hoursValue,
+      sub: Number(hoursValue) === 1 ? 'hora jugada' : 'horas jugadas',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <circle cx="12" cy="12" r="10" />
+          <polyline points="12 6 12 12 16 14" />
+        </svg>
+      ),
+    },
+    {
+      label: 'Miembro desde', value: formatJoinDate(profile.created_at), sub: 'fecha de registro',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+          <circle cx="12" cy="7" r="4" />
         </svg>
       ),
     },
@@ -485,11 +483,22 @@ export default async function ProfilePage() {
               <p className="text-sm text-text-muted mt-0.5">Tu progreso y estadísticas</p>
             </div>
 
-            <ProfileHeader profile={profile} completedCount={completedCount} />
+            <ProfileHeader profile={profile} />
+
+            <ShareButton className="w-full" />
 
             <div className="grid grid-cols-1 md:grid-cols-[1fr_380px] gap-6 items-start">
               <ClassProgressCard classProgress={classProgress} />
-              <StatsGrid profile={profile} completedCount={completedCount} totalXp={totalXp} />
+              <div className="flex flex-col gap-6">
+                <div className="p-4 bg-surface rounded-card border border-border/60">
+                  <ShieldIndicator
+                    shieldCount={profile.shield_count}
+                    streakProgress={profile.current_streak % 7}
+                    size="lg"
+                  />
+                </div>
+                <StatsGrid profile={profile} completedCount={completedCount} totalXp={totalXp} />
+              </div>
             </div>
 
             <RecentAchievements recent={recent} />
