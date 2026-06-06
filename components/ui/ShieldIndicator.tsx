@@ -117,18 +117,25 @@ export function ShieldIndicator({
         className="flex items-center gap-1.5"
         aria-label={`${shieldCount} ${shieldCount === 1 ? 'escudo disponible' : 'escudos disponibles'}`}
       >
-        {Array.from({ length: MAX_SHIELDS }, (_, i) => (
-          <Shield
-            key={i}
-            size={s.inventoryIcon}
-            strokeWidth={1.5}
-            style={{
-              color: 'var(--color-text-primary)',
-              opacity: i < shieldCount ? 1 : 0.2,
-            }}
-            aria-hidden
-          />
-        ))}
+        {Array.from({ length: MAX_SHIELDS }, (_, i) =>
+          i < shieldCount ? (
+            <ShieldCheck
+              key={i}
+              size={s.inventoryIcon}
+              strokeWidth={1.5}
+              style={{ color: 'var(--color-fisico)' }}
+              aria-hidden
+            />
+          ) : (
+            <Shield
+              key={i}
+              size={s.inventoryIcon}
+              strokeWidth={1.5}
+              style={{ color: 'var(--color-text-secondary)', opacity: 0.2 }}
+              aria-hidden
+            />
+          )
+        )}
       </div>
 
     </div>
