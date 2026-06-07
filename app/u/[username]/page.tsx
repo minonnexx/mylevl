@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Flame, Pencil, Lock } from 'lucide-react'
 import Sidebar from '@/components/dashboard/Sidebar'
@@ -17,14 +17,10 @@ export default async function PublicProfilePage({
   const { username } = await params
   const supabase = await createClient()
 
-  // Auth optional — check if viewer is the owner
-  let user = null
-  try {
-    const { data } = await supabase.auth.getUser()
-    user = data.user
-  } catch {
-    user = null
-  }
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) redirect('/')
+
+  const user = session.user
 
   const { data: profile } = await supabase
     .from('profiles')
