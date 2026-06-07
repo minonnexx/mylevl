@@ -106,14 +106,27 @@ export default function ProfileLoading() {
               {/* Right column */}
               <div className="flex flex-col gap-6">
 
-                {/* ShieldIndicator card — ring + two text stubs */}
-                <div className="p-4 bg-surface rounded-card border border-border/60">
+                {/* ShieldIndicator card — ring + two text stubs / separator / recap button */}
+                <div className="p-4 bg-surface rounded-card border border-border/60 flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <Skeleton className="w-[72px] h-[72px] rounded-full flex-shrink-0" />
                     <div className="flex flex-col gap-1.5">
                       <Skeleton className="h-3.5 w-20" />
                       <Skeleton className="h-3 w-28" />
                     </div>
+                  </div>
+                  <div
+                    style={{
+                      width: 1,
+                      alignSelf: 'stretch',
+                      backgroundColor: 'color-mix(in srgb, var(--color-text-muted) 20%, transparent)',
+                      margin: '0 8px',
+                    }}
+                    aria-hidden
+                  />
+                  <div className="flex flex-col items-center gap-1.5 px-4">
+                    <Skeleton className="w-[18px] h-[18px]" />
+                    <Skeleton className="h-3 w-10" />
                   </div>
                 </div>
 
@@ -136,8 +149,6 @@ export default function ProfileLoading() {
                       </div>
                     ))}
                   </div>
-                  {/* Ver recap link */}
-                  <Skeleton className="h-12 w-full rounded-component mt-3" />
                 </section>
 
               </div>

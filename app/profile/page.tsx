@@ -12,7 +12,7 @@ import { AnimatedBar } from '@/components/ui/AnimatedBar'
 import { ShieldIndicator } from '@/components/ui/ShieldIndicator'
 import { EmptyState } from '@/components/ui/EmptyState'
 import Link from 'next/link'
-import { Trophy, Calendar, BarChart2, ArrowRight } from 'lucide-react'
+import { Trophy, Calendar, BarChart2 } from 'lucide-react'
 import { LogoutButton } from '@/components/profile/LogoutButton'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -260,16 +260,6 @@ function StatsGrid({ profile, completedCount, totalXp }: {
         ))}
       </div>
 
-      <Link
-        href="/recap"
-        className="flex items-center justify-between p-4 bg-surface border border-border/60 rounded-component hover:border-border transition-colors mt-3"
-      >
-        <div className="flex items-center gap-3">
-          <BarChart2 size={18} className="text-text-muted flex-shrink-0" aria-hidden />
-          <span className="text-sm font-medium text-text-primary">Recap</span>
-        </div>
-        <ArrowRight size={16} className="text-text-muted flex-shrink-0" aria-hidden />
-      </Link>
     </section>
   )
 }
@@ -505,12 +495,29 @@ export default async function ProfilePage() {
             <div className="grid grid-cols-1 md:grid-cols-[1fr_380px] gap-6 items-start">
               <ClassProgressCard classProgress={classProgress} />
               <div className="flex flex-col gap-6">
-                <div className="p-4 bg-surface rounded-card border border-border/60">
+                <div className="p-4 bg-surface rounded-card border border-border/60 flex items-center justify-between">
                   <ShieldIndicator
                     shieldCount={profile.shield_count}
                     streakProgress={profile.current_streak % 7}
                     size="lg"
                   />
+                  <div
+                    style={{
+                      width: 1,
+                      alignSelf: 'stretch',
+                      backgroundColor: 'color-mix(in srgb, var(--color-text-muted) 20%, transparent)',
+                      margin: '0 8px',
+                    }}
+                    aria-hidden
+                  />
+                  <Link
+                    href="/recap"
+                    className="flex flex-col items-center gap-1.5 px-4 py-2 rounded-component transition-colors hover:text-text-primary"
+                    style={{ color: 'var(--color-text-muted)' }}
+                  >
+                    <BarChart2 size={18} aria-hidden />
+                    <span className="text-xs font-medium">Recap</span>
+                  </Link>
                 </div>
                 <StatsGrid profile={profile} completedCount={completedCount} totalXp={totalXp} />
               </div>
