@@ -52,13 +52,22 @@ export default function ProfileLoading() {
               <Skeleton className="h-4 w-48" />
             </div>
 
-            {/* Profile header card — avatar + two text lines only */}
+            {/* Profile header card — avatar + text + shield indicator */}
             <section className="bg-surface rounded-card p-6 border border-border/60">
               <div className="flex items-center gap-4">
                 <Skeleton className="w-16 h-16 rounded-full flex-shrink-0" />
                 <div className="flex flex-col gap-1.5 flex-1 min-w-0">
                   <Skeleton className="h-6 w-36" />
                   <Skeleton className="h-4 w-44" />
+                </div>
+              </div>
+              <div className="border-t border-border/40 mt-5 pt-5">
+                <div className="flex items-center gap-4">
+                  <Skeleton className="w-[72px] h-[72px] rounded-full flex-shrink-0" />
+                  <div className="flex flex-col gap-1.5">
+                    <Skeleton className="h-3.5 w-20" />
+                    <Skeleton className="h-3 w-28" />
+                  </div>
                 </div>
               </div>
             </section>
@@ -106,30 +115,14 @@ export default function ProfileLoading() {
               {/* Right column */}
               <div className="flex flex-col gap-6">
 
-                {/* ShieldIndicator card — vertical shields / separator / recap button */}
-                <div className="p-4 bg-surface rounded-card border border-border/60 flex items-center">
-                  {/* Left: ring + inventory row */}
-                  <div className="flex flex-1 flex-col items-center justify-center gap-2">
-                    <Skeleton className="w-12 h-12 rounded-full" />
-                    <div className="flex items-center gap-1.5">
-                      <Skeleton className="w-5 h-5 rounded-full" />
-                      <Skeleton className="w-5 h-5 rounded-full" />
-                      <Skeleton className="w-5 h-5 rounded-full" />
-                    </div>
+                {/* Recap card */}
+                <div className="flex items-center gap-4 p-6 bg-surface rounded-card border border-border/60">
+                  <Skeleton className="w-8 h-8 flex-shrink-0" />
+                  <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+                    <Skeleton className="h-5 w-24" />
+                    <Skeleton className="h-3.5 w-48" />
                   </div>
-                  <div
-                    style={{
-                      width: 1,
-                      alignSelf: 'stretch',
-                      backgroundColor: 'color-mix(in srgb, var(--color-text-muted) 20%, transparent)',
-                    }}
-                    aria-hidden
-                  />
-                  {/* Right: recap icon + label */}
-                  <div className="flex flex-1 flex-col items-center justify-center gap-1.5">
-                    <Skeleton className="w-6 h-6" />
-                    <Skeleton className="h-4 w-12" />
-                  </div>
+                  <Skeleton className="w-4 h-4 flex-shrink-0" />
                 </div>
 
                 {/* StatsGrid — 2×3 = 6 stats */}

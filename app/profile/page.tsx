@@ -12,7 +12,7 @@ import { AnimatedBar } from '@/components/ui/AnimatedBar'
 import { ShieldIndicator } from '@/components/ui/ShieldIndicator'
 import { EmptyState } from '@/components/ui/EmptyState'
 import Link from 'next/link'
-import { Trophy, Calendar, BarChart2 } from 'lucide-react'
+import { Trophy, Calendar, BarChart2, ChevronRight } from 'lucide-react'
 import { LogoutButton } from '@/components/profile/LogoutButton'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -95,6 +95,14 @@ function ProfileHeader({ profile }: { profile: Profile }) {
             LVL {profile.global_level} · {streak} {streak === 1 ? 'día' : 'días'} racha
           </p>
         </div>
+      </div>
+
+      <div className="border-t border-border/40 mt-5 pt-5">
+        <ShieldIndicator
+          shieldCount={profile.shield_count}
+          streakProgress={profile.current_streak % 7}
+          size="lg"
+        />
       </div>
     </section>
   )
@@ -495,33 +503,20 @@ export default async function ProfilePage() {
             <div className="grid grid-cols-1 md:grid-cols-[1fr_380px] gap-6 items-start">
               <ClassProgressCard classProgress={classProgress} />
               <div className="flex flex-col gap-6">
-                <div className="p-4 bg-surface rounded-card border border-border/60 flex items-center">
-                  <div className="flex flex-1 items-center justify-center">
-                    <ShieldIndicator
-                      shieldCount={profile.shield_count}
-                      streakProgress={profile.current_streak % 7}
-                      vertical
-                    />
+                <Link
+                  href="/recap"
+                  className="flex items-center gap-4 p-6 border border-border/60 rounded-card hover:border-border transition-colors"
+                  style={{ background: 'var(--color-surface)' }}
+                >
+                  <BarChart2 size={32} style={{ color: 'var(--color-accent)', flexShrink: 0 }} aria-hidden />
+                  <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+                    <span className="text-base font-semibold text-text-primary">Tu recap</span>
+                    <span className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
+                      Revisa tu progreso diario, semanal y mensual
+                    </span>
                   </div>
-                  <div
-                    style={{
-                      width: 1,
-                      alignSelf: 'stretch',
-                      backgroundColor: 'color-mix(in srgb, var(--color-text-muted) 20%, transparent)',
-                    }}
-                    aria-hidden
-                  />
-                  <div className="flex flex-1 items-center justify-center">
-                    <Link
-                      href="/recap"
-                      className="flex flex-col items-center rounded-component transition-colors hover:text-text-primary"
-                      style={{ color: 'var(--color-text-muted)', gap: 6 }}
-                    >
-                      <BarChart2 size={24} aria-hidden />
-                      <span className="text-base font-medium">Recap</span>
-                    </Link>
-                  </div>
-                </div>
+                  <ChevronRight size={18} className="text-text-muted flex-shrink-0" aria-hidden />
+                </Link>
                 <StatsGrid profile={profile} completedCount={completedCount} totalXp={totalXp} />
               </div>
             </div>
