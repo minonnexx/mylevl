@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { Flame, Pencil } from 'lucide-react'
+import { Flame, Pencil, Lock } from 'lucide-react'
 import Sidebar from '@/components/dashboard/Sidebar'
 import BottomNav from '@/components/dashboard/BottomNav'
 import { CLASS_META, getClassMilestone } from '@/lib/constants/classes'
@@ -22,13 +22,14 @@ export default async function PublicProfilePage({
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, username, global_level, current_streak')
+    .select('id, username, global_level, current_streak, feed_public')
     .eq('username', username)
     .maybeSingle()
 
   if (!profile) notFound()
 
   const isOwner = user?.id === profile.id
+  const isPrivate = !(profile.feed_public as boolean) && !isOwner
 
   const { data: classProgressRows } = await supabase
     .from('class_progress')
@@ -67,6 +68,19 @@ export default async function PublicProfilePage({
         <main className="flex-1 py-6 px-4 md:py-8 md:px-8 pb-28 md:pb-8">
           <div className="max-w-[640px] mx-auto flex flex-col gap-6">
 
+            {isPrivate ? (
+              <div
+                className="rounded-card p-6 border border-border/60 flex flex-col items-center gap-3 text-center py-14"
+                style={{ background: 'var(--color-surface)' }}
+              >
+                <Lock size={32} strokeWidth={1.5} style={{ color: 'var(--color-text-muted)' }} aria-hidden />
+                <h1 className="text-xl font-semibold text-text-primary">Perfil privado</h1>
+                <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
+                  Este usuario ha decidido mantener su perfil privado
+                </p>
+              </div>
+            ) : (
+            <>
             {/* Page title */}
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -165,6 +179,9 @@ export default async function PublicProfilePage({
                 })}
               </div>
             </div>
+
+            </>
+            )}
 
           </div>
         </main>

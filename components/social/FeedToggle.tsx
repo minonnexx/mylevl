@@ -29,7 +29,7 @@ export function FeedToggle({ feedPublic }: { feedPublic: boolean }) {
             }
           </div>
           <div>
-            <p className="text-sm font-semibold text-text-primary">Feed público</p>
+            <p className="text-sm font-semibold text-text-primary">{isPublic ? 'Feed público' : 'Feed privado'}</p>
             <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
               {isPublic
                 ? 'Cualquier jugador puede ver tu actividad'
