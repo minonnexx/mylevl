@@ -14,6 +14,11 @@ import { AnimatedBar } from '@/components/ui/AnimatedBar'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Filter, ShieldCheck } from 'lucide-react'
 
+function getTodayKey(): string {
+  const d = new Date()
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`
+}
+
 const DIFF_META: Record<MissionDifficulty, { label: string; text: string; bg: string; border: string }> = {
   easy:   { label: 'Fácil',  text: 'text-fisico',     bg: 'bg-fisico/8',     border: 'border-fisico/20'     },
   medium: { label: 'Medio',  text: 'text-disciplina', bg: 'bg-disciplina/8', border: 'border-disciplina/20' },
@@ -119,9 +124,13 @@ function MissionCard({
     if (result.levelUp) setTimeout(() => setLevelUpData({ level: result.newLevel }), 800)
 
     if (result.allMissionsCompleted && result.daySummary) {
-      const summary = result.daySummary
-      const delay = result.levelUp ? 500 : 0
-      setTimeout(() => onAllCompleted?.(summary), delay)
+      const key = `recap-shown-${getTodayKey()}`
+      if (!sessionStorage.getItem(key)) {
+        sessionStorage.setItem(key, '1')
+        const summary = result.daySummary
+        const delay = result.levelUp ? 500 : 0
+        setTimeout(() => onAllCompleted?.(summary), delay)
+      }
     }
   }, [result, onAllCompleted])
 

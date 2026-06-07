@@ -63,13 +63,14 @@ export function MissionAreaWrapper({ missions }: { missions: Mission[] }) {
     // Overlays — independientes de los sonidos
     if (result.levelUp) setTimeout(() => setLevelUpData({ level: result.newLevel }), 800)
 
-    console.log('[dashboard recap]', result.allMissionsCompleted, result.daySummary)
-
     if (result.allMissionsCompleted && result.daySummary) {
-      setShowConfetti(true)
-      const summary = result.daySummary
-      const delay = result.levelUp ? 500 : 0
-      setTimeout(() => setRecapData(summary), delay)
+      const key = `recap-shown-${getTodayKey()}`
+      if (!sessionStorage.getItem(key)) {
+        sessionStorage.setItem(key, '1')
+        setShowConfetti(true)
+        const delay = result.levelUp ? 500 : 0
+        setTimeout(() => setRecapData(result.daySummary!), delay)
+      }
     }
   }, [result])
 
