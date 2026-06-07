@@ -2,8 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Users, UserMinus, Flame } from 'lucide-react'
-import Link from 'next/link'
+import { Users, UserMinus, Flame, User } from 'lucide-react'
 import { toast } from 'sonner'
 import { removeFriend } from '@/app/social/actions'
 
@@ -74,12 +73,9 @@ function FriendRow({ friend }: { friend: Friend }) {
       style={{ background: 'var(--color-background)' }}
     >
       <div className="flex-1 min-w-0">
-        <Link
-          href={`/u/${friend.username}`}
-          className="text-sm font-semibold text-text-primary hover:underline underline-offset-2 truncate block"
-        >
+        <p className="text-sm font-semibold text-text-primary truncate">
           {friend.username ?? 'jugador'}
-        </Link>
+        </p>
         <div className="flex items-center gap-3 mt-0.5">
           <span
             className="text-xs font-bold px-2 py-0.5 rounded-pill tabular-nums"
@@ -101,6 +97,16 @@ function FriendRow({ friend }: { friend: Friend }) {
       </div>
 
       <div className="flex items-center gap-1.5 flex-shrink-0">
+        {!confirmDelete && (
+          <button
+            onClick={() => router.push(`/u/${friend.username}`)}
+            aria-label={`Ver perfil de ${friend.username}`}
+            className="h-7 w-7 flex items-center justify-center rounded-component transition-colors"
+            style={{ color: 'var(--color-text-muted)' }}
+          >
+            <User size={14} aria-hidden />
+          </button>
+        )}
         {confirmDelete ? (
           <>
             <button

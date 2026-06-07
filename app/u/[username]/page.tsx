@@ -6,6 +6,8 @@ import Sidebar from '@/components/dashboard/Sidebar'
 import BottomNav from '@/components/dashboard/BottomNav'
 import { CLASS_META, getClassMilestone } from '@/lib/constants/classes'
 import type { LifeClass } from '@/types/supabase'
+import { FriendshipButton } from '@/components/social/FriendshipButton'
+import type { FriendshipState } from '@/components/social/FriendshipButton'
 
 const LIFE_CLASSES: LifeClass[] = ['fisico', 'mental', 'disciplina']
 
@@ -33,14 +35,42 @@ export default async function PublicProfilePage({
   const isOwner = user?.id === profile.id
   const isPrivate = !(profile.feed_public as boolean) && !isOwner
 
-  const { data: classProgressRows } = await supabase
-    .from('class_progress')
-    .select('life_class, points')
-    .eq('user_id', profile.id)
+  const [classProgressRes, friendshipRes] = await Promise.all([
+    supabase
+      .from('class_progress')
+      .select('life_class, points')
+      .eq('user_id', profile.id),
+    isOwner
+      ? Promise.resolve({ data: null })
+      : supabase
+          .from('friendships')
+          .select('id, requester_id, status')
+          .or(
+            `and(requester_id.eq.${user.id},addressee_id.eq.${profile.id}),` +
+            `and(requester_id.eq.${profile.id},addressee_id.eq.${user.id})`
+          )
+          .maybeSingle(),
+  ])
+
+  const { data: classProgressRows } = classProgressRes
 
   const pointsByClass = Object.fromEntries(
     (classProgressRows ?? []).map(r => [r.life_class as string, r.points as number])
   )
+
+  const friendship = friendshipRes.data as { id: string; requester_id: string; status: string } | null
+  let friendshipState: FriendshipState | null = null
+  if (!isOwner) {
+    if (!friendship) {
+      friendshipState = { type: 'none', profileId: profile.id }
+    } else if (friendship.status === 'accepted') {
+      friendshipState = { type: 'friends', friendshipId: friendship.id }
+    } else if (friendship.requester_id === user.id) {
+      friendshipState = { type: 'pending_sent', friendshipId: friendship.id }
+    } else {
+      friendshipState = { type: 'pending_received', friendshipId: friendship.id }
+    }
+  }
 
   return (
     <div className="flex min-h-screen" style={{ background: 'var(--color-background)' }}>
@@ -126,7 +156,7 @@ export default async function PublicProfilePage({
                 {(profile.username ?? 'JU').slice(0, 2).toUpperCase()}
               </div>
 
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2 flex-1 min-w-0">
                 {/* Level badge */}
                 <span
                   className="self-start text-xs font-bold px-3 py-1 rounded-pill tabular-nums"
@@ -150,6 +180,13 @@ export default async function PublicProfilePage({
                   </div>
                 )}
               </div>
+
+              {/* Friendship action */}
+              {friendshipState && (
+                <div className="flex-shrink-0 ml-auto">
+                  <FriendshipButton state={friendshipState} />
+                </div>
+              )}
             </div>
 
             {/* Class milestones */}

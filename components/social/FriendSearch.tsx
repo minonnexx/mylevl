@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Search, UserPlus, Flame } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Search, UserPlus, Flame, User } from 'lucide-react'
 import { toast } from 'sonner'
 import { searchUser, sendFriendRequest } from '@/app/social/actions'
 
@@ -13,6 +14,7 @@ type SearchResult = {
 }
 
 export function FriendSearch() {
+  const router = useRouter()
   const [query, setQuery] = useState('')
   const [result, setResult] = useState<SearchResult | null | undefined>(undefined)
   const [isSearching, startSearch] = useTransition()
@@ -117,20 +119,34 @@ export function FriendSearch() {
               )}
             </div>
           </div>
-          <button
-            onClick={() => handleAddFriend(result.id)}
-            disabled={isSending}
-            aria-label={`Enviar solicitud a ${result.username}`}
-            className="flex items-center gap-1.5 h-8 px-3 rounded-component text-xs font-medium transition-colors disabled:opacity-40"
-            style={{
-              background: 'color-mix(in srgb, var(--color-accent) 15%, transparent)',
-              color: 'var(--color-accent)',
-              border: '1px solid color-mix(in srgb, var(--color-accent) 25%, transparent)',
-            }}
-          >
-            <UserPlus size={13} aria-hidden />
-            {isSending ? 'Enviando...' : 'Añadir amigo'}
-          </button>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button
+              onClick={() => router.push(`/u/${result.username}`)}
+              aria-label={`Ver perfil de ${result.username}`}
+              className="flex items-center gap-1.5 h-8 px-3 rounded-component text-xs font-medium transition-colors"
+              style={{
+                color: 'var(--color-text-muted)',
+                border: '1px solid color-mix(in srgb, var(--color-text-muted) 20%, transparent)',
+              }}
+            >
+              <User size={13} aria-hidden />
+              Ver perfil
+            </button>
+            <button
+              onClick={() => handleAddFriend(result.id)}
+              disabled={isSending}
+              aria-label={`Enviar solicitud a ${result.username}`}
+              className="flex items-center gap-1.5 h-8 px-3 rounded-component text-xs font-medium transition-colors disabled:opacity-40"
+              style={{
+                background: 'color-mix(in srgb, var(--color-accent) 15%, transparent)',
+                color: 'var(--color-accent)',
+                border: '1px solid color-mix(in srgb, var(--color-accent) 25%, transparent)',
+              }}
+            >
+              <UserPlus size={13} aria-hidden />
+              {isSending ? 'Enviando...' : 'Añadir amigo'}
+            </button>
+          </div>
         </div>
       )}
     </div>
