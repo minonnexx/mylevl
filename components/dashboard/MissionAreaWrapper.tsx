@@ -44,16 +44,15 @@ export function MissionAreaWrapper({ missions }: { missions: Mission[] }) {
       return
     }
 
+    // Sonidos — siempre se ejecutan, independientes de los overlays
     playMissionComplete()
+    if (result.shieldGranted) playShieldGained()
+    if (result.levelUp) setTimeout(() => playLevelUp(), 300)
+    if (result.allMissionsCompleted) setTimeout(() => playDayComplete(), 400)
+
+    // Toasts
     toast('Misión completada', { description: `+${result.xpReward} XP`, duration: 2500 })
-
-    if (result.levelUp) {
-      playLevelUp()
-      setTimeout(() => setLevelUpData({ level: result.newLevel }), 800)
-    }
-
     if (result.shieldGranted) {
-      playShieldGained()
       toast('Escudo ganado', {
         description: 'Racha de 7 días completada',
         icon: <ShieldCheck size={16} />,
@@ -61,8 +60,10 @@ export function MissionAreaWrapper({ missions }: { missions: Mission[] }) {
       })
     }
 
+    // Overlays — independientes de los sonidos
+    if (result.levelUp) setTimeout(() => setLevelUpData({ level: result.newLevel }), 800)
+
     if (result.allMissionsCompleted && result.daySummary) {
-      playDayComplete()
       const key = `recap-shown-${getTodayKey()}`
       if (!sessionStorage.getItem(key)) {
         sessionStorage.setItem(key, '1')
