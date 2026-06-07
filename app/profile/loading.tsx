@@ -106,13 +106,15 @@ export default function ProfileLoading() {
               {/* Right column */}
               <div className="flex flex-col gap-6">
 
-                {/* ShieldIndicator card — ring + two text stubs / separator / recap button */}
-                <div className="p-4 bg-surface rounded-card border border-border/60 flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <Skeleton className="w-[72px] h-[72px] rounded-full flex-shrink-0" />
-                    <div className="flex flex-col gap-1.5">
-                      <Skeleton className="h-3.5 w-20" />
-                      <Skeleton className="h-3 w-28" />
+                {/* ShieldIndicator card — vertical shields / separator / recap button */}
+                <div className="p-4 bg-surface rounded-card border border-border/60 flex items-center">
+                  {/* Left: ring + inventory row */}
+                  <div className="flex flex-1 flex-col items-center justify-center gap-2">
+                    <Skeleton className="w-12 h-12 rounded-full" />
+                    <div className="flex items-center gap-1.5">
+                      <Skeleton className="w-5 h-5 rounded-full" />
+                      <Skeleton className="w-5 h-5 rounded-full" />
+                      <Skeleton className="w-5 h-5 rounded-full" />
                     </div>
                   </div>
                   <div
@@ -120,13 +122,13 @@ export default function ProfileLoading() {
                       width: 1,
                       alignSelf: 'stretch',
                       backgroundColor: 'color-mix(in srgb, var(--color-text-muted) 20%, transparent)',
-                      margin: '0 8px',
                     }}
                     aria-hidden
                   />
-                  <div className="flex flex-col items-center gap-1.5 px-4">
-                    <Skeleton className="w-[18px] h-[18px]" />
-                    <Skeleton className="h-3 w-10" />
+                  {/* Right: recap icon + label */}
+                  <div className="flex flex-1 flex-col items-center justify-center gap-1.5">
+                    <Skeleton className="w-6 h-6" />
+                    <Skeleton className="h-4 w-12" />
                   </div>
                 </div>
 

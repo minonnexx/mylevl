@@ -500,7 +500,7 @@ export default async function ProfilePage() {
                     <ShieldIndicator
                       shieldCount={profile.shield_count}
                       streakProgress={profile.current_streak % 7}
-                      size="lg"
+                      vertical
                     />
                   </div>
                   <div

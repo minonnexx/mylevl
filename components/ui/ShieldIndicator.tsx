@@ -15,13 +15,15 @@ export function ShieldIndicator({
   shieldCount,
   streakProgress,
   size = 'sm',
+  vertical = false,
 }: {
   shieldCount: number
   streakProgress: number  // current_streak % 7, range 0–6
   size?: 'sm' | 'lg'
+  vertical?: boolean
 }) {
   const prefersReduced = useReducedMotion()
-  const s = SIZES[size]
+  const s = vertical ? SIZES.sm : SIZES[size]
 
   const isMax = shieldCount >= MAX_SHIELDS
   const isCharged = streakProgress === 0 && shieldCount > 0
@@ -35,7 +37,10 @@ export function ShieldIndicator({
   const shieldColor = (isMax || isCharged) ? 'var(--color-fisico)' : 'var(--color-text-secondary)'
 
   return (
-    <div className="flex items-center" style={{ gap: s.gap }}>
+    <div
+      className={vertical ? 'flex flex-col items-center' : 'flex items-center'}
+      style={{ gap: vertical ? 8 : s.gap }}
+    >
 
       {/* Charging shield with SVG progress ring */}
       <div className="flex flex-col items-center gap-1">
@@ -113,7 +118,7 @@ export function ShieldIndicator({
       </div>
 
       {/* Inventory — always 2 slots; ring counts as the third */}
-      <div
+      {(!vertical || shieldCount > 0) && <div
         className="flex items-center gap-1.5"
         aria-label={`${shieldCount} ${shieldCount === 1 ? 'escudo disponible' : 'escudos disponibles'}`}
       >
@@ -137,7 +142,7 @@ export function ShieldIndicator({
             />
           )
         })}
-      </div>
+      </div>}
 
     </div>
   )
