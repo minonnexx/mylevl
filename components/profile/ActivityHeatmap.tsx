@@ -262,25 +262,27 @@ export function ActivityHeatmap({ data, createdAt }: Props) {
           </div>
         </div>
 
-        {/* Footer row 1: contador + leyenda */}
-        <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-          <span style={{ fontSize: 14, color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>
+        {/* Footer row 1: contador */}
+        <div style={{ marginTop: 10 }}>
+          <span style={{ fontSize: 14, color: 'var(--color-text-muted)' }}>
             {activeDays} {activeDays === 1 ? 'día activo' : 'días activos'} desde que empezaste
           </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
-            <span style={{ fontSize: 12, color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>Menos</span>
-            {([0, 1, 2, 3] as const).map(l => (
-              <div key={l} style={{ width: 10, height: 10, borderRadius: 2, flexShrink: 0, ...cellBg(l) }} />
-            ))}
-            <span style={{ fontSize: 12, color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>Más</span>
-          </div>
         </div>
 
-        {/* Footer row 2: mensaje motivacional para usuarios nuevos */}
+        {/* Footer row 2: leyenda */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 6 }}>
+          <span style={{ fontSize: 12, color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>Menos</span>
+          {([0, 1, 2, 3] as const).map(l => (
+            <div key={l} style={{ width: 10, height: 10, borderRadius: 2, flexShrink: 0, ...cellBg(l) }} />
+          ))}
+          <span style={{ fontSize: 12, color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>Más</span>
+        </div>
+
+        {/* Footer row 3: mensaje motivacional para usuarios nuevos */}
         {isNewUser && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8 }}>
             <TrendingUp size={14} style={{ color: 'var(--color-text-muted)', flexShrink: 0 }} aria-hidden />
-            <span style={{ fontSize: 14, color: 'var(--color-text-muted)' }}>
+            <span style={{ fontSize: 14, color: 'var(--color-text-muted)', maxWidth: '30ch' }}>
               Sigue completando misiones para ver tu historial crecer
             </span>
           </div>
