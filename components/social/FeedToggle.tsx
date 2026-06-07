@@ -44,7 +44,7 @@ export function FeedToggle({ feedPublic }: { feedPublic: boolean }) {
           role="switch"
           aria-checked={isPublic}
           aria-label="Activar o desactivar feed público"
-          className="relative flex-shrink-0 w-11 h-6 rounded-pill transition-all duration-200 disabled:opacity-50"
+          className="relative flex-shrink-0 w-11 h-6 rounded-pill overflow-hidden transition-all duration-200 disabled:opacity-50"
           style={{
             background: isPublic
               ? 'color-mix(in srgb, var(--color-accent) 80%, transparent)'
@@ -55,10 +55,10 @@ export function FeedToggle({ feedPublic }: { feedPublic: boolean }) {
           }}
         >
           <span
-            className="absolute top-0.5 w-5 h-5 rounded-full transition-transform duration-200"
+            className="absolute top-[3px] left-[3px] w-[18px] h-[18px] rounded-full transition-transform duration-200"
             style={{
               background: 'var(--color-text-primary)',
-              transform: isPublic ? 'translateX(20px)' : 'translateX(2px)',
+              transform: isPublic ? 'translateX(20px)' : 'translateX(0)',
             }}
           />
         </button>

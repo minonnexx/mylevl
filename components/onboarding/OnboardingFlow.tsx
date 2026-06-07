@@ -56,8 +56,9 @@ function UsernameStep() {
       setError('Solo letras, números y guiones bajos, sin espacios')
       return
     }
-    startTransition(() => {
-      completeOnboarding(trimmed)
+    startTransition(async () => {
+      const result = await completeOnboarding(trimmed)
+      if (result?.error) setError(result.error)
     })
   }
 
