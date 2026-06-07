@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Search, UserPlus, Flame, User } from 'lucide-react'
 import { toast } from 'sonner'
 import { searchUser, sendFriendRequest } from '@/app/social/actions'
+import { FriendSearchSkeleton } from '@/components/social/FriendSearchSkeleton'
 
 type SearchResult = {
   id: string
@@ -84,14 +85,18 @@ export function FriendSearch() {
         </button>
       </div>
 
-      {/* Result */}
-      {result === null && (
+      {/* Skeleton mientras busca */}
+      {isSearching && <FriendSearchSkeleton />}
+
+      {/* Sin resultado */}
+      {!isSearching && result === null && (
         <p className="mt-4 text-sm" style={{ color: 'var(--color-text-muted)' }}>
           Usuario no encontrado
         </p>
       )}
 
-      {result && (
+      {/* Resultado */}
+      {!isSearching && result && (
         <div
           className="mt-4 flex items-center gap-3 p-4 rounded-component border border-border/60"
           style={{ background: 'var(--color-background)' }}
@@ -130,7 +135,7 @@ export function FriendSearch() {
               }}
             >
               <User size={13} aria-hidden />
-              Ver perfil
+              <span className="hidden sm:inline">Ver perfil</span>
             </button>
             <button
               onClick={() => handleAddFriend(result.id)}
@@ -144,7 +149,9 @@ export function FriendSearch() {
               }}
             >
               <UserPlus size={13} aria-hidden />
-              {isSending ? 'Enviando...' : 'Añadir amigo'}
+              <span className="hidden sm:inline">
+                {isSending ? 'Enviando...' : 'Añadir amigo'}
+              </span>
             </button>
           </div>
         </div>

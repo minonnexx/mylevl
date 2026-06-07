@@ -38,7 +38,7 @@ export function FriendshipButton({ state }: { state: FriendshipState }) {
             }
           })
         }
-        className="flex items-center gap-1.5 h-9 px-4 rounded-component text-sm font-medium transition-colors disabled:opacity-40"
+        className="flex items-center gap-1.5 h-9 px-3 sm:px-4 rounded-component text-sm font-medium transition-colors disabled:opacity-40"
         style={{
           background: 'color-mix(in srgb, var(--color-accent) 12%, transparent)',
           color: 'var(--color-accent)',
@@ -46,7 +46,9 @@ export function FriendshipButton({ state }: { state: FriendshipState }) {
         }}
       >
         <UserPlus size={14} aria-hidden />
-        {isPending ? 'Enviando...' : 'Añadir amigo'}
+        <span className="hidden sm:inline">
+          {isPending ? 'Enviando...' : 'Añadir amigo'}
+        </span>
       </button>
     )
   }
@@ -55,14 +57,14 @@ export function FriendshipButton({ state }: { state: FriendshipState }) {
     return (
       <button
         disabled
-        className="flex items-center gap-1.5 h-9 px-4 rounded-component text-sm font-medium opacity-50 cursor-not-allowed"
+        className="flex items-center gap-1.5 h-9 px-3 sm:px-4 rounded-component text-sm font-medium opacity-50 cursor-not-allowed"
         style={{
           color: 'var(--color-text-muted)',
           border: '1px solid color-mix(in srgb, var(--color-text-muted) 20%, transparent)',
         }}
       >
         <Clock size={14} aria-hidden />
-        Solicitud enviada
+        <span className="hidden sm:inline">Solicitud enviada</span>
       </button>
     )
   }
@@ -83,7 +85,7 @@ export function FriendshipButton({ state }: { state: FriendshipState }) {
               }
             })
           }
-          className="flex items-center gap-1.5 h-9 px-4 rounded-component text-sm font-medium transition-colors disabled:opacity-40"
+          className="flex items-center gap-1.5 h-9 px-3 sm:px-4 rounded-component text-sm font-medium transition-colors disabled:opacity-40"
           style={{
             background: 'color-mix(in srgb, var(--color-fisico) 12%, transparent)',
             color: 'var(--color-fisico)',
@@ -91,7 +93,7 @@ export function FriendshipButton({ state }: { state: FriendshipState }) {
           }}
         >
           <UserCheck size={14} aria-hidden />
-          Aceptar
+          <span className="hidden sm:inline">Aceptar</span>
         </button>
         <button
           disabled={isPending}
@@ -106,14 +108,14 @@ export function FriendshipButton({ state }: { state: FriendshipState }) {
               }
             })
           }
-          className="flex items-center gap-1.5 h-9 px-4 rounded-component text-sm font-medium transition-colors disabled:opacity-40"
+          className="flex items-center gap-1.5 h-9 px-3 sm:px-4 rounded-component text-sm font-medium transition-colors disabled:opacity-40"
           style={{
             color: 'var(--color-text-muted)',
             border: '1px solid color-mix(in srgb, var(--color-text-muted) 20%, transparent)',
           }}
         >
           <UserX size={14} aria-hidden />
-          Rechazar
+          <span className="hidden sm:inline">Rechazar</span>
         </button>
       </div>
     )
@@ -134,14 +136,16 @@ export function FriendshipButton({ state }: { state: FriendshipState }) {
           }
         })
       }
-      className="flex items-center gap-1.5 h-9 px-4 rounded-component text-sm font-medium transition-colors disabled:opacity-40"
+      className="flex items-center gap-1.5 h-9 px-3 sm:px-4 rounded-component text-sm font-medium transition-colors disabled:opacity-40"
       style={{
         color: 'var(--color-text-muted)',
         border: '1px solid color-mix(in srgb, var(--color-text-muted) 20%, transparent)',
       }}
     >
       <UserMinus size={14} aria-hidden />
-      {isPending ? 'Eliminando...' : 'Eliminar amigo'}
+      <span className="hidden sm:inline">
+        {isPending ? 'Eliminando...' : 'Eliminar amigo'}
+      </span>
     </button>
   )
 }
