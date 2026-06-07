@@ -12,14 +12,10 @@ import { AnimatedBar } from '@/components/ui/AnimatedBar'
 import { ShieldIndicator } from '@/components/ui/ShieldIndicator'
 import { EmptyState } from '@/components/ui/EmptyState'
 import Link from 'next/link'
-import { Trophy, Calendar, BarChart2, ChevronRight } from 'lucide-react'
+import { Trophy, Calendar, BarChart2, ChevronRight, Timer } from 'lucide-react'
 import { LogoutButton } from '@/components/profile/LogoutButton'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-function getInitials(username: string | null): string {
-  return (username ?? 'JU').slice(0, 2).toUpperCase()
-}
-
 function formatJoinDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
 }
@@ -68,41 +64,49 @@ function ClassBadge({ lifeClass }: { lifeClass: LifeClass }) {
 
 // 1 ── Profile header
 function ProfileHeader({ profile }: { profile: Profile }) {
-  const initials = getInitials(profile.username)
-  const streak   = profile.current_streak
+  const initials = (profile.username ?? 'JU').slice(0, 2).toUpperCase()
 
   return (
     <section
-      className="bg-surface rounded-card p-6 border border-border/60"
+      className="bg-surface rounded-card p-6 border border-border/60 flex flex-col gap-5"
       aria-label="Perfil del jugador"
     >
+      {/* Top row: avatar + username/level + shield */}
       <div className="flex items-center gap-4">
-        {/* Avatar */}
         <div
-          className="w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0 text-accent font-bold text-xl select-none border-2 border-accent/35"
-          style={{ background: 'linear-gradient(135deg, var(--color-accent-glow) 0%, transparent 100%)' }}
-          aria-label={`Avatar de ${profile.username ?? 'jugador'}`}
+          className="flex-shrink-0 p-[2px] rounded-full"
+          style={{
+            background: 'linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-light) 50%, var(--color-accent) 100%)',
+          }}
         >
-          {initials}
+          <div className="w-12 h-12 rounded-full bg-surface flex items-center justify-center">
+            <span className="text-accent font-bold text-sm leading-none select-none">
+              {initials}
+            </span>
+          </div>
         </div>
-
-        {/* Name + secondary line */}
-        <div className="flex flex-col gap-1 flex-1 min-w-0">
-          <h2 className="text-xl font-semibold text-text-primary tracking-tight truncate">
-            {profile.username ?? 'Jugador'}
-          </h2>
-          <p className="text-[13px] text-text-secondary">
-            LVL {profile.global_level} · {streak} {streak === 1 ? 'día' : 'días'} racha
-          </p>
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold text-text-primary truncate">{profile.username ?? 'Jugador'}</p>
+          <p className="text-xs text-text-muted mt-0.5">Nivel {profile.global_level} · Jugador</p>
         </div>
-      </div>
-
-      <div className="border-t border-border/40 mt-5 pt-5">
         <ShieldIndicator
           shieldCount={profile.shield_count}
           streakProgress={profile.current_streak % 7}
-          size="lg"
+          size="sm"
         />
+      </div>
+
+      {/* Hours played */}
+      <div className="border-t border-border/40 pt-5 flex items-center gap-4">
+        <div className="w-9 h-9 rounded-component bg-surface-elevated flex items-center justify-center text-text-muted flex-shrink-0">
+          <Timer size={16} strokeWidth={1.75} aria-hidden />
+        </div>
+        <div>
+          <p className="text-xs text-text-muted">Horas jugadas en la vida real</p>
+          <p className="text-2xl font-bold text-text-primary tabular-nums leading-none mt-0.5">
+            {formatHoursFromBirth(profile.date_of_birth)}
+          </p>
+        </div>
       </div>
     </section>
   )

@@ -11,6 +11,12 @@ const inputClass =
   'focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent/50 ' +
   'transition-[border-color,box-shadow] duration-150'
 
+const dateInputClass =
+  'w-full bg-surface-elevated border border-border rounded-component px-4 py-3 text-sm ' +
+  'text-text-primary text-left ' +
+  'focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent/50 ' +
+  'transition-[border-color,box-shadow] duration-150'
+
 const STEPS = [
   {
     icon: Sword,
@@ -129,7 +135,7 @@ function UsernameStep() {
             value={dateOfBirth}
             onChange={e => handleDobChange(e.target.value)}
             max={new Date().toISOString().slice(0, 10)}
-            className={inputClass}
+            className={dateInputClass}
             style={{ colorScheme: 'dark' }}
           />
           {dobError && (
