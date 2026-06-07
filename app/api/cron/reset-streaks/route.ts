@@ -94,6 +94,29 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: shieldResult.error.message }, { status: 500 })
   }
 
+  // Streak milestone feed events for users who are still active
+  const STREAK_MILESTONES = new Set([7, 14, 30, 60, 100])
+  if (activeYesterdayIds.size > 0) {
+    try {
+      const { data: activeMilestoneProfiles } = await supabase
+        .from('profiles')
+        .select('id, current_streak')
+        .in('id', Array.from(activeYesterdayIds))
+
+      const milestoneInserts = (activeMilestoneProfiles ?? [])
+        .filter(p => STREAK_MILESTONES.has(p.current_streak as number))
+        .map(p => ({
+          user_id: p.id as string,
+          event_type: 'streak_milestone',
+          metadata: { streak_days: p.current_streak },
+        }))
+
+      if (milestoneInserts.length > 0) {
+        await supabase.from('social_feed').insert(milestoneInserts)
+      }
+    } catch {}
+  }
+
   return NextResponse.json({
     reset: unshieldedIds.length,
     shielded: shieldUpdates.length,

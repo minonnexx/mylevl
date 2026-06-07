@@ -17,6 +17,29 @@ export interface Profile {
   shield_active?: boolean
   shield_used_at: string | null
   shield_notification_shown: boolean
+  feed_public: boolean
+  created_at: string
+}
+
+export interface Friendship {
+  id: string
+  requester_id: string
+  addressee_id: string
+  status: 'pending' | 'accepted'
+  created_at: string
+}
+
+export interface SocialFeedEvent {
+  id: string
+  user_id: string
+  event_type: 'mission_completed' | 'level_up' | 'streak_milestone'
+  metadata: {
+    mission_title?: string
+    life_class?: string
+    xp_reward?: number
+    new_level?: number
+    streak_days?: number
+  }
   created_at: string
 }
 

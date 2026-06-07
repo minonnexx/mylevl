@@ -48,8 +48,8 @@ export async function completeMissionAction(
     await supabase.from('completed_missions').insert({ user_id: user.id, mission_id: missionId })
     const { shieldGranted } = await updateStreak(supabase, user.id)
 
-    // Fetch current class points and global profile state in parallel
-    const [cpRes, profileRes] = await Promise.all([
+    // Fetch current class points, global profile state, and mission title in parallel
+    const [cpRes, profileRes, missionRes] = await Promise.all([
       supabase
         .from('class_progress')
         .select('points')
@@ -61,6 +61,11 @@ export async function completeMissionAction(
         .select('current_xp, global_level')
         .eq('id', user.id)
         .single(),
+      supabase
+        .from('missions')
+        .select('title')
+        .eq('id', missionId)
+        .maybeSingle(),
     ])
 
     const difficultyPoints: Record<string, number> = { easy: 1, medium: 2, hard: 5, boss: 10 }
@@ -95,6 +100,28 @@ export async function completeMissionAction(
     revalidatePath('/missions')
     revalidatePath('/dashboard')
     revalidatePath('/recap')
+
+    // Feed events — fire and forget, never block main flow
+    try {
+      await supabase.from('social_feed').insert({
+        user_id: user.id,
+        event_type: 'mission_completed',
+        metadata: {
+          mission_title: (missionRes.data as { title: string } | null)?.title,
+          life_class: lifeClass,
+          xp_reward: xpReward,
+        },
+      })
+    } catch {}
+    if (didLevelUp) {
+      try {
+        await supabase.from('social_feed').insert({
+          user_id: user.id,
+          event_type: 'level_up',
+          metadata: { new_level: newGlobal.level },
+        })
+      } catch {}
+    }
 
     const summary = await getDaySummary(supabase, user.id)
     const allMissionsCompleted =
