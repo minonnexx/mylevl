@@ -411,11 +411,7 @@ export default async function ProfilePage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth')
 
-  const cutoff = new Date()
-  cutoff.setDate(cutoff.getDate() - 365)
-  const cutoffStr = cutoff.toISOString().slice(0, 10)
-
-  const [profileRes, classProgressRes, completedCountRes, recentRes, xpTotalRes, heatmapRes] = await Promise.all([
+  const [profileRes, classProgressRes, completedCountRes, recentRes, xpTotalRes] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', user.id).single(),
     supabase.from('class_progress').select('*').eq('user_id', user.id),
     supabase.from('completed_missions').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
@@ -425,11 +421,6 @@ export default async function ProfilePage() {
       .order('completed_at', { ascending: false })
       .limit(5),
     supabase.from('completed_missions').select('missions(xp_reward)').eq('user_id', user.id),
-    supabase.from('streaks')
-      .select('date, missions_completed')
-      .eq('user_id', user.id)
-      .gte('date', cutoffStr)
-      .order('date', { ascending: true }),
   ])
 
   const profile: Profile = (profileRes.data as Profile | null) ?? {
@@ -452,6 +443,15 @@ export default async function ProfilePage() {
   const totalXp = ((xpTotalRes.data ?? []) as unknown as XpRow[]).reduce((sum, row) => {
     return sum + (row.missions?.xp_reward ?? 0)
   }, 0)
+
+  const createdAtStr = profile.created_at.slice(0, 10)
+
+  const heatmapRes = await supabase
+    .from('streaks')
+    .select('date, missions_completed')
+    .eq('user_id', user.id)
+    .gte('date', createdAtStr)
+    .order('date', { ascending: true })
 
   type HeatmapRow = { date: string; missions_completed: number }
   const heatmapData = (heatmapRes.data ?? []) as HeatmapRow[]
@@ -515,7 +515,7 @@ export default async function ProfilePage() {
               </div>
             </div>
 
-            <ActivityHeatmap data={heatmapData} />
+            <ActivityHeatmap data={heatmapData} createdAt={profile.created_at} />
 
             <RecentAchievements recent={recent} />
 

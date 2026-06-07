@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 
 type DayData = { date: string; missions_completed: number }
-type Props = { data: DayData[] }
+type Props = { data: DayData[]; createdAt: string }
 
 // Monday=0 … Sunday=6
 function isoWeekday(d: Date): number {
@@ -36,7 +36,7 @@ const MONTHS_ES_SHORT = [
   'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
 ]
 
-export function ActivityHeatmap({ data }: Props) {
+export function ActivityHeatmap({ data, createdAt }: Props) {
   const [tooltip, setTooltip] = useState<{ x: number; y: number; text: string } | null>(null)
 
   const dataMap = useMemo(() => {
@@ -45,35 +45,34 @@ export function ActivityHeatmap({ data }: Props) {
     return map
   }, [data])
 
-  // Build the sliding-window grid
   const { weeks, monthLabels, activeDays } = useMemo(() => {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
 
-    // Window start: 364 days ago (so today is day 365), rewound to that day's Monday
-    const windowStart = new Date(today)
-    windowStart.setDate(today.getDate() - 364)
-    const offsetToMonday = isoWeekday(windowStart) // days since last Monday
-    windowStart.setDate(windowStart.getDate() - offsetToMonday)
+    // Grid start: Monday of the week containing createdAt
+    const regDate = new Date(createdAt.slice(0, 10) + 'T00:00:00')
+    const offsetToMonday = isoWeekday(regDate)
+    const gridStart = new Date(regDate)
+    gridStart.setDate(regDate.getDate() - offsetToMonday)
 
-    // Build weeks array: each entry = array of 7 Date|null
-    // null means the slot is before the window start or after today
+    // Build week columns from gridStart to today
     const weeksArr: (Date | null)[][] = []
-    const cur = new Date(windowStart)
+    const cur = new Date(gridStart)
 
     while (cur <= today) {
       const col: (Date | null)[] = []
       for (let d = 0; d < 7; d++) {
         const day = new Date(cur)
         day.setDate(cur.getDate() + d)
-        // only include days within the 365-day window and not in the future
-        col.push(day <= today ? day : null)
+        // null for days before registration or in the future
+        const valid = day >= regDate && day <= today
+        col.push(valid ? day : null)
       }
       weeksArr.push(col)
       cur.setDate(cur.getDate() + 7)
     }
 
-    // Month labels: one per month, placed at the first col where that month appears
+    // Month labels: one label per month, at the first column where that month appears
     const seen = new Set<string>()
     const labels: { col: number; label: string }[] = []
     weeksArr.forEach((col, colIdx) => {
@@ -94,7 +93,7 @@ export function ActivityHeatmap({ data }: Props) {
     }
 
     return { weeks: weeksArr, monthLabels: labels, activeDays: active }
-  }, [dataMap])
+  }, [createdAt, dataMap])
 
   const DAY_LABEL_W = 14
   const DAY_LABEL_GAP = 6
@@ -146,10 +145,10 @@ export function ActivityHeatmap({ data }: Props) {
               ))}
             </div>
 
-            {/* Main grid row: day labels + week columns */}
+            {/* Main grid: day labels + week columns */}
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: DAY_LABEL_GAP }}>
 
-              {/* Day labels — each cell exactly CELL height + GAP, matching rows */}
+              {/* Day labels */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: GAP, flexShrink: 0 }}>
                 {DAY_LABELS.map(label => (
                   <div
@@ -177,13 +176,7 @@ export function ActivityHeatmap({ data }: Props) {
                   <div key={colIdx} style={{ display: 'flex', flexDirection: 'column', gap: GAP }}>
                     {col.map((day, rowIdx) => {
                       if (!day) {
-                        // empty slot (before window start, beginning of first week)
-                        return (
-                          <div
-                            key={rowIdx}
-                            style={{ width: CELL, height: CELL, flexShrink: 0 }}
-                          />
-                        )
+                        return <div key={rowIdx} style={{ width: CELL, height: CELL, flexShrink: 0 }} />
                       }
 
                       const key = toKey(day)
@@ -216,11 +209,7 @@ export function ActivityHeatmap({ data }: Props) {
                           }}
                           onMouseEnter={e => {
                             const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-                            setTooltip({
-                              x: rect.left + rect.width / 2,
-                              y: rect.top,
-                              text: tooltipText,
-                            })
+                            setTooltip({ x: rect.left + rect.width / 2, y: rect.top, text: tooltipText })
                           }}
                           onMouseLeave={() => setTooltip(null)}
                         />
@@ -243,7 +232,7 @@ export function ActivityHeatmap({ data }: Props) {
               }}
             >
               <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>
-                {activeDays} {activeDays === 1 ? 'día activo' : 'días activos'} en el último año
+                {activeDays} {activeDays === 1 ? 'día activo' : 'días activos'} desde que empezaste
               </span>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -259,10 +248,7 @@ export function ActivityHeatmap({ data }: Props) {
                         border: '1px solid transparent',
                       }
                   return (
-                    <div
-                      key={l}
-                      style={{ width: 10, height: 10, borderRadius: 2, flexShrink: 0, ...s }}
-                    />
+                    <div key={l} style={{ width: 10, height: 10, borderRadius: 2, flexShrink: 0, ...s }} />
                   )
                 })}
                 <span style={{ fontSize: 10, color: 'var(--color-text-muted)' }}>Más</span>
