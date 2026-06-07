@@ -114,7 +114,7 @@ export function ActivityHeatmap({ data, createdAt }: Props) {
       cur.setDate(cur.getDate() + 7)
     }
 
-    // Month labels at first column where each month starts
+    // Month labels: one per month, skip if closer than 3 weeks to the previous label
     const seen = new Set<string>()
     const labels: { col: number; label: string }[] = []
     weeksArr.forEach((col, colIdx) => {
@@ -122,8 +122,11 @@ export function ActivityHeatmap({ data, createdAt }: Props) {
       if (!firstReal) return
       const key = `${firstReal.getFullYear()}-${firstReal.getMonth()}`
       if (!seen.has(key)) {
-        seen.add(key)
-        labels.push({ col: colIdx, label: MONTHS_ES_SHORT[firstReal.getMonth()] })
+        const lastCol = labels.length > 0 ? labels[labels.length - 1].col : -Infinity
+        if (colIdx - lastCol >= 3) {
+          seen.add(key)
+          labels.push({ col: colIdx, label: MONTHS_ES_SHORT[firstReal.getMonth()] })
+        }
       }
     })
 
@@ -269,16 +272,7 @@ export function ActivityHeatmap({ data, createdAt }: Props) {
           </span>
         </div>
 
-        {/* Footer row 2: leyenda */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 6 }}>
-          <span style={{ fontSize: 12, color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>Menos</span>
-          {([0, 1, 2, 3] as const).map(l => (
-            <div key={l} style={{ width: 10, height: 10, borderRadius: 2, flexShrink: 0, ...cellBg(l) }} />
-          ))}
-          <span style={{ fontSize: 12, color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>Más</span>
-        </div>
-
-        {/* Footer row 3: mensaje motivacional para usuarios nuevos */}
+        {/* Footer row 2: mensaje motivacional para usuarios nuevos */}
         {isNewUser && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8 }}>
             <TrendingUp size={14} style={{ color: 'var(--color-text-muted)', flexShrink: 0 }} aria-hidden />
