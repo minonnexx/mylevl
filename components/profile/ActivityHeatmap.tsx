@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { TrendingUp } from 'lucide-react'
 
 type DayData = { date: string; missions_completed: number }
 type Props = { data: DayData[]; createdAt: string }
@@ -94,6 +95,13 @@ export function ActivityHeatmap({ data, createdAt }: Props) {
 
     return { weeks: weeksArr, monthLabels: labels, activeDays: active }
   }, [createdAt, dataMap])
+
+  const isNewUser = useMemo(() => {
+    const reg = new Date(createdAt.slice(0, 10) + 'T00:00:00')
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    return (today.getTime() - reg.getTime()) < 28 * 24 * 60 * 60 * 1000
+  }, [createdAt])
 
   const DAY_LABEL_W = 14
   const DAY_LABEL_GAP = 6
@@ -220,7 +228,7 @@ export function ActivityHeatmap({ data, createdAt }: Props) {
               </div>
             </div>
 
-            {/* Footer */}
+            {/* Footer: contador + leyenda */}
             <div
               style={{
                 marginTop: 10,
@@ -254,6 +262,16 @@ export function ActivityHeatmap({ data, createdAt }: Props) {
                 <span style={{ fontSize: 12, color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>Más</span>
               </div>
             </div>
+
+            {/* Mensaje motivacional para usuarios nuevos (<28 días) */}
+            {isNewUser && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 10 }}>
+                <TrendingUp size={14} style={{ color: 'var(--color-text-muted)', flexShrink: 0 }} aria-hidden />
+                <span style={{ fontSize: 14, color: 'var(--color-text-muted)' }}>
+                  Sigue completando misiones para ver tu historial crecer
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </div>
