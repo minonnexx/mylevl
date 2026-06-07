@@ -10,7 +10,7 @@ import { LevelUpOverlay } from '@/components/LevelUpOverlay'
 import { DailyRecapOverlay } from '@/components/dashboard/DailyRecapOverlay'
 import { Confetti } from '@/components/ui/Confetti'
 import { completeMission, type MissionActionResult } from '@/app/dashboard/actions'
-import { playLevelUp, playMissionComplete, playShieldGained } from '@/lib/sounds'
+import { playLevelUp, playMissionComplete, playShieldGained, playDayComplete } from '@/lib/sounds'
 
 function getTodayKey(): string {
   const d = new Date()
@@ -62,6 +62,7 @@ export function MissionAreaWrapper({ missions }: { missions: Mission[] }) {
     }
 
     if (result.allMissionsCompleted && result.daySummary) {
+      playDayComplete()
       const key = `recap-shown-${getTodayKey()}`
       if (!sessionStorage.getItem(key)) {
         sessionStorage.setItem(key, '1')

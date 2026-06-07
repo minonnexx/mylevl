@@ -10,23 +10,6 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   )
 }
 
-// Shield indicator skeleton — lg size (ring=72px, inventory icons=30px)
-function ShieldSkeletonLg() {
-  return (
-    <div className="flex items-center flex-shrink-0 gap-4">
-      <div className="flex flex-col items-center gap-1">
-        <Skeleton className="w-[72px] h-[72px] rounded-full" />
-        <Skeleton className="h-2.5 w-8" />
-      </div>
-      <div className="flex items-center gap-1.5">
-        <Skeleton className="w-[30px] h-[30px] rounded-sm" />
-        <Skeleton className="w-[30px] h-[30px] rounded-sm" />
-      </div>
-    </div>
-  )
-}
-
-// Stagger opacities for 3 class rows
 const CLASS_OPACITIES = [1, 0.8, 0.6]
 
 export default function ProfileLoading() {
@@ -69,31 +52,19 @@ export default function ProfileLoading() {
               <Skeleton className="h-4 w-48" />
             </div>
 
-            {/* Profile header card */}
+            {/* Profile header card — avatar + two text lines only */}
             <section className="bg-surface rounded-card p-6 border border-border/60">
-              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-5 md:gap-6">
-                <div className="flex items-start gap-4 md:gap-5 min-w-0">
-                  {/* Avatar */}
-                  <Skeleton className="w-20 h-20 rounded-full flex-shrink-0" />
-                  {/* Shield lg */}
-                  <div className="flex-shrink-0 flex items-start pt-1">
-                    <ShieldSkeletonLg />
-                  </div>
-                  {/* Name + details */}
-                  <div className="flex flex-col gap-1.5 min-w-0 pt-1">
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <Skeleton className="h-7 w-32" />
-                      <Skeleton className="h-6 w-16 rounded-pill" />
-                    </div>
-                    <Skeleton className="h-4 w-40 mt-0.5" />
-                    <Skeleton className="h-4 w-52" />
-                  </div>
-                </div>
-                <div className="flex-shrink-0">
-                  <Skeleton className="h-8 w-28 rounded-component" />
+              <div className="flex items-center gap-4">
+                <Skeleton className="w-16 h-16 rounded-full flex-shrink-0" />
+                <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+                  <Skeleton className="h-6 w-36" />
+                  <Skeleton className="h-4 w-44" />
                 </div>
               </div>
             </section>
+
+            {/* ShareButton skeleton — full width */}
+            <Skeleton className="h-9 w-full rounded-component" />
 
             {/* Classes + Stats grid */}
             <div className="grid grid-cols-1 md:grid-cols-[1fr_380px] gap-6 items-start">
@@ -104,6 +75,11 @@ export default function ProfileLoading() {
                   <Skeleton className="h-3 w-28" />
                 </SectionTitle>
                 <div className="bg-surface rounded-card border border-border/60 overflow-hidden">
+                  {/* Radar chart skeleton */}
+                  <div className="px-4 md:px-6 pt-5 pb-2 flex justify-center">
+                    <Skeleton className="w-48 h-48 rounded-full" />
+                  </div>
+                  {/* 3 class rows */}
                   {[0, 1, 2].map(i => (
                     <div
                       key={i}
@@ -127,39 +103,56 @@ export default function ProfileLoading() {
                 </div>
               </section>
 
-              {/* StatsGrid */}
-              <section>
-                <SectionTitle>
-                  <Skeleton className="h-3 w-24" />
-                </SectionTitle>
-                <div className="grid grid-cols-2 gap-3">
-                  {[0, 1, 2, 3].map(i => (
-                    <div key={i} className="bg-surface rounded-card p-6 border border-border/60 flex flex-col gap-3">
-                      <div className="flex items-center justify-between">
-                        <Skeleton className="h-3 w-24" />
-                        <Skeleton className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <Skeleton className="h-9 w-16 mb-1.5" />
-                        <Skeleton className="h-3 w-28" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
+              {/* Right column */}
+              <div className="flex flex-col gap-6">
 
+                {/* ShieldIndicator card — ring + two text stubs */}
+                <div className="p-4 bg-surface rounded-card border border-border/60">
+                  <div className="flex items-center gap-4">
+                    <Skeleton className="w-[72px] h-[72px] rounded-full flex-shrink-0" />
+                    <div className="flex flex-col gap-1.5">
+                      <Skeleton className="h-3.5 w-20" />
+                      <Skeleton className="h-3 w-28" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* StatsGrid — 2×3 = 6 stats */}
+                <section>
+                  <SectionTitle>
+                    <Skeleton className="h-3 w-24" />
+                  </SectionTitle>
+                  <div className="grid grid-cols-2 gap-3">
+                    {[0, 1, 2, 3, 4, 5].map(i => (
+                      <div key={i} className="bg-surface rounded-card p-6 border border-border/60 flex flex-col gap-3">
+                        <div className="flex items-center justify-between">
+                          <Skeleton className="h-3 w-24" />
+                          <Skeleton className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <Skeleton className="h-9 w-16 mb-1.5" />
+                          <Skeleton className="h-3 w-28" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Ver recap link */}
+                  <Skeleton className="h-12 w-full rounded-component mt-3" />
+                </section>
+
+              </div>
             </div>
 
-            {/* Recent achievements */}
+            {/* Recent achievements — 5 rows */}
             <section>
               <SectionTitle>
                 <Skeleton className="h-3 w-28" />
               </SectionTitle>
               <div className="bg-surface rounded-card border border-border/60 overflow-hidden">
-                {[0, 1, 2].map(i => (
+                {[0, 1, 2, 3, 4].map(i => (
                   <div
                     key={i}
-                    className={`flex items-center gap-4 px-6 py-4 ${i < 2 ? 'border-b border-border/40' : ''}`}
+                    className={`flex items-center gap-4 px-6 py-4 ${i < 4 ? 'border-b border-border/40' : ''}`}
                   >
                     <Skeleton className="w-2 h-2 rounded-full flex-shrink-0" />
                     <Skeleton className="flex-1 h-4 min-w-0" />
@@ -171,19 +164,21 @@ export default function ProfileLoading() {
               </div>
             </section>
 
-            {/* Class balance */}
+            {/* ClassBalance — 3 cards with stagger */}
             <section>
               <SectionTitle>
                 <Skeleton className="h-3 w-36" />
               </SectionTitle>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {[0, 1, 2].map(i => (
-                  <div key={i} className="bg-surface rounded-card p-6 border border-border/60 flex flex-col gap-4">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2.5">
-                        <Skeleton className="w-2.5 h-2.5 rounded-full" />
-                        <Skeleton className="h-4 w-20" />
-                      </div>
+                  <div
+                    key={i}
+                    className="bg-surface rounded-card p-6 border border-border/60 flex flex-col gap-4"
+                    style={{ opacity: CLASS_OPACITIES[i] }}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Skeleton className="w-2.5 h-2.5 rounded-full" />
+                      <Skeleton className="h-4 w-20" />
                     </div>
                     <div>
                       <Skeleton className="h-8 w-14 mb-1" />
