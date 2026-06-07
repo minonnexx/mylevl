@@ -6,6 +6,7 @@ import { CLASS_META } from '@/lib/constants/classes'
 import { completeMissionAction, type MissionActionResult } from '@/app/missions/actions'
 import type { DaySummary } from '@/lib/recap'
 import { toast } from 'sonner'
+import { playLevelUp, playMissionComplete, playShieldGained, playDayComplete } from '@/lib/sounds'
 import { CompleteButton } from '@/components/dashboard/CompleteButton'
 import { LevelUpOverlay } from '@/components/LevelUpOverlay'
 import { DailyRecapOverlay } from '@/components/dashboard/DailyRecapOverlay'
@@ -98,11 +99,16 @@ function MissionCard({
       return
     }
 
+    playMissionComplete()
     toast('Misión completada', { description: `+${result.xpReward} XP`, duration: 2500 })
 
-    if (result.levelUp) setLevelUpData({ level: result.newLevel })
+    if (result.levelUp) {
+      playLevelUp()
+      setTimeout(() => setLevelUpData({ level: result.newLevel }), 800)
+    }
 
     if (result.shieldGranted) {
+      playShieldGained()
       toast('Escudo ganado', {
         description: 'Racha de 7 días completada',
         icon: <ShieldCheck size={16} />,
@@ -111,6 +117,7 @@ function MissionCard({
     }
 
     if (result.allMissionsCompleted && result.daySummary) {
+      playDayComplete()
       const summary = result.daySummary
       const delay = result.levelUp ? 500 : 0
       setTimeout(() => onAllCompleted?.(summary), delay)

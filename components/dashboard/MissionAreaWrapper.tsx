@@ -49,7 +49,7 @@ export function MissionAreaWrapper({ missions }: { missions: Mission[] }) {
 
     if (result.levelUp) {
       playLevelUp()
-      setLevelUpData({ level: result.newLevel })
+      setTimeout(() => setLevelUpData({ level: result.newLevel }), 800)
     }
 
     if (result.shieldGranted) {

@@ -40,7 +40,7 @@ function tone(
   osc.connect(g)
   g.connect(ctx.destination)
   osc.start(start)
-  osc.stop(start + duration)
+  osc.stop(start + duration + 0.05)
   return osc
 }
 
