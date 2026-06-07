@@ -38,27 +38,58 @@ const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,20}$/
 
 function UsernameStep() {
   const [username, setUsername] = useState('')
-  const [error, setError] = useState('')
+  const [dateOfBirth, setDateOfBirth] = useState('')
+  const [usernameError, setUsernameError] = useState('')
+  const [dobError, setDobError] = useState('')
   const [isPending, startTransition] = useTransition()
 
-  const handleChange = (val: string) => {
+  const handleUsernameChange = (val: string) => {
     setUsername(val)
-    if (error) setError('')
+    if (usernameError) setUsernameError('')
+  }
+
+  const handleDobChange = (val: string) => {
+    setDateOfBirth(val)
+    if (dobError) setDobError('')
   }
 
   const handleSubmit = () => {
+    let valid = true
+
     const trimmed = (username ?? '').trim()
     if (trimmed.length < 3) {
-      setError('Mínimo 3 caracteres')
-      return
+      setUsernameError('Mínimo 3 caracteres')
+      valid = false
+    } else if (!USERNAME_REGEX.test(trimmed)) {
+      setUsernameError('Solo letras, números y guiones bajos, sin espacios')
+      valid = false
     }
-    if (!USERNAME_REGEX.test(trimmed)) {
-      setError('Solo letras, números y guiones bajos, sin espacios')
-      return
+
+    if (!dateOfBirth) {
+      setDobError('Introduce tu fecha de nacimiento')
+      valid = false
+    } else {
+      const dob = new Date(dateOfBirth)
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      if (dob >= today) {
+        setDobError('La fecha no puede ser hoy ni futura')
+        valid = false
+      } else {
+        const age = today.getFullYear() - dob.getFullYear() -
+          (today < new Date(today.getFullYear(), dob.getMonth(), dob.getDate()) ? 1 : 0)
+        if (age < 13) {
+          setDobError('Debes tener al menos 13 años para usar MyLevl')
+          valid = false
+        }
+      }
     }
+
+    if (!valid) return
+
     startTransition(async () => {
-      const result = await completeOnboarding(trimmed)
-      if (result?.error) setError(result.error)
+      const result = await completeOnboarding(trimmed, dateOfBirth)
+      if (result?.error) setUsernameError(result.error)
     })
   }
 
@@ -70,7 +101,7 @@ function UsernameStep() {
       >
         <User size={40} strokeWidth={1.5} className="text-text-primary" />
       </div>
-      <div className="flex flex-col gap-4 w-full">
+      <div className="flex flex-col gap-5 w-full">
         <h1 className="text-2xl font-semibold text-text-primary">
           ¿Cómo quieres que te llamen?
         </h1>
@@ -78,15 +109,31 @@ function UsernameStep() {
           <input
             type="text"
             value={username}
-            onChange={e => handleChange(e.target.value)}
+            onChange={e => handleUsernameChange(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleSubmit()}
             placeholder="Tu nombre de jugador"
             maxLength={20}
             autoFocus
             className={inputClass}
           />
-          {error && (
-            <p className="text-xs text-error text-left">{error}</p>
+          {usernameError && (
+            <p className="text-xs text-error text-left">{usernameError}</p>
+          )}
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-medium text-text-muted text-left">
+            Fecha de nacimiento
+          </label>
+          <input
+            type="date"
+            value={dateOfBirth}
+            onChange={e => handleDobChange(e.target.value)}
+            max={new Date().toISOString().slice(0, 10)}
+            className={inputClass}
+            style={{ colorScheme: 'dark' }}
+          />
+          {dobError && (
+            <p className="text-xs text-error text-left">{dobError}</p>
           )}
         </div>
       </div>

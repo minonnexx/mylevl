@@ -24,10 +24,10 @@ function formatJoinDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
 }
 
-function formatHours(completedCount: number): string {
-  const h = completedCount * 0.5
-  const formatted = h % 1 === 0 ? h.toString() : h.toFixed(1)
-  return `${formatted} ${h === 1 ? 'hora' : 'horas'} jugadas en la vida real`
+function formatHoursFromBirth(dateOfBirth: string | null): string {
+  if (!dateOfBirth) return '—'
+  const hours = Math.floor((Date.now() - new Date(dateOfBirth).getTime()) / (1000 * 60 * 60))
+  return hours.toLocaleString('es-ES')
 }
 
 function formatDate(dateStr: string): string {
@@ -185,8 +185,7 @@ function ClassProgressCard({ classProgress }: { classProgress: ClassProgress[] }
 function StatsGrid({ profile, completedCount, totalXp }: {
   profile: Profile; completedCount: number; totalXp: number
 }) {
-  const hours = completedCount * 0.5
-  const hoursValue = hours % 1 === 0 ? hours.toString() : hours.toFixed(1)
+  const hoursValue = formatHoursFromBirth(profile.date_of_birth)
 
   const stats = [
     {
@@ -230,7 +229,7 @@ function StatsGrid({ profile, completedCount, totalXp }: {
     },
     {
       label: 'Horas en la vida real', value: hoursValue,
-      sub: Number(hoursValue) === 1 ? 'hora jugada' : 'horas jugadas',
+      sub: hoursValue === '—' ? 'fecha de nacimiento no registrada' : 'horas jugadas',
       icon: (
         <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
           <circle cx="12" cy="12" r="10" />
@@ -429,7 +428,7 @@ export default async function ProfilePage() {
     global_level: 1, current_xp: 0, xp_to_next_level: 100,
     current_streak: 0, longest_streak: 0, total_days_active: 0,
     shield_count: 0, shield_used_at: null, shield_notification_shown: true, feed_public: true,
-    created_at: new Date().toISOString(),
+    date_of_birth: null, created_at: new Date().toISOString(),
   }
 
   const classProgress = (classProgressRes.data as ClassProgress[] | null) ?? []

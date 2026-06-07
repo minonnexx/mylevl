@@ -60,6 +60,7 @@ export default async function DashboardPage() {
     shield_used_at: null,
     shield_notification_shown: true,
     feed_public: true,
+    date_of_birth: null,
     created_at: new Date().toISOString(),
   }
 
