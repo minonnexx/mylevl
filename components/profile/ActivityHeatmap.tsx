@@ -224,19 +224,19 @@ export function ActivityHeatmap({ data, createdAt }: Props) {
             <div
               style={{
                 marginTop: 10,
-                marginLeft: DAY_LABEL_W + DAY_LABEL_GAP,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                width: gridW,
+                gap: 12,
+                minWidth: gridW + DAY_LABEL_W + DAY_LABEL_GAP,
               }}
             >
-              <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>
+              <span style={{ fontSize: 14, color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>
                 {activeDays} {activeDays === 1 ? 'día activo' : 'días activos'} desde que empezaste
               </span>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                <span style={{ fontSize: 10, color: 'var(--color-text-muted)' }}>Menos</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                <span style={{ fontSize: 12, color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>Menos</span>
                 {([0, 1, 2, 3] as const).map(l => {
                   const s: React.CSSProperties = l === 0
                     ? {
@@ -251,7 +251,7 @@ export function ActivityHeatmap({ data, createdAt }: Props) {
                     <div key={l} style={{ width: 10, height: 10, borderRadius: 2, flexShrink: 0, ...s }} />
                   )
                 })}
-                <span style={{ fontSize: 10, color: 'var(--color-text-muted)' }}>Más</span>
+                <span style={{ fontSize: 12, color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>Más</span>
               </div>
             </div>
           </div>
