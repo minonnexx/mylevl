@@ -4,9 +4,9 @@ import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 'motion/react'
 import Link from 'next/link'
-import { Flame, ShieldCheck } from 'lucide-react'
+import { Flame, ShieldCheck, Swords, Trophy } from 'lucide-react'
 import { CLASS_META } from '@/lib/constants/classes'
-import type { DaySummary } from '@/lib/recap'
+import type { DaySummary, MissionSummaryItem } from '@/lib/recap'
 import type { LifeClass } from '@/types/supabase'
 
 interface Props {
@@ -35,12 +35,28 @@ function XpCounter({ value }: { value: number }) {
   )
 }
 
+function MissionRow({ item }: { item: MissionSummaryItem }) {
+  const lc = item.life_class as LifeClass
+  const meta = CLASS_META[lc] ?? CLASS_META.fisico
+  return (
+    <div className="flex items-center gap-2.5">
+      <div
+        className="w-2 h-2 rounded-full flex-shrink-0"
+        style={{ backgroundColor: meta.color }}
+        aria-hidden
+      />
+      <span className="text-sm text-text-muted flex-1 min-w-0 truncate">{item.title}</span>
+      <span className="text-sm font-bold tabular-nums flex-shrink-0" style={{ color: 'var(--color-accent)' }}>
+        +{item.xp_reward} XP
+      </span>
+    </div>
+  )
+}
+
 export function DailyRecapOverlay({ daySummary, onClose }: Props) {
   const shouldReduceMotion = useReducedMotion()
 
-  const classEntries = (['fisico', 'mental', 'disciplina'] as LifeClass[]).filter(
-    lc => (daySummary.classPoints[lc] ?? 0) > 0,
-  )
+  const { dailyMissions, bossMission, achievements } = daySummary
 
   const content = (
     <div
@@ -75,7 +91,7 @@ export function DailyRecapOverlay({ daySummary, onClose }: Props) {
             <span className="text-xl font-bold text-text-primary tabular-nums">
               {daySummary.missionsCompleted}/{daySummary.missionsTotal}
             </span>
-            <span className="text-[10px] text-text-muted text-center leading-tight">misiones</span>
+            <span className="text-[10px] text-text-muted text-center leading-tight">diarias</span>
           </div>
           <div className="flex flex-col items-center gap-1 bg-background rounded-component p-3">
             <div className="flex items-center gap-1">
@@ -99,31 +115,43 @@ export function DailyRecapOverlay({ daySummary, onClose }: Props) {
           </div>
         </div>
 
-        {/* Class points */}
-        {classEntries.length > 0 && (
+        {/* Daily missions */}
+        {dailyMissions.length > 0 && (
           <div className="flex flex-col gap-2.5 border-t border-border/40 pt-4">
             <p className="text-[10px] font-medium text-text-muted uppercase tracking-wider">
-              Puntos de clase
+              Misiones diarias · {daySummary.missionsCompleted}/{daySummary.missionsTotal} completadas
             </p>
-            {classEntries.map(lc => {
-              const meta = CLASS_META[lc]
-              const pts = daySummary.classPoints[lc]
-              return (
-                <div key={lc} className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="w-2 h-2 rounded-full"
-                      style={{ backgroundColor: meta.color }}
-                      aria-hidden
-                    />
-                    <span className="text-sm text-text-muted">{meta.label}</span>
-                  </div>
-                  <span className="text-sm font-bold tabular-nums" style={{ color: meta.color }}>
-                    +{pts} {pts === 1 ? 'punto' : 'puntos'}
-                  </span>
-                </div>
-              )
-            })}
+            {dailyMissions.map(item => (
+              <MissionRow key={item.mission_id} item={item} />
+            ))}
+          </div>
+        )}
+
+        {/* Boss mission */}
+        {bossMission && (
+          <div className="flex flex-col gap-2.5 border-t border-border/40 pt-4">
+            <div className="flex items-center gap-1.5">
+              <Swords size={12} style={{ color: 'var(--color-accent)' }} aria-hidden />
+              <p className="text-[10px] font-medium text-text-muted uppercase tracking-wider">
+                Misión jefe
+              </p>
+            </div>
+            <MissionRow item={bossMission} />
+          </div>
+        )}
+
+        {/* Achievements */}
+        {achievements.length > 0 && (
+          <div className="flex flex-col gap-2.5 border-t border-border/40 pt-4">
+            <div className="flex items-center gap-1.5">
+              <Trophy size={12} style={{ color: 'var(--color-disciplina)' }} aria-hidden />
+              <p className="text-[10px] font-medium text-text-muted uppercase tracking-wider">
+                Logros
+              </p>
+            </div>
+            {achievements.map(item => (
+              <MissionRow key={item.mission_id} item={item} />
+            ))}
           </div>
         )}
 
