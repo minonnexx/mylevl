@@ -63,7 +63,7 @@ export async function GET(req: NextRequest) {
 
   const unshieldedIds: string[] = []
   const now = new Date().toISOString()
-  const shieldUpdates: { id: string; shield_count: number; shield_used_at: string }[] = []
+  const shieldUpdates: { id: string; shield_count: number; shield_used_at: string; shield_notification_shown: boolean }[] = []
 
   for (const p of shieldData ?? []) {
     if ((p.shield_count as number ?? 0) > 0) {
@@ -71,6 +71,7 @@ export async function GET(req: NextRequest) {
         id: p.id as string,
         shield_count: (p.shield_count as number) - 1,
         shield_used_at: now,
+        shield_notification_shown: false,
       })
     } else {
       unshieldedIds.push(p.id as string)

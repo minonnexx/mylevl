@@ -428,7 +428,7 @@ export default async function ProfilePage() {
     onboarding_completed: false,
     global_level: 1, current_xp: 0, xp_to_next_level: 100,
     current_streak: 0, longest_streak: 0, total_days_active: 0,
-    shield_count: 0, shield_used_at: null,
+    shield_count: 0, shield_used_at: null, shield_notification_shown: true,
     created_at: new Date().toISOString(),
   }
 

@@ -8,8 +8,9 @@ import type { DaySummary } from '@/lib/recap'
 import { FeaturedMissionCard } from './FeaturedMissionCard'
 import { LevelUpOverlay } from '@/components/LevelUpOverlay'
 import { DailyRecapOverlay } from '@/components/dashboard/DailyRecapOverlay'
+import { ShieldUsedBanner } from '@/components/dashboard/ShieldUsedBanner'
 import { Confetti } from '@/components/ui/Confetti'
-import { completeMission, type MissionActionResult } from '@/app/dashboard/actions'
+import { completeMission, markShieldNotificationSeen, type MissionActionResult } from '@/app/dashboard/actions'
 import { playLevelUp, playMissionComplete, playShieldGained, playDayComplete } from '@/lib/sounds'
 
 function getTodayKey(): string {
@@ -17,13 +18,26 @@ function getTodayKey(): string {
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`
 }
 
-export function MissionAreaWrapper({ missions }: { missions: Mission[] }) {
+export function MissionAreaWrapper({
+  missions,
+  showShieldNotification,
+}: {
+  missions: Mission[]
+  showShieldNotification: boolean
+}) {
   const [result, formAction] = useActionState<MissionActionResult, FormData>(completeMission, null)
   const [levelUpData, setLevelUpData] = useState<{ level: number } | null>(null)
   const [recapData, setRecapData] = useState<DaySummary | null>(null)
   const [showConfetti, setShowConfetti] = useState(false)
+  const [showShieldBanner, setShowShieldBanner] = useState(showShieldNotification)
   const prevTsRef = useRef<number>(-1)
   const pendingRecapRef = useRef<DaySummary | null>(null)
+
+  const handleShieldDismiss = useCallback(async () => {
+    setShowShieldBanner(false)
+    playShieldGained()
+    await markShieldNotificationSeen()
+  }, [])
 
   const handleRecapClose = useCallback(() => setRecapData(null), [])
 
@@ -77,6 +91,9 @@ export function MissionAreaWrapper({ missions }: { missions: Mission[] }) {
   return (
     <>
       {showConfetti && <Confetti key={result?.ts} />}
+      {showShieldBanner && (
+        <ShieldUsedBanner onDismiss={handleShieldDismiss} />
+      )}
       {levelUpData && (
         <LevelUpOverlay
           level={levelUpData.level}

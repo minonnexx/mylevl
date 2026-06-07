@@ -58,8 +58,11 @@ export default async function DashboardPage() {
     total_days_active: 0,
     shield_count: 0,
     shield_used_at: null,
+    shield_notification_shown: true,
     created_at: new Date().toISOString(),
   }
+
+  const showShieldNotification = !!profile.shield_used_at && !profile.shield_notification_shown
 
   const completedCount = completedRes.count ?? 0
   const completedTodayIds = new Set((completedTodayRes.data ?? []).map(c => c.mission_id as string))
@@ -159,7 +162,12 @@ export default async function DashboardPage() {
                 )}
 
                 {/* All pending daily missions — completable in any order */}
-                {dailyMissions.length > 0 && <MissionAreaWrapper missions={pendingDaily} />}
+                {dailyMissions.length > 0 && (
+                  <MissionAreaWrapper
+                    missions={pendingDaily}
+                    showShieldNotification={showShieldNotification}
+                  />
+                )}
 
                 <Link href="/missions" className="text-xs text-text-muted hover:text-accent transition-colors">
                   Ver todas las misiones →

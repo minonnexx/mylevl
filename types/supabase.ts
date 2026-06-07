@@ -16,6 +16,7 @@ export interface Profile {
   shield_count: number
   shield_active?: boolean
   shield_used_at: string | null
+  shield_notification_shown: boolean
   created_at: string
 }
 

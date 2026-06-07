@@ -8,6 +8,13 @@ import { updateStreak } from '@/lib/streaks'
 import { getDaySummary } from '@/lib/recap'
 import type { DaySummary } from '@/lib/recap'
 
+export async function markShieldNotificationSeen(): Promise<void> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+  await supabase.from('profiles').update({ shield_notification_shown: true }).eq('id', user.id)
+}
+
 export type MissionActionResult = {
   levelUp: boolean
   newLevel: number
