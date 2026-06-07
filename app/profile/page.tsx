@@ -13,6 +13,7 @@ import { ShieldIndicator } from '@/components/ui/ShieldIndicator'
 import { EmptyState } from '@/components/ui/EmptyState'
 import Link from 'next/link'
 import { Trophy, Calendar, CalendarCheck, ArrowRight } from 'lucide-react'
+import { LogoutButton } from '@/components/profile/LogoutButton'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function getInitials(username: string | null): string {
@@ -534,11 +535,10 @@ export default async function ProfilePage() {
 
             <ClassBalance classProgress={classProgress} />
 
-            {process.env.NODE_ENV === 'development' && (
-              <div className="flex justify-end pt-4">
-                <ResetProfileButton />
-              </div>
-            )}
+            <div className="flex items-center justify-between pt-2">
+              <LogoutButton />
+              {process.env.NODE_ENV === 'development' && <ResetProfileButton />}
+            </div>
 
           </div>
         </main>

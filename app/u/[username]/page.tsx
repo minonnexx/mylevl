@@ -18,7 +18,13 @@ export default async function PublicProfilePage({
   const supabase = await createClient()
 
   // Auth optional — check if viewer is the owner
-  const { data: { user } } = await supabase.auth.getUser()
+  let user = null
+  try {
+    const { data } = await supabase.auth.getUser()
+    user = data.user
+  } catch {
+    user = null
+  }
 
   const { data: profile } = await supabase
     .from('profiles')
