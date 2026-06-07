@@ -495,29 +495,32 @@ export default async function ProfilePage() {
             <div className="grid grid-cols-1 md:grid-cols-[1fr_380px] gap-6 items-start">
               <ClassProgressCard classProgress={classProgress} />
               <div className="flex flex-col gap-6">
-                <div className="p-4 bg-surface rounded-card border border-border/60 flex items-center justify-between">
-                  <ShieldIndicator
-                    shieldCount={profile.shield_count}
-                    streakProgress={profile.current_streak % 7}
-                    size="lg"
-                  />
+                <div className="p-4 bg-surface rounded-card border border-border/60 flex items-center">
+                  <div className="flex flex-1 items-center justify-center">
+                    <ShieldIndicator
+                      shieldCount={profile.shield_count}
+                      streakProgress={profile.current_streak % 7}
+                      size="lg"
+                    />
+                  </div>
                   <div
                     style={{
                       width: 1,
                       alignSelf: 'stretch',
                       backgroundColor: 'color-mix(in srgb, var(--color-text-muted) 20%, transparent)',
-                      margin: '0 8px',
                     }}
                     aria-hidden
                   />
-                  <Link
-                    href="/recap"
-                    className="flex flex-col items-center gap-1.5 px-4 py-2 rounded-component transition-colors hover:text-text-primary"
-                    style={{ color: 'var(--color-text-muted)' }}
-                  >
-                    <BarChart2 size={18} aria-hidden />
-                    <span className="text-xs font-medium">Recap</span>
-                  </Link>
+                  <div className="flex flex-1 items-center justify-center">
+                    <Link
+                      href="/recap"
+                      className="flex flex-col items-center rounded-component transition-colors hover:text-text-primary"
+                      style={{ color: 'var(--color-text-muted)', gap: 6 }}
+                    >
+                      <BarChart2 size={24} aria-hidden />
+                      <span className="text-base font-medium">Recap</span>
+                    </Link>
+                  </div>
                 </div>
                 <StatsGrid profile={profile} completedCount={completedCount} totalXp={totalXp} />
               </div>
