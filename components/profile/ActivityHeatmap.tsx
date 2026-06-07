@@ -122,7 +122,7 @@ export function ActivityHeatmap({ data, createdAt }: Props) {
       </div>
 
       <div className="bg-surface rounded-card p-6 border border-border/60">
-        <div style={{ overflowX: 'auto', overflowY: 'visible' }}>
+        <div style={{ overflowX: 'auto', overflowY: 'visible', width: 'fit-content' }}>
           <div style={{ display: 'inline-flex', flexDirection: 'column', gap: 0 }}>
 
             {/* Month labels row */}
