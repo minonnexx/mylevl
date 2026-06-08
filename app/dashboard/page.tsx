@@ -35,9 +35,8 @@ export default async function DashboardPage() {
   const todayUTC = new Date()
   todayUTC.setUTCHours(0, 0, 0, 0)
 
-  const [profileRes, dailyMissionsRes, completedRes, completedTodayRes] = await Promise.all([
+  const [profileRes, completedRes, completedTodayRes] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', user.id).single(),
-    supabase.from('missions').select('*').eq('type', 'daily').order('sort_order', { ascending: true, nullsFirst: false }),
     supabase.from('completed_missions').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
     supabase.from('completed_missions').select('mission_id').eq('user_id', user.id).gte('completed_at', todayUTC.toISOString()),
   ])
@@ -62,8 +61,21 @@ export default async function DashboardPage() {
     feed_public: true,
     date_of_birth: null,
     username_changed_at: null,
+    active_pack: null,
     created_at: new Date().toISOString(),
   }
+
+  let dailyMissionsQuery = supabase
+    .from('missions')
+    .select('*')
+    .eq('type', 'daily')
+    .order('sort_order', { ascending: true, nullsFirst: false })
+
+  if (profile.active_pack) {
+    dailyMissionsQuery = dailyMissionsQuery.eq('pack', profile.active_pack)
+  }
+
+  const dailyMissionsRes = await dailyMissionsQuery
 
   const showShieldNotification = !!profile.shield_used_at && !profile.shield_notification_shown
 

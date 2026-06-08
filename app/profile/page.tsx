@@ -5,6 +5,7 @@ import { CLASS_META, getMilestoneProgress, getMilestoneTier } from '@/lib/consta
 import Sidebar from '@/components/dashboard/Sidebar'
 import BottomNav from '@/components/dashboard/BottomNav'
 import { ShareButton } from '@/components/profile/ShareButton'
+import { PackSelector } from '@/components/profile/PackSelector'
 import { ResetProfileButton } from '@/components/profile/ResetProfileButton'
 import { ClassRadarChart } from '@/components/profile/ClassRadarChart'
 import { ActivityHeatmap } from '@/components/profile/ActivityHeatmap'
@@ -433,7 +434,7 @@ export default async function ProfilePage() {
     global_level: 1, current_xp: 0, xp_to_next_level: 100,
     current_streak: 0, longest_streak: 0, total_days_active: 0,
     shield_count: 0, shield_used_at: null, shield_notification_shown: true, feed_public: true,
-    date_of_birth: null, username_changed_at: null, created_at: new Date().toISOString(),
+    date_of_birth: null, username_changed_at: null, active_pack: null, created_at: new Date().toISOString(),
   }
 
   const classProgress = (classProgressRes.data as ClassProgress[] | null) ?? []
@@ -503,6 +504,8 @@ export default async function ProfilePage() {
             <ProfileHeader profile={profile} />
 
             <ShareButton className="w-full" />
+
+            <PackSelector currentPack={profile.active_pack} />
 
             <div className="grid grid-cols-1 md:grid-cols-[1fr_380px] gap-6 items-start">
               <ClassProgressCard classProgress={classProgress} />

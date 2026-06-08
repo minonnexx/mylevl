@@ -10,14 +10,14 @@ import MissionsClient from '@/components/missions/MissionsClient'
 // Inserted automatically if the missions table is empty.
 // Types match the ENUM values in supabase/schema.sql exactly.
 const SEED_MISSIONS: Omit<Mission, 'id'>[] = [
-  { title: 'Meditar 10 minutos',   description: 'Usa una app guiada o simplemente siéntate en silencio y respira.',          life_class: 'mental'     as LifeClass, difficulty: 'easy'   as MissionDifficulty, type: 'daily'       as MissionType, xp_reward: 30,   verification: 'manual', required_level: 1, sort_order: 1 },
-  { title: 'Dormir 7-9 horas',     description: 'Respeta tu ciclo de sueño completo esta noche.',                            life_class: 'fisico'     as LifeClass, difficulty: 'easy'   as MissionDifficulty, type: 'daily'       as MissionType, xp_reward: 40,   verification: 'manual', required_level: 1, sort_order: 2 },
-  { title: 'Lee 20 páginas',       description: 'Cualquier libro físico o digital. Cuenta como misión completada.',           life_class: 'mental'     as LifeClass, difficulty: 'easy'   as MissionDifficulty, type: 'daily'       as MissionType, xp_reward: 45,   verification: 'manual', required_level: 1, sort_order: 3 },
-  { title: 'Sin móvil 2 horas',    description: 'Desconéctate del teléfono durante 2 horas seguidas. Sin notificaciones.',   life_class: 'disciplina' as LifeClass, difficulty: 'medium' as MissionDifficulty, type: 'daily'       as MissionType, xp_reward: 50,   verification: 'manual', required_level: 1, sort_order: 4 },
-  { title: 'Entrena 30 minutos',   description: 'Realiza cualquier tipo de entrenamiento físico durante al menos 30 minutos.', life_class: 'fisico'   as LifeClass, difficulty: 'easy'   as MissionDifficulty, type: 'daily'       as MissionType, xp_reward: 60,   verification: 'manual', required_level: 1, sort_order: 5 },
-  { title: 'Correr un 10K',        description: 'Completa una carrera de 10 kilómetros, al aire libre o en cinta.',          life_class: 'fisico'     as LifeClass, difficulty: 'hard'   as MissionDifficulty, type: 'achievement' as MissionType, xp_reward: 1200, verification: 'manual', required_level: 1, sort_order: null },
-  { title: 'Terminar un libro',    description: 'Lee un libro completo de principio a fin. Cualquier género cuenta.',        life_class: 'mental'     as LifeClass, difficulty: 'medium' as MissionDifficulty, type: 'achievement' as MissionType, xp_reward: 800,  verification: 'manual', required_level: 1, sort_order: null },
-  { title: 'La semana perfecta',   description: 'Completa todas las misiones diarias durante 7 días consecutivos sin fallar.', life_class: 'disciplina' as LifeClass, difficulty: 'boss'   as MissionDifficulty, type: 'boss'       as MissionType, xp_reward: 750,  verification: 'manual', required_level: 1, sort_order: null },
+  { title: 'Meditar 10 minutos',   description: 'Usa una app guiada o simplemente siéntate en silencio y respira.',          life_class: 'mental'     as LifeClass, difficulty: 'easy'   as MissionDifficulty, type: 'daily'       as MissionType, xp_reward: 30,   verification: 'manual', required_level: 1, sort_order: 1,    pack: null },
+  { title: 'Dormir 7-9 horas',     description: 'Respeta tu ciclo de sueño completo esta noche.',                            life_class: 'fisico'     as LifeClass, difficulty: 'easy'   as MissionDifficulty, type: 'daily'       as MissionType, xp_reward: 40,   verification: 'manual', required_level: 1, sort_order: 2,    pack: null },
+  { title: 'Lee 20 páginas',       description: 'Cualquier libro físico o digital. Cuenta como misión completada.',           life_class: 'mental'     as LifeClass, difficulty: 'easy'   as MissionDifficulty, type: 'daily'       as MissionType, xp_reward: 45,   verification: 'manual', required_level: 1, sort_order: 3,    pack: null },
+  { title: 'Sin móvil 2 horas',    description: 'Desconéctate del teléfono durante 2 horas seguidas. Sin notificaciones.',   life_class: 'disciplina' as LifeClass, difficulty: 'medium' as MissionDifficulty, type: 'daily'       as MissionType, xp_reward: 50,   verification: 'manual', required_level: 1, sort_order: 4,    pack: null },
+  { title: 'Entrena 30 minutos',   description: 'Realiza cualquier tipo de entrenamiento físico durante al menos 30 minutos.', life_class: 'fisico'   as LifeClass, difficulty: 'easy'   as MissionDifficulty, type: 'daily'       as MissionType, xp_reward: 60,   verification: 'manual', required_level: 1, sort_order: 5,    pack: null },
+  { title: 'Correr un 10K',        description: 'Completa una carrera de 10 kilómetros, al aire libre o en cinta.',          life_class: 'fisico'     as LifeClass, difficulty: 'hard'   as MissionDifficulty, type: 'achievement' as MissionType, xp_reward: 1200, verification: 'manual', required_level: 1, sort_order: null, pack: null },
+  { title: 'Terminar un libro',    description: 'Lee un libro completo de principio a fin. Cualquier género cuenta.',        life_class: 'mental'     as LifeClass, difficulty: 'medium' as MissionDifficulty, type: 'achievement' as MissionType, xp_reward: 800,  verification: 'manual', required_level: 1, sort_order: null, pack: null },
+  { title: 'La semana perfecta',   description: 'Completa todas las misiones diarias durante 7 días consecutivos sin fallar.', life_class: 'disciplina' as LifeClass, difficulty: 'boss'   as MissionDifficulty, type: 'boss'       as MissionType, xp_reward: 750,  verification: 'manual', required_level: 1, sort_order: null, pack: null },
 ]
 
 // ─── Page ───────────────────────────────────────────────────────────────────
@@ -26,13 +26,34 @@ export default async function MissionsPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth')
 
+  // ── User profile (needed before mission query for pack filter) ───────────────
+  const todayUTC = new Date()
+  todayUTC.setUTCHours(0, 0, 0, 0)
+
+  const [profileRes, completedToday] = await Promise.all([
+    supabase.from('profiles').select('username, global_level, current_streak, active_pack').eq('id', user.id).single(),
+    supabase.from('completed_missions').select('mission_id').eq('user_id', user.id).gte('completed_at', todayUTC.toISOString()),
+  ])
+
+  const profile = profileRes.data
+  const username      = profile?.username ?? user.email?.split('@')[0] ?? 'jugador'
+  const level         = (profile as { global_level?: number } | null)?.global_level ?? 1
+  const currentStreak = (profile as { current_streak?: number } | null)?.current_streak ?? 0
+  const activePack    = (profile as { active_pack?: string | null } | null)?.active_pack ?? null
+
   // ── Fetch missions ────────────────────────────────────────────────────────
-  let { data: missions } = await supabase
+  let missionsQuery = supabase
     .from('missions')
     .select('*')
     .order('type')
     .order('sort_order', { ascending: true, nullsFirst: false })
     .order('xp_reward')
+
+  if (activePack) {
+    missionsQuery = missionsQuery.or(`type.neq.daily,pack.eq.${activePack}`)
+  }
+
+  let { data: missions } = await missionsQuery
 
   // ── Auto-seed if empty (requires SUPABASE_SERVICE_ROLE_KEY) ───────────────
   if (!missions?.length) {
@@ -47,27 +68,7 @@ export default async function MissionsPage() {
   }
 
   // ── Completed today (UTC midnight boundary) ────────────────────────────────
-  const todayUTC = new Date()
-  todayUTC.setUTCHours(0, 0, 0, 0)
-
-  const { data: completedToday } = await supabase
-    .from('completed_missions')
-    .select('mission_id')
-    .eq('user_id', user.id)
-    .gte('completed_at', todayUTC.toISOString())
-
-  const completedTodayIds = completedToday?.map((c) => c.mission_id as string) ?? []
-
-  // ── User profile (for header) ──────────────────────────────────────────────
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('username, global_level, current_streak')
-    .eq('id', user.id)
-    .single()
-
-  const username      = profile?.username ?? user.email?.split('@')[0] ?? 'jugador'
-  const level         = (profile as { global_level?: number } | null)?.global_level ?? 1
-  const currentStreak = (profile as { current_streak?: number } | null)?.current_streak ?? 0
+  const completedTodayIds = completedToday.data?.map((c) => c.mission_id as string) ?? []
 
   return (
     <div className="flex min-h-screen bg-background">

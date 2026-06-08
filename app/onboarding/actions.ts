@@ -2,10 +2,12 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import type { PackId } from '@/types/supabase'
 
 export async function completeOnboarding(
   username: string,
   dateOfBirth: string,
+  activePack: PackId,
 ): Promise<{ error: string } | undefined> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -34,7 +36,13 @@ export async function completeOnboarding(
 
   await supabase
     .from('profiles')
-    .update({ username, onboarding_completed: true, date_of_birth: dateOfBirth, username_changed_at: new Date().toISOString() })
+    .update({
+      username,
+      onboarding_completed: true,
+      date_of_birth: dateOfBirth,
+      username_changed_at: new Date().toISOString(),
+      active_pack: activePack,
+    })
     .eq('id', user.id)
 
   redirect('/dashboard')

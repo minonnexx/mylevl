@@ -3,7 +3,28 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
+import { revalidatePath } from 'next/cache'
 import { xpToNextLevel } from '@/lib/xp'
+import type { PackId } from '@/types/supabase'
+
+export async function changeActivePack(
+  pack: PackId,
+): Promise<{ error: string } | undefined> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/auth')
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ active_pack: pack })
+    .eq('id', user.id)
+
+  if (error) return { error: 'No se pudo cambiar el pack. Inténtalo de nuevo.' }
+
+  revalidatePath('/profile')
+  revalidatePath('/dashboard')
+  revalidatePath('/missions')
+}
 
 export async function resetProfileAction(): Promise<void> {
   if (process.env.NODE_ENV !== 'development') return

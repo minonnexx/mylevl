@@ -2,8 +2,10 @@
 
 import { useRef, useState, useTransition } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { Sword, Zap, Shield, User } from 'lucide-react'
+import { Sword, Zap, Shield, User, Dumbbell, BookOpen, Star } from 'lucide-react'
 import { completeOnboarding } from '@/app/onboarding/actions'
+import { PACK_LIST } from '@/lib/constants/packs'
+import type { PackId } from '@/types/supabase'
 
 const inputClass =
   'w-full bg-surface-elevated border border-border rounded-component px-4 py-3 text-sm ' +
@@ -40,14 +42,20 @@ const STEPS = [
   },
 ] as const
 
+const PACK_ICONS: Record<PackId, React.ElementType> = {
+  guerrero: Dumbbell,
+  sabio: BookOpen,
+  monje: Shield,
+  heroe: Star,
+}
+
 const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,20}$/
 
-function UsernameStep() {
+function UsernameStep({ onNext }: { onNext: (username: string, dateOfBirth: string) => void }) {
   const [username, setUsername] = useState('')
   const [dateOfBirth, setDateOfBirth] = useState('')
   const [usernameError, setUsernameError] = useState('')
   const [dobError, setDobError] = useState('')
-  const [isPending, startTransition] = useTransition()
 
   const handleUsernameChange = (val: string) => {
     setUsername(val)
@@ -95,11 +103,7 @@ function UsernameStep() {
     }
 
     if (!valid) return
-
-    startTransition(async () => {
-      const result = await completeOnboarding(trimmed, dateOfBirth)
-      if (result?.error) setUsernameError(result.error)
-    })
+    onNext(trimmed, dateOfBirth)
   }
 
   return (
@@ -149,7 +153,91 @@ function UsernameStep() {
       </div>
       <button
         onClick={handleSubmit}
-        disabled={isPending}
+        className="w-full bg-accent text-white font-semibold py-3 rounded-component hover:opacity-90 active:scale-[0.98] transition-all duration-150"
+      >
+        Siguiente
+      </button>
+    </div>
+  )
+}
+
+function PackStep({
+  username,
+  dateOfBirth,
+}: {
+  username: string
+  dateOfBirth: string
+}) {
+  const [selected, setSelected] = useState<PackId | null>(null)
+  const [isPending, startTransition] = useTransition()
+
+  const handleConfirm = () => {
+    if (!selected) return
+    startTransition(async () => {
+      await completeOnboarding(username, dateOfBirth, selected)
+    })
+  }
+
+  return (
+    <div className="flex flex-col gap-6 w-full">
+      <div className="text-center flex flex-col gap-2">
+        <h1 className="text-2xl font-semibold text-text-primary">Elige tu camino</h1>
+        <p className="text-sm text-text-muted">Podrás cambiarlo en cualquier momento desde tu perfil</p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        {PACK_LIST.map(pack => {
+          const Icon = PACK_ICONS[pack.id]
+          const isSelected = selected === pack.id
+
+          return (
+            <button
+              key={pack.id}
+              onClick={() => setSelected(pack.id)}
+              className="flex flex-col gap-3 p-4 rounded-card text-left transition-all duration-150"
+              style={{
+                background: 'var(--color-surface)',
+                border: isSelected
+                  ? '2px solid var(--color-accent)'
+                  : '1px solid var(--color-border)',
+                outline: 'none',
+              }}
+            >
+              <Icon
+                size={24}
+                strokeWidth={1.5}
+                style={{ color: isSelected ? 'var(--color-accent)' : 'var(--color-text-muted)' }}
+              />
+              <div className="flex flex-col gap-1">
+                <p
+                  className="text-sm font-semibold"
+                  style={{ color: isSelected ? 'var(--color-accent)' : 'var(--color-text-primary)' }}
+                >
+                  {pack.label}
+                </p>
+                <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+                  {pack.subtitle}
+                </p>
+              </div>
+              <ul className="flex flex-col gap-0.5">
+                {pack.missions.map(m => (
+                  <li key={m} className="text-[11px] text-text-muted flex items-start gap-1.5">
+                    <span
+                      className="mt-[3px] w-1 h-1 rounded-full flex-shrink-0"
+                      style={{ background: 'var(--color-text-muted)' }}
+                    />
+                    {m}
+                  </li>
+                ))}
+              </ul>
+            </button>
+          )
+        })}
+      </div>
+
+      <button
+        onClick={handleConfirm}
+        disabled={!selected || isPending}
         className="w-full bg-accent text-white font-semibold py-3 rounded-component hover:opacity-90 active:scale-[0.98] transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
       >
         {isPending ? (
@@ -170,6 +258,7 @@ function UsernameStep() {
 
 export function OnboardingFlow() {
   const [step, setStep] = useState(0)
+  const [userData, setUserData] = useState<{ username: string; dateOfBirth: string } | null>(null)
 
   const goNext = () => setStep(s => s + 1)
   const skipToUsername = () => setStep(3)
@@ -181,12 +270,13 @@ export function OnboardingFlow() {
   }
 
   function handleTouchEnd(e: React.TouchEvent) {
-    // Disable swipe on username step (step 3) to avoid interfering with input
-    if (step === 3) return
+    if (step >= 3) return
     const dx = e.changedTouches[0].clientX - touchStartX.current
     if (dx < -50 && step < 3) setStep(s => s + 1)
     else if (dx > 50 && step > 0) setStep(s => s - 1)
   }
+
+  const TOTAL_STEPS = 5
 
   return (
     <div
@@ -194,7 +284,6 @@ export function OnboardingFlow() {
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Skip button — visible en pasos 0-2 */}
       {step < 3 && (
         <button
           onClick={skipToUsername}
@@ -205,7 +294,6 @@ export function OnboardingFlow() {
       )}
 
       <div className="w-full max-w-sm flex flex-col items-center gap-10">
-        {/* Contenido animado */}
         <div className="w-full">
           <AnimatePresence mode="wait">
             <motion.div
@@ -239,16 +327,25 @@ export function OnboardingFlow() {
                     </div>
                   )
                 })()
+              ) : step === 3 ? (
+                <UsernameStep
+                  onNext={(username, dateOfBirth) => {
+                    setUserData({ username, dateOfBirth })
+                    setStep(4)
+                  }}
+                />
               ) : (
-                <UsernameStep />
+                <PackStep
+                  username={userData?.username ?? ''}
+                  dateOfBirth={userData?.dateOfBirth ?? ''}
+                />
               )}
             </motion.div>
           </AnimatePresence>
         </div>
 
-        {/* Indicador de progreso */}
         <div className="flex gap-2" role="tablist" aria-label="Progreso del onboarding">
-          {[0, 1, 2, 3].map(i => (
+          {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
             <div
               key={i}
               role="tab"

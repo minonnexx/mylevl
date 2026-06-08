@@ -2,6 +2,7 @@ export type LifeClass = 'fisico' | 'mental' | 'disciplina'
 export type MissionDifficulty = 'easy' | 'medium' | 'hard' | 'boss'
 export type MissionType = 'daily' | 'streak' | 'achievement' | 'boss'
 export type VerificationType = 'healthkit' | 'health_connect' | 'manual'
+export type PackId = 'guerrero' | 'sabio' | 'monje' | 'heroe'
 
 export interface Profile {
   id: string
@@ -20,6 +21,7 @@ export interface Profile {
   feed_public: boolean
   date_of_birth: string | null
   username_changed_at: string | null
+  active_pack: 'guerrero' | 'sabio' | 'monje' | 'heroe' | null
   created_at: string
 }
 
@@ -56,6 +58,7 @@ export interface Mission {
   verification: VerificationType
   required_level: number
   sort_order: number | null
+  pack: string | null
 }
 
 export interface ClassProgress {
