@@ -27,25 +27,22 @@ const DIFF_META: Record<MissionDifficulty, { label: string; text: string; bg: st
 }
 
 const SECTION_META: Partial<Record<MissionType, { title: string; isBoss: boolean }>> = {
-  daily:       { title: 'Misiones diarias',  isBoss: false },
-  streak:      { title: 'Misiones de racha', isBoss: false },
-  achievement: { title: 'Logros únicos',     isBoss: false },
-  boss:        { title: 'Jefe semanal',      isBoss: true  },
+  daily:  { title: 'Misiones diarias',  isBoss: false },
+  streak: { title: 'Misiones de racha', isBoss: false },
 }
 
-const TYPE_ORDER: MissionType[] = ['daily', 'streak', 'achievement', 'boss']
+const TYPE_ORDER: MissionType[] = ['daily', 'streak']
 
-type FilterValue = 'all' | 'fisico' | 'mental' | 'disciplina' | 'easy' | 'medium' | 'hard' | 'boss'
+type FilterValue = 'all' | 'fisico' | 'mental' | 'disciplina' | 'easy' | 'medium' | 'hard'
 
 const FILTER_PILLS: { value: FilterValue; label: string }[] = [
-  { value: 'all',        label: 'Todas'     },
-  { value: 'fisico',     label: 'Físico'    },
-  { value: 'mental',     label: 'Mental'    },
-  { value: 'disciplina', label: 'Disciplina'},
-  { value: 'easy',       label: 'Fácil'     },
-  { value: 'medium',     label: 'Medio'     },
-  { value: 'hard',       label: 'Difícil'   },
-  { value: 'boss',       label: 'Jefe'      },
+  { value: 'all',        label: 'Todas'      },
+  { value: 'fisico',     label: 'Físico'     },
+  { value: 'mental',     label: 'Mental'     },
+  { value: 'disciplina', label: 'Disciplina' },
+  { value: 'easy',       label: 'Fácil'      },
+  { value: 'medium',     label: 'Medio'      },
+  { value: 'hard',       label: 'Difícil'    },
 ]
 
 // ─── Badge components ────────────────────────────────────────────────────────

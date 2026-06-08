@@ -44,10 +44,11 @@ export default async function MissionsPage() {
   const feedPublic    = (profile as { feed_public?: boolean } | null)?.feed_public ?? true
   const usernameChangedAt = (profile as { username_changed_at?: string | null } | null)?.username_changed_at ?? null
 
-  // ── Fetch missions ────────────────────────────────────────────────────────
+  // ── Fetch missions (daily + streak only — achievements/boss live in /achievements) ──
   let missionsQuery = supabase
     .from('missions')
     .select('*')
+    .in('type', ['daily', 'streak'])
     .order('type')
     .order('sort_order', { ascending: true, nullsFirst: false })
     .order('xp_reward')
