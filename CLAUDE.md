@@ -85,3 +85,6 @@ Nunca definir CLASS_META localmente en un componente o página
 - No duplicar CLASS_META fuera de lib/constants/classes.ts
 - No usar bottom navigation (es webapp de escritorio)
 - No usar localStorage (usar Supabase)
+
+## Lo que DEBES hacer
+- Escribirme siempre en español para entender al 100% lo que planteas, editas, escribes...

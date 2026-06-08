@@ -30,7 +30,11 @@
       "Read(//d/d/PROYECTO APP/logros-reales-app/**)",
       "Bash(git -C \"d:\\\\PROYECTO APP\\\\logros-reales-app\" add .)",
       "Bash(git -C \"d:\\\\PROYECTO APP\\\\logros-reales-app\" commit -m \"feat: add recap link to profile stats grid\")",
-      "Bash(git -C \"d:\\\\PROYECTO APP\\\\logros-reales-app\" push)"
+      "Bash(git -C \"d:\\\\PROYECTO APP\\\\logros-reales-app\" push)",
+      "Bash(Remove-Item \"d:\\\\PROYECTO APP\\\\logros-reales-app\\\\components\\\\ui\\\\ShieldToast.tsx\")",
+      "PowerShell(Remove-Item \"d:\\\\PROYECTO APP\\\\logros-reales-app\\\\components\\\\ui\\\\ShieldToast.tsx\" -Confirm:$false)",
+      "Bash(findstr recharts *)",
+      "Bash(npx next *)"
     ]
   }
 }

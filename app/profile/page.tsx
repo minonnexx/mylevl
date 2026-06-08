@@ -67,16 +67,6 @@ function ClassBadge({ lifeClass }: { lifeClass: LifeClass }) {
 function ProfileHeader({ profile }: { profile: Profile }) {
   const initials = (profile.username ?? 'JU').slice(0, 2).toUpperCase()
 
-  let nextUsernameChangeDate: string | null = null
-  if (profile.username_changed_at) {
-    const changedAt = new Date(profile.username_changed_at)
-    const daysSince = (Date.now() - changedAt.getTime()) / (1000 * 60 * 60 * 24)
-    if (daysSince < 30) {
-      const nextChange = new Date(changedAt.getTime() + 30 * 24 * 60 * 60 * 1000)
-      nextUsernameChangeDate = nextChange.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })
-    }
-  }
-
   return (
     <section
       className="bg-surface rounded-card p-6 border border-border/60"
@@ -98,11 +88,6 @@ function ProfileHeader({ profile }: { profile: Profile }) {
         <div className="min-w-0 flex-1">
           <p className="font-semibold text-text-primary truncate">{profile.username ?? 'Jugador'}</p>
           <p className="text-xs text-text-muted mt-0.5">Nivel {profile.global_level} · Jugador</p>
-          {nextUsernameChangeDate && (
-            <p className="text-sm mt-1" style={{ color: 'var(--color-text-muted)' }}>
-              Podrás cambiar tu nombre de usuario el {nextUsernameChangeDate}
-            </p>
-          )}
         </div>
         <ShieldIndicator
           shieldCount={profile.shield_count}
