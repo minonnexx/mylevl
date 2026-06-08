@@ -19,6 +19,7 @@ export interface Profile {
   shield_notification_shown: boolean
   feed_public: boolean
   date_of_birth: string | null
+  username_changed_at: string | null
   created_at: string
 }
 

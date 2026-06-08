@@ -20,8 +20,9 @@ CREATE TABLE profiles (
   xp_to_next_level  INTEGER     NOT NULL DEFAULT 100,
   current_streak    INTEGER     NOT NULL DEFAULT 0,
   longest_streak    INTEGER     NOT NULL DEFAULT 0,
-  total_days_active INTEGER     NOT NULL DEFAULT 0,
-  created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  total_days_active    INTEGER     NOT NULL DEFAULT 0,
+  username_changed_at  TIMESTAMPTZ,
+  created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE class_progress (

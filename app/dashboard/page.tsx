@@ -61,6 +61,7 @@ export default async function DashboardPage() {
     shield_notification_shown: true,
     feed_public: true,
     date_of_birth: null,
+    username_changed_at: null,
     created_at: new Date().toISOString(),
   }
 

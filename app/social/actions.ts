@@ -10,7 +10,7 @@ export async function searchUser(username: string) {
   const { data } = await supabase
     .from('profiles')
     .select('id, username, global_level, current_streak')
-    .eq('username', username)
+    .ilike('username', username)
     .neq('id', user.id)
     .maybeSingle()
 

@@ -87,6 +87,9 @@ function UsernameStep() {
         if (age < 13) {
           setDobError('Debes tener al menos 13 años para usar MyLevl')
           valid = false
+        } else if (age > 80) {
+          setDobError('La fecha de nacimiento no es válida')
+          valid = false
         }
       }
     }
@@ -134,6 +137,7 @@ function UsernameStep() {
             type="date"
             value={dateOfBirth}
             onChange={e => handleDobChange(e.target.value)}
+            min={(() => { const d = new Date(); d.setFullYear(d.getFullYear() - 80); return d.toISOString().slice(0, 10) })()}
             max={new Date().toISOString().slice(0, 10)}
             className={dateInputClass}
             style={{ colorScheme: 'dark' }}
