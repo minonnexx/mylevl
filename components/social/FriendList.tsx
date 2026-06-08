@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Users, UserMinus, Flame, User } from 'lucide-react'
+import { Users, UserMinus, UserPlus, Flame, User } from 'lucide-react'
 import { toast } from 'sonner'
 import { removeFriend } from '@/app/social/actions'
 
@@ -29,9 +29,10 @@ export function FriendList({ friends }: { friends: Friend[] }) {
 
       {friends.length === 0 ? (
         <div className="flex flex-col items-center gap-2 py-6 text-center">
-          <Users size={32} strokeWidth={1.5} style={{ color: 'var(--color-text-muted)' }} aria-hidden />
+          <UserPlus size={32} strokeWidth={1.5} style={{ color: 'var(--color-text-muted)' }} aria-hidden />
+          <p className="text-base font-semibold text-text-primary">Aún no tienes compañeros</p>
           <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
-            Aún no tienes amigos — búscalos por username
+            Busca a alguien por su nombre de héroe y empieza tu aventura juntos
           </p>
         </div>
       ) : (

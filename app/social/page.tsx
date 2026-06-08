@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { Rss } from 'lucide-react'
+import { Users, Search } from 'lucide-react'
 import Sidebar from '@/components/dashboard/Sidebar'
 import BottomNav from '@/components/dashboard/BottomNav'
 import { FriendSearch } from '@/components/social/FriendSearch'
@@ -66,13 +66,26 @@ export default async function SocialPage() {
 
                 {feed.length === 0 ? (
                   <div
-                    className="rounded-card p-10 border border-border/60 flex flex-col items-center gap-3 text-center"
+                    className="rounded-card p-6 border border-border/60 flex flex-col items-center gap-3 text-center"
                     style={{ background: 'var(--color-surface)' }}
                   >
-                    <Rss size={36} strokeWidth={1.5} style={{ color: 'var(--color-text-muted)' }} aria-hidden />
+                    <Users size={32} strokeWidth={1.5} style={{ color: 'var(--color-text-muted)' }} aria-hidden />
+                    <p className="text-base font-semibold text-text-primary">Tu feed está vacío</p>
                     <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
-                      Añade amigos para ver su actividad aquí
+                      Añade amigos para ver cuando suban de nivel, completen misiones o alcancen nuevas rachas
                     </p>
+                    <a
+                      href="#friend-search"
+                      className="mt-1 inline-flex items-center gap-2 h-9 px-4 rounded-component text-sm font-medium transition-colors"
+                      style={{
+                        background: 'color-mix(in srgb, var(--color-accent) 15%, transparent)',
+                        color: 'var(--color-accent)',
+                        border: '1px solid color-mix(in srgb, var(--color-accent) 25%, transparent)',
+                      }}
+                    >
+                      <Search size={14} aria-hidden />
+                      Buscar compañeros
+                    </a>
                   </div>
                 ) : (
                   feed.map(event => (
