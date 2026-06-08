@@ -3,7 +3,7 @@
 import { useRef, useState, useTransition } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { Sword, Zap, Shield, User, Dumbbell, BookOpen, Star } from 'lucide-react'
-import { completeOnboarding } from '@/app/onboarding/actions'
+import { completeOnboarding, checkUsernameAvailable } from '@/app/onboarding/actions'
 import { PACK_LIST } from '@/lib/constants/packs'
 import type { PackId } from '@/types/supabase'
 
@@ -56,6 +56,7 @@ function UsernameStep({ onNext }: { onNext: (username: string, dateOfBirth: stri
   const [dateOfBirth, setDateOfBirth] = useState('')
   const [usernameError, setUsernameError] = useState('')
   const [dobError, setDobError] = useState('')
+  const [isChecking, setIsChecking] = useState(false)
 
   const handleUsernameChange = (val: string) => {
     setUsername(val)
@@ -67,7 +68,7 @@ function UsernameStep({ onNext }: { onNext: (username: string, dateOfBirth: stri
     if (dobError) setDobError('')
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     let valid = true
 
     const trimmed = (username ?? '').trim()
@@ -103,6 +104,18 @@ function UsernameStep({ onNext }: { onNext: (username: string, dateOfBirth: stri
     }
 
     if (!valid) return
+
+    setIsChecking(true)
+    try {
+      const { available } = await checkUsernameAvailable(trimmed)
+      if (!available) {
+        setUsernameError('Este nombre de héroe ya está en uso')
+        return
+      }
+    } finally {
+      setIsChecking(false)
+    }
+
     onNext(trimmed, dateOfBirth)
   }
 
@@ -144,7 +157,7 @@ function UsernameStep({ onNext }: { onNext: (username: string, dateOfBirth: stri
             min={(() => { const d = new Date(); d.setFullYear(d.getFullYear() - 80); return d.toISOString().slice(0, 10) })()}
             max={new Date().toISOString().slice(0, 10)}
             className={dateInputClass}
-            style={{ colorScheme: 'dark' }}
+            style={{ colorScheme: 'dark', width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}
           />
           {dobError ? (
             <p className="text-xs text-error text-left">{dobError}</p>
@@ -155,9 +168,20 @@ function UsernameStep({ onNext }: { onNext: (username: string, dateOfBirth: stri
       </div>
       <button
         onClick={handleSubmit}
-        className="w-full bg-accent text-white font-semibold py-3 rounded-component hover:opacity-90 active:scale-[0.98] transition-all duration-150"
+        disabled={isChecking}
+        className="w-full bg-accent text-white font-semibold py-3 rounded-component hover:opacity-90 active:scale-[0.98] transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
       >
-        Siguiente
+        {isChecking ? (
+          <span className="flex items-center justify-center gap-2">
+            <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden>
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity="0.25" strokeWidth="3" />
+              <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+            </svg>
+            Verificando…
+          </span>
+        ) : (
+          'Siguiente'
+        )}
       </button>
     </div>
   )

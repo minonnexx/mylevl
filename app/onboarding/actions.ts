@@ -4,6 +4,21 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import type { PackId } from '@/types/supabase'
 
+export async function checkUsernameAvailable(username: string): Promise<{ available: boolean }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const query = supabase
+    .from('profiles')
+    .select('id')
+    .eq('username', username)
+
+  if (user) query.neq('id', user.id)
+
+  const { data } = await query.maybeSingle()
+  return { available: data === null }
+}
+
 export async function completeOnboarding(
   username: string,
   dateOfBirth: string,
