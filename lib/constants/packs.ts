@@ -13,7 +13,7 @@ export const PACK_META: Record<PackId, PackMeta> = {
   guerrero: {
     id: 'guerrero',
     label: 'Guerrero',
-    subtitle: 'Entrena tu cuerpo',
+    subtitle: 'Forja tu cuerpo día a día',
     missions: [
       'Entrena 30 minutos',
       'Correr 5 km',
@@ -25,7 +25,7 @@ export const PACK_META: Record<PackId, PackMeta> = {
   sabio: {
     id: 'sabio',
     label: 'Sabio',
-    subtitle: 'Entrena tu mente',
+    subtitle: 'Entrena tu mente sin límites',
     missions: [
       'Lee 20 páginas',
       'Estudia 45 minutos',
@@ -37,7 +37,7 @@ export const PACK_META: Record<PackId, PackMeta> = {
   monje: {
     id: 'monje',
     label: 'Monje',
-    subtitle: 'Entrena tu disciplina',
+    subtitle: 'Domina tu disciplina',
     missions: [
       'Meditar 10 minutos',
       'Sin móvil 2 horas',
@@ -49,7 +49,7 @@ export const PACK_META: Record<PackId, PackMeta> = {
   heroe: {
     id: 'heroe',
     label: 'Héroe',
-    subtitle: 'Entrénalo todo',
+    subtitle: 'El camino más difícil. El más recompensado.',
     missions: [
       'Entrena 30 minutos',
       'Lee 20 páginas',

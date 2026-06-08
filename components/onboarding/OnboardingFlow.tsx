@@ -22,7 +22,7 @@ const dateInputClass =
 const STEPS = [
   {
     icon: Sword,
-    title: 'Bienvenido a mylevl',
+    title: 'Tu aventura empieza aquí',
     description: 'Convierte tus hábitos en misiones. Sube de nivel en la vida real.',
     buttonLabel: 'Empezar',
   },
@@ -116,7 +116,7 @@ function UsernameStep({ onNext }: { onNext: (username: string, dateOfBirth: stri
       </div>
       <div className="flex flex-col gap-5 w-full">
         <h1 className="text-2xl font-semibold text-text-primary">
-          ¿Cómo quieres que te llamen?
+          Elige tu nombre de héroe
         </h1>
         <div className="flex flex-col gap-1.5">
           <input
@@ -124,7 +124,7 @@ function UsernameStep({ onNext }: { onNext: (username: string, dateOfBirth: stri
             value={username}
             onChange={e => handleUsernameChange(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-            placeholder="Tu nombre de jugador"
+            placeholder="darkwolf, ironmind..."
             maxLength={20}
             autoFocus
             className={inputClass}
@@ -135,7 +135,7 @@ function UsernameStep({ onNext }: { onNext: (username: string, dateOfBirth: stri
         </div>
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-medium text-text-muted text-left">
-            Fecha de nacimiento
+            ¿Cuándo nació el héroe?
           </label>
           <input
             type="date"
@@ -146,8 +146,10 @@ function UsernameStep({ onNext }: { onNext: (username: string, dateOfBirth: stri
             className={dateInputClass}
             style={{ colorScheme: 'dark' }}
           />
-          {dobError && (
+          {dobError ? (
             <p className="text-xs text-error text-left">{dobError}</p>
+          ) : (
+            <p className="text-xs text-text-muted text-left">Solo tú verás este dato</p>
           )}
         </div>
       </div>
@@ -182,7 +184,7 @@ function PackStep({
     <div className="flex flex-col gap-6 w-full">
       <div className="text-center flex flex-col gap-2">
         <h1 className="text-2xl font-semibold text-text-primary">Elige tu camino</h1>
-        <p className="text-sm text-text-muted">Podrás cambiarlo en cualquier momento desde tu perfil</p>
+        <p className="text-sm text-text-muted">Cada pack es un estilo de vida. Podrás cambiarlo cuando quieras.</p>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
