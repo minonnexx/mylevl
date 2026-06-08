@@ -157,7 +157,7 @@ function UsernameStep({ onNext }: { onNext: (username: string, dateOfBirth: stri
             min={(() => { const d = new Date(); d.setFullYear(d.getFullYear() - 80); return d.toISOString().slice(0, 10) })()}
             max={new Date().toISOString().slice(0, 10)}
             className={dateInputClass}
-            style={{ colorScheme: 'dark', width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}
+            style={{ colorScheme: 'dark', width: '100%', maxWidth: '100%', boxSizing: 'border-box', WebkitAppearance: 'none', appearance: 'none' }}
           />
           {dobError ? (
             <p className="text-xs text-error text-left">{dobError}</p>
