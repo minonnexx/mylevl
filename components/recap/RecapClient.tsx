@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Flame, ShieldCheck, Swords, Trophy, Dumbbell, Sword } from 'lucide-react'
+import Link from 'next/link'
+import { Flame, ShieldCheck, Swords, Trophy, Dumbbell, Sword, Home } from 'lucide-react'
 import { CLASS_META } from '@/lib/constants/classes'
 import type { DaySummary, MissionSummaryItem } from '@/lib/recap'
 import type { LifeClass, Profile } from '@/types/supabase'
@@ -156,6 +157,33 @@ function MiniHeatmap({ data, cols }: { data: DayActivity[]; cols: number }) {
   )
 }
 
+// ─── Motivational CTA ────────────────────────────────────────────────────────
+
+function MotivationalCTA({ message, showButton }: { message: string; showButton: boolean }) {
+  return (
+    <div
+      className="rounded-card p-6 border border-border/60 flex flex-col items-center gap-4 text-center"
+      style={{ backgroundColor: 'var(--color-surface)' }}
+    >
+      <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>{message}</p>
+      {showButton && (
+        <Link
+          href="/dashboard"
+          className="w-full flex items-center justify-center gap-2 rounded-component px-4 py-2 text-sm font-medium transition-colors"
+          style={{
+            border: '1px solid var(--color-border)',
+            color: 'var(--color-text-muted)',
+            backgroundColor: 'transparent',
+          }}
+        >
+          <Home size={14} aria-hidden />
+          Ir al dashboard
+        </Link>
+      )}
+    </div>
+  )
+}
+
 // ─── Daily view ───────────────────────────────────────────────────────────────
 
 function DailyView({ daySummary, profile }: { daySummary: DaySummary; profile: Profile }) {
@@ -251,6 +279,18 @@ function DailyView({ daySummary, profile }: { daySummary: DaySummary; profile: P
           />
         </section>
       )}
+
+      {/* Motivational CTA */}
+      <MotivationalCTA
+        message={
+          daySummary.missionsCompleted === 0
+            ? 'Hoy no has completado ninguna misión — mañana es otro día'
+            : allDone
+            ? 'Lo has dado todo hoy. Vuelve mañana para seguir.'
+            : 'Todavía puedes completar tus misiones de hoy'
+        }
+        showButton={!allDone}
+      />
     </div>
   )
 }
@@ -352,6 +392,16 @@ function WeeklyView({ weekData }: { weekData: WeekData }) {
           </div>
         </div>
       </section>
+
+      {/* Motivational CTA */}
+      <MotivationalCTA
+        message={
+          weekData.currentStreak > 0
+            ? `Llevas ${weekData.currentStreak} días consecutivos — no lo rompas`
+            : 'Esta semana puedes hacerlo mejor. Empieza hoy.'
+        }
+        showButton
+      />
     </div>
   )
 }
@@ -452,6 +502,12 @@ function MonthlyView({ monthData }: { monthData: MonthData }) {
           </p>
         </div>
       </section>
+
+      {/* Motivational CTA */}
+      <MotivationalCTA
+        message={`Llevas ${monthData.activeDays} días activos este mes. Sigue construyendo tu mejor versión.`}
+        showButton
+      />
     </div>
   )
 }
