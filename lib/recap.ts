@@ -30,18 +30,24 @@ export async function getDaySummary(
   const todayStart = new Date()
   todayStart.setUTCHours(0, 0, 0, 0)
 
-  const [totalDailyRes, completedTodayRes, profileRes] = await Promise.all([
-    supabase.from('missions').select('id').eq('type', 'daily'),
+  // Profile fetched first to know active_pack before querying daily mission total
+  type ProfileSnap = { current_streak: number; shield_count: number; active_pack: string | null }
+  const profileRes = await supabase
+    .from('profiles')
+    .select('current_streak, shield_count, active_pack')
+    .eq('id', userId)
+    .single()
+  const snap = profileRes.data as ProfileSnap | null
+  const activePack = snap?.active_pack ?? null
+
+  const dailyBaseQuery = supabase.from('missions').select('id').eq('type', 'daily')
+  const [totalDailyRes, completedTodayRes] = await Promise.all([
+    activePack ? dailyBaseQuery.eq('pack', activePack) : dailyBaseQuery,
     supabase
       .from('completed_missions')
       .select('mission_id, missions(title, xp_reward, life_class, difficulty, type)')
       .eq('user_id', userId)
       .gte('completed_at', todayStart.toISOString()),
-    supabase
-      .from('profiles')
-      .select('current_streak, shield_count')
-      .eq('id', userId)
-      .single(),
   ])
 
   type CompletedRow = {
@@ -86,9 +92,6 @@ export async function getDaySummary(
       achievements.push(item)
     }
   }
-
-  type ProfileSnap = { current_streak: number; shield_count: number }
-  const snap = profileRes.data as ProfileSnap | null
 
   return {
     xpEarnedToday,

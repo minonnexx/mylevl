@@ -49,7 +49,7 @@ export default async function RecapPage() {
     supabase.from('profiles').select('*').eq('id', user.id).single(),
     supabase
       .from('completed_missions')
-      .select('completed_at, missions(xp_reward, life_class, difficulty)')
+      .select('completed_at, missions(xp_reward, life_class, difficulty, type, pack)')
       .eq('user_id', user.id)
       .gte('completed_at', monthStart.toISOString())
       .order('completed_at', { ascending: true }),
@@ -74,7 +74,7 @@ export default async function RecapPage() {
 
   type MonthRow = {
     completed_at: string
-    missions: { xp_reward: number; life_class: string; difficulty: string } | null
+    missions: { xp_reward: number; life_class: string; difficulty: string; type: string; pack: string | null } | null
   }
   const monthRows = (completedMonthRes.data ?? []) as unknown as MonthRow[]
 
@@ -89,6 +89,7 @@ export default async function RecapPage() {
 
   for (const row of weekRows) {
     if (!row.missions) continue
+    if (row.missions.type === 'daily' && row.missions.pack !== profile.active_pack) continue
     weekXp += row.missions.xp_reward
     weekMissions++
     weekActiveDates.add(row.completed_at.split('T')[0])
@@ -119,6 +120,7 @@ export default async function RecapPage() {
 
   for (const row of monthRows) {
     if (!row.missions) continue
+    if (row.missions.type === 'daily' && row.missions.pack !== profile.active_pack) continue
     monthXp += row.missions.xp_reward
     monthMissions++
     monthActiveDates.add(row.completed_at.split('T')[0])
