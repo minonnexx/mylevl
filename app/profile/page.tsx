@@ -12,7 +12,7 @@ import { AnimatedBar } from '@/components/ui/AnimatedBar'
 import { ShieldIndicator } from '@/components/ui/ShieldIndicator'
 import { EmptyState } from '@/components/ui/EmptyState'
 import Link from 'next/link'
-import { Trophy, Calendar, BarChart2, ChevronRight, Timer } from 'lucide-react'
+import { Trophy, Calendar, BarChart2, ChevronRight } from 'lucide-react'
 import { LogoutButton } from '@/components/profile/LogoutButton'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -68,10 +68,9 @@ function ProfileHeader({ profile }: { profile: Profile }) {
 
   return (
     <section
-      className="bg-surface rounded-card p-6 border border-border/60 flex flex-col gap-5"
+      className="bg-surface rounded-card p-6 border border-border/60"
       aria-label="Perfil del jugador"
     >
-      {/* Top row: avatar + username/level + shield */}
       <div className="flex items-center gap-4">
         <div
           className="flex-shrink-0 p-[2px] rounded-full"
@@ -94,19 +93,6 @@ function ProfileHeader({ profile }: { profile: Profile }) {
           streakProgress={profile.current_streak % 7}
           size="sm"
         />
-      </div>
-
-      {/* Hours played */}
-      <div className="border-t border-border/40 pt-5 flex items-center gap-4">
-        <div className="w-9 h-9 rounded-component bg-surface-elevated flex items-center justify-center text-text-muted flex-shrink-0">
-          <Timer size={16} strokeWidth={1.75} aria-hidden />
-        </div>
-        <div>
-          <p className="text-xs text-text-muted">Horas jugadas en la vida real</p>
-          <p className="text-2xl font-bold text-text-primary tabular-nums leading-none mt-0.5">
-            {formatHoursFromBirth(profile.date_of_birth)}
-          </p>
-        </div>
       </div>
     </section>
   )
