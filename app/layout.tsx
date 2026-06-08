@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from 'sonner';
 import InstallBannerWrapper from "@/components/pwa/InstallBannerWrapper";
+import SplashScreen from "@/components/ui/SplashScreen";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -31,6 +32,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
       </head>
       <body className="min-h-full flex flex-col">
+        <SplashScreen />
         {children}
         <InstallBannerWrapper />
         <Toaster
