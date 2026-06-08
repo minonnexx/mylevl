@@ -49,7 +49,6 @@ export function FriendSearch() {
 
   return (
     <div
-      id="friend-search"
       className="rounded-card p-6 border border-border/60"
       style={{ background: 'var(--color-surface)' }}
     >

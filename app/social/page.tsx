@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { Users, Search } from 'lucide-react'
+import { Users } from 'lucide-react'
 import Sidebar from '@/components/dashboard/Sidebar'
 import BottomNav from '@/components/dashboard/BottomNav'
 import { FriendSearch } from '@/components/social/FriendSearch'
@@ -74,18 +74,6 @@ export default async function SocialPage() {
                     <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
                       Añade amigos para ver cuando suban de nivel, completen misiones o alcancen nuevas rachas
                     </p>
-                    <a
-                      href="#friend-search"
-                      className="mt-1 inline-flex items-center gap-2 h-9 px-4 rounded-component text-sm font-medium transition-colors"
-                      style={{
-                        background: 'color-mix(in srgb, var(--color-accent) 15%, transparent)',
-                        color: 'var(--color-accent)',
-                        border: '1px solid color-mix(in srgb, var(--color-accent) 25%, transparent)',
-                      }}
-                    >
-                      <Search size={14} aria-hidden />
-                      Buscar compañeros
-                    </a>
                   </div>
                 ) : (
                   feed.map(event => (
