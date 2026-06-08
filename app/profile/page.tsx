@@ -5,8 +5,8 @@ import { CLASS_META, getMilestoneProgress, getMilestoneTier } from '@/lib/consta
 import Sidebar from '@/components/dashboard/Sidebar'
 import BottomNav from '@/components/dashboard/BottomNav'
 import { ShareButton } from '@/components/profile/ShareButton'
-import { PackSelector } from '@/components/profile/PackSelector'
 import { ResetProfileButton } from '@/components/profile/ResetProfileButton'
+import { AppHeader } from '@/components/ui/AppHeader'
 import { ClassRadarChart } from '@/components/profile/ClassRadarChart'
 import { ActivityHeatmap } from '@/components/profile/ActivityHeatmap'
 import { AnimatedBar } from '@/components/ui/AnimatedBar'
@@ -14,7 +14,6 @@ import { ShieldIndicator } from '@/components/ui/ShieldIndicator'
 import { EmptyState } from '@/components/ui/EmptyState'
 import Link from 'next/link'
 import { Trophy, Calendar, BarChart2, ChevronRight } from 'lucide-react'
-import { LogoutButton } from '@/components/profile/LogoutButton'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function formatJoinDate(dateStr: string): string {
@@ -452,29 +451,16 @@ export default async function ProfilePage() {
 
       <div className="md:ml-16 flex-1 min-w-0 flex flex-col min-h-screen">
 
-        {/* ── Header ──────────────────────────────────────────────────── */}
-        <header
-          className="sticky top-0 z-20 h-14 px-4 md:px-8 flex items-center justify-between"
-          style={{
-            background: 'rgba(14,14,16,0.9)',
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
-            borderBottom: '1px solid var(--color-border)',
+        <AppHeader
+          username={profile.username ?? 'jugador'}
+          globalLevel={profile.global_level}
+          profile={{
+            username: profile.username,
+            username_changed_at: profile.username_changed_at,
+            active_pack: profile.active_pack,
+            feed_public: profile.feed_public,
           }}
-        >
-          <div className="flex items-center gap-2.5">
-            <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 text-accent" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
-            </svg>
-            <span className="font-semibold text-text-primary tracking-tight">mylevl</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-text-muted">{profile.username ?? 'jugador'}</span>
-            <span className="text-xs font-bold text-accent bg-accent/12 border border-accent/20 px-3 py-1 rounded-pill tabular-nums">
-              LVL {profile.global_level}
-            </span>
-          </div>
-        </header>
+        />
 
         {/* ── Content ─────────────────────────────────────────────────── */}
         <main className="flex-1 py-6 px-4 md:py-8 md:px-8 pb-28 md:pb-8">
@@ -489,8 +475,6 @@ export default async function ProfilePage() {
             <ProfileHeader profile={profile} />
 
             <ShareButton className="w-full" />
-
-            <PackSelector currentPack={profile.active_pack} />
 
             <div className="grid grid-cols-1 md:grid-cols-[1fr_380px] gap-6 items-start">
               <ClassProgressCard classProgress={classProgress} />
@@ -532,10 +516,11 @@ export default async function ProfilePage() {
 
             <ClassBalance classProgress={classProgress} />
 
-            <div className="flex items-center justify-between pt-2">
-              <LogoutButton />
-              {process.env.NODE_ENV === 'development' && <ResetProfileButton />}
-            </div>
+            {process.env.NODE_ENV === 'development' && (
+              <div className="flex justify-end pt-2">
+                <ResetProfileButton />
+              </div>
+            )}
 
           </div>
         </main>

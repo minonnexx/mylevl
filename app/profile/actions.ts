@@ -7,6 +7,55 @@ import { revalidatePath } from 'next/cache'
 import { xpToNextLevel } from '@/lib/xp'
 import type { PackId } from '@/types/supabase'
 
+export async function changeUsername(
+  newUsername: string,
+): Promise<{ error: string } | undefined> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/auth')
+
+  const clean = newUsername.trim().toLowerCase()
+  if (!clean || clean.length < 3 || clean.length > 20) {
+    return { error: 'El nombre debe tener entre 3 y 20 caracteres.' }
+  }
+  if (!/^[a-z0-9_]+$/.test(clean)) {
+    return { error: 'Solo letras, números y guiones bajos.' }
+  }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('username_changed_at')
+    .eq('id', user.id)
+    .single()
+
+  if (profile?.username_changed_at) {
+    const availableAt = new Date(new Date(profile.username_changed_at).getTime() + 30 * 24 * 60 * 60 * 1000)
+    if (new Date() < availableAt) {
+      return { error: `Disponible el ${availableAt.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })}.` }
+    }
+  }
+
+  const { data: existing } = await supabase
+    .from('profiles')
+    .select('id')
+    .ilike('username', clean)
+    .neq('id', user.id)
+    .maybeSingle()
+
+  if (existing) return { error: 'Ese nombre ya está en uso.' }
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ username: clean, username_changed_at: new Date().toISOString() })
+    .eq('id', user.id)
+
+  if (error) return { error: 'No se pudo cambiar el nombre de usuario.' }
+
+  revalidatePath('/profile')
+  revalidatePath('/dashboard')
+  revalidatePath('/missions')
+}
+
 export async function changeActivePack(
   pack: PackId,
 ): Promise<{ error: string } | undefined> {

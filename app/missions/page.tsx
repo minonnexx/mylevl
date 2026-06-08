@@ -5,6 +5,7 @@ import type { Mission, MissionDifficulty, MissionType, LifeClass } from '@/types
 import Sidebar from '@/components/dashboard/Sidebar'
 import BottomNav from '@/components/dashboard/BottomNav'
 import MissionsClient from '@/components/missions/MissionsClient'
+import { AppHeader } from '@/components/ui/AppHeader'
 
 // ─── Seed data ──────────────────────────────────────────────────────────────
 // Inserted automatically if the missions table is empty.
@@ -31,7 +32,7 @@ export default async function MissionsPage() {
   todayUTC.setUTCHours(0, 0, 0, 0)
 
   const [profileRes, completedToday] = await Promise.all([
-    supabase.from('profiles').select('username, global_level, current_streak, active_pack').eq('id', user.id).single(),
+    supabase.from('profiles').select('username, global_level, current_streak, active_pack, feed_public, username_changed_at').eq('id', user.id).single(),
     supabase.from('completed_missions').select('mission_id').eq('user_id', user.id).gte('completed_at', todayUTC.toISOString()),
   ])
 
@@ -40,6 +41,8 @@ export default async function MissionsPage() {
   const level         = (profile as { global_level?: number } | null)?.global_level ?? 1
   const currentStreak = (profile as { current_streak?: number } | null)?.current_streak ?? 0
   const activePack    = (profile as { active_pack?: string | null } | null)?.active_pack ?? null
+  const feedPublic    = (profile as { feed_public?: boolean } | null)?.feed_public ?? true
+  const usernameChangedAt = (profile as { username_changed_at?: string | null } | null)?.username_changed_at ?? null
 
   // ── Fetch missions ────────────────────────────────────────────────────────
   let missionsQuery = supabase
@@ -79,29 +82,16 @@ export default async function MissionsPage() {
       {/* ── Main shell ──────────────────────────────────────────────────── */}
       <div className="md:ml-16 flex-1 min-w-0 flex flex-col min-h-screen">
 
-        {/* ── Header ──────────────────────────────────────────────────── */}
-        <header
-          className="sticky top-0 z-20 h-14 px-4 md:px-8 flex items-center justify-between"
-          style={{
-            background: 'rgba(14,14,16,0.9)',
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
-            borderBottom: '1px solid var(--color-border)',
+        <AppHeader
+          username={username}
+          globalLevel={level}
+          profile={{
+            username: profile?.username ?? null,
+            username_changed_at: usernameChangedAt,
+            active_pack: activePack as import('@/types/supabase').PackId | null,
+            feed_public: feedPublic,
           }}
-        >
-          <div className="flex items-center gap-2.5">
-            <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 text-accent" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
-            </svg>
-            <span className="font-semibold text-text-primary tracking-tight">mylevl</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-text-muted">{username}</span>
-            <span className="text-xs font-bold text-accent bg-accent/12 border border-accent/20 px-3 py-1 rounded-pill tabular-nums">
-              LVL {level}
-            </span>
-          </div>
-        </header>
+        />
 
         {/* ── Content ─────────────────────────────────────────────────── */}
         <main className="flex-1 py-6 px-4 md:py-8 md:px-8 pb-28 md:pb-8">

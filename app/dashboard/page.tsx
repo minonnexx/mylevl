@@ -9,6 +9,7 @@ import { XpBar } from '@/components/dashboard/XpBar'
 import { ShieldIndicator } from '@/components/ui/ShieldIndicator'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Sword, Flame } from 'lucide-react'
+import { AppHeader } from '@/components/ui/AppHeader'
 
 function StatRow({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: number; sub: string }) {
   return (
@@ -93,29 +94,16 @@ export default async function DashboardPage() {
 
       <div className="md:ml-16 flex-1 min-w-0 flex flex-col min-h-screen">
 
-        {/* ── Header ─────────────────────────────────────────────────────── */}
-        <header
-          className="sticky top-0 z-20 h-14 px-4 md:px-8 flex items-center justify-between"
-          style={{
-            background: 'rgba(14,14,16,0.9)',
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
-            borderBottom: '1px solid var(--color-border)',
+        <AppHeader
+          username={profile.username ?? 'jugador'}
+          globalLevel={profile.global_level}
+          profile={{
+            username: profile.username,
+            username_changed_at: profile.username_changed_at,
+            active_pack: profile.active_pack,
+            feed_public: profile.feed_public,
           }}
-        >
-          <div className="flex items-center gap-2.5">
-            <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 text-accent" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
-            </svg>
-            <span className="font-semibold text-text-primary tracking-tight">mylevl</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-text-muted">{profile.username ?? 'jugador'}</span>
-            <span className="text-xs font-bold text-accent bg-accent/12 border border-accent/20 px-3 py-1 rounded-pill tabular-nums">
-              LVL {profile.global_level}
-            </span>
-          </div>
-        </header>
+        />
 
         {/* ── Content ─────────────────────────────────────────────────────── */}
         <main className="flex-1 py-6 px-4 md:py-8 md:px-8 pb-28 md:pb-8">

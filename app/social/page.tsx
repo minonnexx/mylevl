@@ -7,9 +7,10 @@ import { FriendSearch } from '@/components/social/FriendSearch'
 import { PendingRequests } from '@/components/social/PendingRequests'
 import { FriendList } from '@/components/social/FriendList'
 import { FeedItem } from '@/components/social/FeedItem'
-import { FeedToggle } from '@/components/social/FeedToggle'
 import { getFeed, getFriends, getPendingRequests } from '@/app/social/actions'
 import type { FeedEventItem } from '@/components/social/FeedItem'
+import { AppHeader } from '@/components/ui/AppHeader'
+import type { PackId } from '@/types/supabase'
 
 export default async function SocialPage() {
   const supabase = await createClient()
@@ -20,10 +21,12 @@ export default async function SocialPage() {
     getFeed(),
     getFriends(),
     getPendingRequests(),
-    supabase.from('profiles').select('feed_public').eq('id', user.id).single(),
+    supabase.from('profiles').select('username, active_pack, feed_public, username_changed_at').eq('id', user.id).single(),
   ])
 
-  const feedPublic = (profileRes.data as { feed_public: boolean } | null)?.feed_public ?? true
+  type SocialProfile = { username: string | null; active_pack: PackId | null; feed_public: boolean; username_changed_at: string | null }
+  const profileData = profileRes.data as SocialProfile | null
+  const feedPublic = profileData?.feed_public ?? true
   const feed = feedRaw as unknown as FeedEventItem[]
 
   return (
@@ -32,23 +35,15 @@ export default async function SocialPage() {
 
       <div className="md:ml-16 flex-1 min-w-0 flex flex-col min-h-screen">
 
-        {/* Header */}
-        <header
-          className="sticky top-0 z-20 h-14 px-4 md:px-8 flex items-center justify-between"
-          style={{
-            background: 'rgba(14,14,16,0.9)',
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
-            borderBottom: '1px solid var(--color-border)',
+        <AppHeader
+          username={profileData?.username ?? undefined}
+          profile={{
+            username: profileData?.username ?? null,
+            username_changed_at: profileData?.username_changed_at ?? null,
+            active_pack: profileData?.active_pack ?? null,
+            feed_public: feedPublic,
           }}
-        >
-          <div className="flex items-center gap-2.5">
-            <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 text-accent" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
-            </svg>
-            <span className="font-semibold text-text-primary tracking-tight">mylevl</span>
-          </div>
-        </header>
+        />
 
         {/* Content */}
         <main className="flex-1 py-6 px-4 md:py-8 md:px-8 pb-28 md:pb-8">
@@ -91,7 +86,6 @@ export default async function SocialPage() {
                 <FriendSearch />
                 <PendingRequests requests={pendingRequests} />
                 <FriendList friends={friends} />
-                <FeedToggle feedPublic={feedPublic} />
               </div>
 
             </div>
