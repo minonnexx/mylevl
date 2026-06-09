@@ -88,8 +88,8 @@ function TraitButton({
 
 // ── Step A: style selector ───────────────────────────────────────────────────
 
-function StyleStep({ onSelect }: { onSelect: (s: AvatarStyle) => void }) {
-  const [picked, setPicked] = useState<AvatarStyle | null>(null)
+function StyleStep({ onSelect, initial }: { onSelect: (s: AvatarStyle) => void; initial?: AvatarStyle | null }) {
+  const [picked, setPicked] = useState<AvatarStyle | null>(initial ?? null)
 
   const cardStyle = (s: AvatarStyle): React.CSSProperties => ({
     flex: 1,
@@ -330,12 +330,13 @@ function TraitsStep({
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function AvatarCreator({ onComplete, initialConfig }: Props) {
-  const [step, setStep] = useState<'style' | 'traits'>(initialConfig ? 'traits' : 'style')
-  const [chosenStyle, setChosenStyle] = useState<AvatarStyle | null>(initialConfig?.style ?? null)
+  const [step, setStep] = useState<'style' | 'traits'>('style')
+  const [chosenStyle, setChosenStyle] = useState<AvatarStyle | null>(null)
 
   if (step === 'style') {
     return (
       <StyleStep
+        initial={initialConfig?.style}
         onSelect={s => {
           setChosenStyle(s)
           setStep('traits')
@@ -348,7 +349,7 @@ export default function AvatarCreator({ onComplete, initialConfig }: Props) {
     <TraitsStep
       style={chosenStyle!}
       onComplete={onComplete}
-      initialConfig={initialConfig}
+      initialConfig={chosenStyle === initialConfig?.style ? initialConfig : null}
     />
   )
 }
