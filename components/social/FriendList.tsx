@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { Users, UserMinus, UserPlus, Flame, User } from 'lucide-react'
 import { toast } from 'sonner'
 import { removeFriend } from '@/app/social/actions'
+import AvatarDisplay from '@/components/avatar/AvatarDisplay'
+import type { AvatarConfig, PackId } from '@/types/supabase'
 
 type Friend = {
   friendshipId: string
@@ -12,6 +14,8 @@ type Friend = {
   username: string | null
   global_level: number
   current_streak: number
+  avatar_config: AvatarConfig | null
+  active_pack: PackId | null
 }
 
 export function FriendList({ friends }: { friends: Friend[] }) {
@@ -73,6 +77,9 @@ function FriendRow({ friend }: { friend: Friend }) {
       className="flex items-center gap-3 p-3 rounded-component border border-border/40"
       style={{ background: 'var(--color-background)' }}
     >
+      <div className="flex-shrink-0">
+        <AvatarDisplay config={friend.avatar_config} pack={friend.active_pack} size={32} />
+      </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-text-primary truncate">
           {friend.username ?? 'jugador'}

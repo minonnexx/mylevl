@@ -14,7 +14,7 @@ export default async function AchievementsPage() {
   const [profileRes, achievementsRes, bossRes, completedRes] = await Promise.all([
     supabase
       .from('profiles')
-      .select('username, global_level, current_streak, active_pack, feed_public, username_changed_at')
+      .select('username, global_level, current_streak, active_pack, feed_public, username_changed_at, avatar_config')
       .eq('id', user.id)
       .single(),
     supabase
@@ -41,6 +41,7 @@ export default async function AchievementsPage() {
   const activePack       = (profile as { active_pack?: string | null } | null)?.active_pack ?? null
   const feedPublic       = (profile as { feed_public?: boolean } | null)?.feed_public ?? true
   const usernameChangedAt = (profile as { username_changed_at?: string | null } | null)?.username_changed_at ?? null
+  const avatarConfig = (profile as { avatar_config?: import('@/types/supabase').AvatarConfig | null } | null)?.avatar_config ?? null
 
   // Build map: mission_id → most recent completed_at
   const completedMap: Record<string, string> = {}
@@ -67,6 +68,7 @@ export default async function AchievementsPage() {
             username_changed_at: usernameChangedAt,
             active_pack: activePack as PackId | null,
             feed_public: feedPublic,
+            avatar_config: avatarConfig,
           }}
         />
 

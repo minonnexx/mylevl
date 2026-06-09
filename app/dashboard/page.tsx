@@ -10,6 +10,7 @@ import { ShieldIndicator } from '@/components/ui/ShieldIndicator'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Sword, Flame } from 'lucide-react'
 import { AppHeader } from '@/components/ui/AppHeader'
+import AvatarDisplay from '@/components/avatar/AvatarDisplay'
 
 function StatRow({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: number; sub: string }) {
   return (
@@ -103,6 +104,7 @@ export default async function DashboardPage() {
             username_changed_at: profile.username_changed_at,
             active_pack: profile.active_pack,
             feed_public: profile.feed_public,
+            avatar_config: profile.avatar_config,
           }}
         />
 
@@ -185,17 +187,23 @@ export default async function DashboardPage() {
                 {/* Player card */}
                 <div className="bg-surface rounded-card p-6 border border-border/60 flex flex-col gap-5">
                   <div className="flex items-center gap-4">
-                    <div
-                      className="flex-shrink-0 p-[2px] rounded-full"
-                      style={{
-                        background: 'linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-light) 50%, var(--color-accent) 100%)',
-                      }}
-                    >
-                      <div className="w-12 h-12 rounded-full bg-surface flex items-center justify-center">
-                        <span className="text-accent font-bold text-sm leading-none select-none">
-                          {(profile.username ?? 'JU').slice(0, 2).toUpperCase()}
-                        </span>
-                      </div>
+                    <div className="flex-shrink-0">
+                      {profile.avatar_config ? (
+                        <AvatarDisplay config={profile.avatar_config} pack={profile.active_pack} size={40} />
+                      ) : (
+                        <div
+                          className="p-[2px] rounded-full"
+                          style={{
+                            background: 'linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-light) 50%, var(--color-accent) 100%)',
+                          }}
+                        >
+                          <div className="w-10 h-10 rounded-full bg-surface flex items-center justify-center">
+                            <span className="text-accent font-bold text-sm leading-none select-none">
+                              {(profile.username ?? 'JU').slice(0, 2).toUpperCase()}
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="font-semibold text-text-primary truncate">{profile.username ?? 'Jugador'}</p>

@@ -14,6 +14,7 @@ import { ShieldIndicator } from '@/components/ui/ShieldIndicator'
 import { EmptyState } from '@/components/ui/EmptyState'
 import Link from 'next/link'
 import { Trophy, Calendar, BarChart2, ChevronRight } from 'lucide-react'
+import AvatarDisplay from '@/components/avatar/AvatarDisplay'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function formatJoinDate(dateStr: string): string {
@@ -72,17 +73,23 @@ function ProfileHeader({ profile }: { profile: Profile }) {
       aria-label="Perfil del jugador"
     >
       <div className="flex items-center gap-4">
-        <div
-          className="flex-shrink-0 p-[2px] rounded-full"
-          style={{
-            background: 'linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-light) 50%, var(--color-accent) 100%)',
-          }}
-        >
-          <div className="w-12 h-12 rounded-full bg-surface flex items-center justify-center">
-            <span className="text-accent font-bold text-sm leading-none select-none">
-              {initials}
-            </span>
-          </div>
+        <div className="flex-shrink-0">
+          {profile.avatar_config ? (
+            <AvatarDisplay config={profile.avatar_config} pack={profile.active_pack} size={80} />
+          ) : (
+            <div
+              className="p-[2px] rounded-full"
+              style={{
+                background: 'linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-light) 50%, var(--color-accent) 100%)',
+              }}
+            >
+              <div className="w-20 h-20 rounded-full bg-surface flex items-center justify-center">
+                <span className="text-accent font-bold text-xl leading-none select-none">
+                  {initials}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
         <div className="min-w-0 flex-1">
           <p className="font-semibold text-text-primary truncate">{profile.username ?? 'Jugador'}</p>
@@ -459,6 +466,7 @@ export default async function ProfilePage() {
             username_changed_at: profile.username_changed_at,
             active_pack: profile.active_pack,
             feed_public: profile.feed_public,
+            avatar_config: profile.avatar_config,
           }}
         />
 

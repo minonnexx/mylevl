@@ -6,12 +6,16 @@ import { Search, UserPlus, Flame, User } from 'lucide-react'
 import { toast } from 'sonner'
 import { searchUser, sendFriendRequest } from '@/app/social/actions'
 import { FriendSearchSkeleton } from '@/components/social/FriendSearchSkeleton'
+import AvatarDisplay from '@/components/avatar/AvatarDisplay'
+import type { AvatarConfig, PackId } from '@/types/supabase'
 
 type SearchResult = {
   id: string
   username: string | null
   global_level: number
   current_streak: number
+  avatar_config: AvatarConfig | null
+  active_pack: PackId | null
 }
 
 export function FriendSearch() {
@@ -101,6 +105,9 @@ export function FriendSearch() {
           className="mt-4 flex items-center gap-3 p-4 rounded-component border border-border/60"
           style={{ background: 'var(--color-background)' }}
         >
+          <div className="flex-shrink-0">
+            <AvatarDisplay config={result.avatar_config} pack={result.active_pack} size={32} />
+          </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-text-primary truncate">
               {result.username ?? 'jugador'}

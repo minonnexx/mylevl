@@ -21,10 +21,10 @@ export default async function SocialPage() {
     getFeed(),
     getFriends(),
     getPendingRequests(),
-    supabase.from('profiles').select('username, active_pack, feed_public, username_changed_at').eq('id', user.id).single(),
+    supabase.from('profiles').select('username, active_pack, feed_public, username_changed_at, avatar_config').eq('id', user.id).single(),
   ])
 
-  type SocialProfile = { username: string | null; active_pack: PackId | null; feed_public: boolean; username_changed_at: string | null }
+  type SocialProfile = { username: string | null; active_pack: PackId | null; feed_public: boolean; username_changed_at: string | null; avatar_config: import('@/types/supabase').AvatarConfig | null }
   const profileData = profileRes.data as SocialProfile | null
   const feedPublic = profileData?.feed_public ?? true
   const feed = feedRaw as unknown as FeedEventItem[]
@@ -42,6 +42,7 @@ export default async function SocialPage() {
             username_changed_at: profileData?.username_changed_at ?? null,
             active_pack: profileData?.active_pack ?? null,
             feed_public: feedPublic,
+            avatar_config: profileData?.avatar_config ?? null,
           }}
         />
 

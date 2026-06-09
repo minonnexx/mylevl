@@ -3,6 +3,8 @@
 import { useState, useTransition, useEffect } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { X, Pencil, RefreshCw, LogOut, Globe, Lock, Dumbbell, BookOpen, Shield, Star } from 'lucide-react'
+import AvatarDisplay from '@/components/avatar/AvatarDisplay'
+import type { AvatarConfig } from '@/types/supabase'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
@@ -23,6 +25,7 @@ export interface SettingsProfile {
   username_changed_at: string | null
   active_pack: PackId | null
   feed_public: boolean
+  avatar_config: AvatarConfig | null
 }
 
 interface Props {
@@ -176,6 +179,22 @@ export function SettingsDrawer({ isOpen, onClose, profile }: Props) {
               {/* ── Perfil ─────────────────────────────────────────────────── */}
               <div className="px-6 py-5" style={{ borderBottom: '1px solid var(--color-border)' }}>
                 <p className="text-[11px] font-medium text-text-muted uppercase tracking-wider mb-4">Perfil</p>
+
+                {/* Avatar */}
+                <div className="flex flex-col items-center gap-3 mb-5">
+                  <AvatarDisplay config={profile.avatar_config} pack={profile.active_pack} size={64} />
+                  <button
+                    disabled
+                    className="flex items-center gap-1.5 text-xs rounded-component px-3 py-1.5 transition-opacity opacity-40 cursor-not-allowed"
+                    style={{
+                      color: 'var(--color-text-muted)',
+                      border: '1px solid color-mix(in srgb, var(--color-text-muted) 20%, transparent)',
+                    }}
+                  >
+                    <Pencil size={11} aria-hidden />
+                    Editar personaje
+                  </button>
+                </div>
 
                 <p className="text-xs text-text-muted mb-1">Nombre de usuario</p>
 

@@ -156,6 +156,7 @@ export default async function RecapPage() {
             username_changed_at: profile.username_changed_at,
             active_pack: profile.active_pack,
             feed_public: profile.feed_public,
+            avatar_config: profile.avatar_config,
           }}
         />
 

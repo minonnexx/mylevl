@@ -32,7 +32,7 @@ export default async function MissionsPage() {
   todayUTC.setUTCHours(0, 0, 0, 0)
 
   const [profileRes, completedToday] = await Promise.all([
-    supabase.from('profiles').select('username, global_level, current_streak, active_pack, feed_public, username_changed_at').eq('id', user.id).single(),
+    supabase.from('profiles').select('username, global_level, current_streak, active_pack, feed_public, username_changed_at, avatar_config').eq('id', user.id).single(),
     supabase.from('completed_missions').select('mission_id').eq('user_id', user.id).gte('completed_at', todayUTC.toISOString()),
   ])
 
@@ -43,6 +43,7 @@ export default async function MissionsPage() {
   const activePack    = (profile as { active_pack?: string | null } | null)?.active_pack ?? null
   const feedPublic    = (profile as { feed_public?: boolean } | null)?.feed_public ?? true
   const usernameChangedAt = (profile as { username_changed_at?: string | null } | null)?.username_changed_at ?? null
+  const avatarConfig = (profile as { avatar_config?: import('@/types/supabase').AvatarConfig | null } | null)?.avatar_config ?? null
 
   // ── Fetch missions (daily + streak only — achievements/boss live in /achievements) ──
   let missionsQuery = supabase
@@ -91,6 +92,7 @@ export default async function MissionsPage() {
             username_changed_at: usernameChangedAt,
             active_pack: activePack as import('@/types/supabase').PackId | null,
             feed_public: feedPublic,
+            avatar_config: avatarConfig,
           }}
         />
 

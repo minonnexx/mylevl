@@ -5,7 +5,8 @@ import { Flame, Pencil, Lock } from 'lucide-react'
 import Sidebar from '@/components/dashboard/Sidebar'
 import BottomNav from '@/components/dashboard/BottomNav'
 import { CLASS_META, getClassMilestone } from '@/lib/constants/classes'
-import type { LifeClass } from '@/types/supabase'
+import type { AvatarConfig, LifeClass, PackId } from '@/types/supabase'
+import AvatarDisplay from '@/components/avatar/AvatarDisplay'
 import { FriendshipButton } from '@/components/social/FriendshipButton'
 import type { FriendshipState } from '@/components/social/FriendshipButton'
 
@@ -26,7 +27,7 @@ export default async function PublicProfilePage({
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, username, global_level, current_streak, feed_public')
+    .select('id, username, global_level, current_streak, feed_public, avatar_config, active_pack')
     .eq('username', username)
     .maybeSingle()
 
@@ -115,13 +116,20 @@ export default async function PublicProfilePage({
             <>
             {/* Page title */}
             <div className="flex items-start justify-between gap-4">
-              <div>
-                <h1 className="text-2xl font-semibold text-text-primary">
-                  {profile.username}
-                </h1>
-                <p className="text-sm mt-1" style={{ color: 'var(--color-text-muted)' }}>
-                  Perfil público
-                </p>
+              <div className="flex items-center gap-4">
+                <AvatarDisplay
+                  config={profile.avatar_config as AvatarConfig | null}
+                  pack={profile.active_pack as PackId | null}
+                  size={80}
+                />
+                <div>
+                  <h1 className="text-2xl font-semibold text-text-primary">
+                    {profile.username}
+                  </h1>
+                  <p className="text-sm mt-1" style={{ color: 'var(--color-text-muted)' }}>
+                    Perfil público
+                  </p>
+                </div>
               </div>
               {isOwner && (
                 <Link

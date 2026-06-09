@@ -9,7 +9,7 @@ export async function searchUser(username: string) {
 
   const { data } = await supabase
     .from('profiles')
-    .select('id, username, global_level, current_streak')
+    .select('id, username, global_level, current_streak, avatar_config, active_pack')
     .ilike('username', username)
     .neq('id', user.id)
     .maybeSingle()
@@ -103,7 +103,7 @@ export async function getFriends() {
 
   const { data: profiles } = await supabase
     .from('profiles')
-    .select('id, username, global_level, current_streak')
+    .select('id, username, global_level, current_streak, avatar_config, active_pack')
     .in('id', friendIds)
 
   return friendships.map(f => {
@@ -115,6 +115,8 @@ export async function getFriends() {
       username: (profile?.username ?? null) as string | null,
       global_level: (profile?.global_level ?? 1) as number,
       current_streak: (profile?.current_streak ?? 0) as number,
+      avatar_config: (profile?.avatar_config ?? null) as import('@/types/supabase').AvatarConfig | null,
+      active_pack: (profile?.active_pack ?? null) as import('@/types/supabase').PackId | null,
     }
   })
 }
