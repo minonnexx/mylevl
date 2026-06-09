@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import type { PackId } from '@/types/supabase'
+import type { AvatarConfig, PackId } from '@/types/supabase'
 
 export async function checkUsernameAvailable(username: string): Promise<{ available: boolean }> {
   const supabase = await createClient()
@@ -23,6 +23,7 @@ export async function completeOnboarding(
   username: string,
   dateOfBirth: string,
   activePack: PackId,
+  avatarConfig: AvatarConfig | null,
 ): Promise<{ error: string } | undefined> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -57,6 +58,7 @@ export async function completeOnboarding(
       date_of_birth: dateOfBirth,
       username_changed_at: new Date().toISOString(),
       active_pack: activePack,
+      avatar_config: avatarConfig,
     })
     .eq('id', user.id)
 

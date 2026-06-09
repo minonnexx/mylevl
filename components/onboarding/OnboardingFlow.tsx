@@ -1,11 +1,13 @@
 'use client'
 
-import { useRef, useState, useTransition } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { Sword, Zap, Shield, User, Dumbbell, BookOpen, Star } from 'lucide-react'
 import { completeOnboarding, checkUsernameAvailable } from '@/app/onboarding/actions'
 import { PACK_LIST } from '@/lib/constants/packs'
-import type { PackId } from '@/types/supabase'
+import AvatarCreator from '@/components/avatar/AvatarCreator'
+import AvatarDisplay from '@/components/avatar/AvatarDisplay'
+import type { AvatarConfig, PackId } from '@/types/supabase'
 
 const inputClass =
   'w-full bg-surface-elevated border border-border rounded-component px-4 py-3 text-sm ' +
@@ -50,6 +52,14 @@ const PACK_ICONS: Record<PackId, React.ElementType> = {
 }
 
 const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,20}$/
+
+const DIALOGUE = [
+  'Yo soy tú.',
+  'Y tú eres yo.',
+  'Vamos a trabajar juntos para sacar la mejor versión de nosotros mismos.',
+]
+
+const sleep = (ms: number) => new Promise<void>(res => setTimeout(res, ms))
 
 function UsernameStep({ onNext }: { onNext: (username: string, dateOfBirth: string) => void }) {
   const [username, setUsername] = useState('')
@@ -187,12 +197,123 @@ function UsernameStep({ onNext }: { onNext: (username: string, dateOfBirth: stri
   )
 }
 
+function CharacterIntroStep({
+  avatarConfig,
+  onNext,
+}: {
+  avatarConfig: AvatarConfig | null
+  onNext: () => void
+}) {
+  const [text, setText] = useState('')
+  const [done, setDone] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function run() {
+      let accumulated = ''
+      for (let s = 0; s < DIALOGUE.length; s++) {
+        if (s > 0) {
+          await sleep(700)
+          if (cancelled) return
+          accumulated += '\n\n'
+          setText(accumulated)
+        }
+        const segment = DIALOGUE[s]
+        for (let c = 0; c < segment.length; c++) {
+          if (cancelled) return
+          accumulated += segment[c]
+          setText(accumulated)
+          await sleep(44)
+        }
+        if (s < DIALOGUE.length - 1) {
+          await sleep(900)
+        }
+      }
+      if (!cancelled) setDone(true)
+    }
+
+    run()
+    return () => { cancelled = true }
+  }, [])
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '48px',
+        width: '100%',
+        maxWidth: '360px',
+      }}
+    >
+      <motion.div
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
+      >
+        <AvatarDisplay config={avatarConfig} pack={null} size={160} />
+      </motion.div>
+
+      <div style={{ textAlign: 'center', minHeight: '120px' }}>
+        <p
+          style={{
+            color: 'var(--color-text-primary)',
+            fontSize: '18px',
+            lineHeight: '1.75',
+            whiteSpace: 'pre-wrap',
+          }}
+        >
+          {text}
+          {!done && (
+            <span
+              style={{
+                display: 'inline-block',
+                width: '2px',
+                height: '1.1em',
+                backgroundColor: 'var(--color-accent)',
+                verticalAlign: 'text-bottom',
+                marginLeft: '2px',
+                animation: 'blink 1s step-end infinite',
+              }}
+            />
+          )}
+        </p>
+      </div>
+
+      {done && (
+        <motion.button
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+          onClick={onNext}
+          style={{
+            padding: '12px 48px',
+            borderRadius: 'var(--radius-component)',
+            backgroundColor: 'var(--color-accent)',
+            color: 'var(--color-text-primary)',
+            border: 'none',
+            cursor: 'pointer',
+            fontSize: '15px',
+            fontWeight: 600,
+          }}
+        >
+          Estoy listo
+        </motion.button>
+      )}
+    </div>
+  )
+}
+
 function PackStep({
   username,
   dateOfBirth,
+  avatarConfig,
 }: {
   username: string
   dateOfBirth: string
+  avatarConfig: AvatarConfig | null
 }) {
   const [selected, setSelected] = useState<PackId | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -200,7 +321,7 @@ function PackStep({
   const handleConfirm = () => {
     if (!selected) return
     startTransition(async () => {
-      await completeOnboarding(username, dateOfBirth, selected)
+      await completeOnboarding(username, dateOfBirth, selected, avatarConfig)
     })
   }
 
@@ -285,6 +406,7 @@ function PackStep({
 export function OnboardingFlow() {
   const [step, setStep] = useState(0)
   const [userData, setUserData] = useState<{ username: string; dateOfBirth: string } | null>(null)
+  const [avatarConfig, setAvatarConfig] = useState<AvatarConfig | null>(null)
 
   const goNext = () => setStep(s => s + 1)
   const skipToUsername = () => setStep(3)
@@ -298,11 +420,33 @@ export function OnboardingFlow() {
   function handleTouchEnd(e: React.TouchEvent) {
     if (step >= 3) return
     const dx = e.changedTouches[0].clientX - touchStartX.current
-    if (dx < -50 && step < 3) setStep(s => s + 1)
+    if (dx < -50 && step < 2) setStep(s => s + 1)
     else if (dx > 50 && step > 0) setStep(s => s - 1)
   }
 
-  const TOTAL_STEPS = 5
+  // Step 5: immersive character intro — full screen, no dots, no nav
+  if (step === 5) {
+    return (
+      <div
+        className="min-h-screen bg-background flex flex-col items-center justify-center px-6"
+      >
+        <CharacterIntroStep
+          avatarConfig={avatarConfig}
+          onNext={() => setStep(6)}
+        />
+      </div>
+    )
+  }
+
+  // Steps 0-4 and 6: standard layout with progress indicator
+  // Dots: 5 total representing the 5 non-immersive phases
+  // 0→intro(0-2), 1→username(3), 2→avatar(4), 3→pack(6) + 1 extra = map step to dot
+  const dotStep =
+    step <= 2 ? 0 :
+    step === 3 ? 1 :
+    step === 4 ? 2 :
+    step === 6 ? 4 : 0
+  const TOTAL_DOTS = 5
 
   return (
     <div
@@ -360,10 +504,28 @@ export function OnboardingFlow() {
                     setStep(4)
                   }}
                 />
+              ) : step === 4 ? (
+                <div className="flex flex-col gap-6 w-full">
+                  <div className="text-center flex flex-col gap-2">
+                    <h1 className="text-2xl font-semibold text-text-primary">
+                      Crea tu personaje
+                    </h1>
+                    <p className="text-sm text-text-muted">
+                      Este eres tú en el mundo de MyLevl
+                    </p>
+                  </div>
+                  <AvatarCreator
+                    onComplete={cfg => {
+                      setAvatarConfig(cfg)
+                      setStep(5)
+                    }}
+                  />
+                </div>
               ) : (
                 <PackStep
                   username={userData?.username ?? ''}
                   dateOfBirth={userData?.dateOfBirth ?? ''}
+                  avatarConfig={avatarConfig}
                 />
               )}
             </motion.div>
@@ -371,15 +533,15 @@ export function OnboardingFlow() {
         </div>
 
         <div className="flex gap-2" role="tablist" aria-label="Progreso del onboarding">
-          {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
+          {Array.from({ length: TOTAL_DOTS }).map((_, i) => (
             <div
               key={i}
               role="tab"
-              aria-selected={step === i}
+              aria-selected={dotStep === i}
               className="w-2 h-2 rounded-full transition-colors duration-200"
               style={{
                 backgroundColor:
-                  step === i ? 'var(--color-text-primary)' : 'var(--color-border)',
+                  dotStep === i ? 'var(--color-text-primary)' : 'var(--color-border)',
               }}
             />
           ))}
