@@ -84,6 +84,8 @@ export default async function AchievementDetailPage({
             totalDaysActive={totalDaysActive}
             totalMissionsCount={totalMissionsCount}
             currentStreak={currentStreak}
+            username={username}
+            avatarConfig={avatarConfig}
           />
         </main>
       </div>
