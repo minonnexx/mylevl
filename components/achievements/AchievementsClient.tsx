@@ -1,6 +1,7 @@
 'use client'
 
 import { useActionState, useEffect, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import type { AvatarConfig, Medal, Mission, MissionDifficulty, LifeClass } from '@/types/supabase'
 import { CLASS_META } from '@/lib/constants/classes'
 import { RARITY_META } from '@/lib/constants/medals'
@@ -93,6 +94,7 @@ function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMi
   const isAuto = mission.verification_type === 'automatic'
   const isManualOrExternal = mission.verification_type === 'manual' || mission.verification_type === 'external'
 
+  const router = useRouter()
   const [result, formAction] = useActionState<AchievementActionResult, FormData>(completeAchievementAction, null)
   const [showXp, setShowXp] = useState(false)
   const [levelUpData, setLevelUpData] = useState<{ level: number } | null>(null)
@@ -102,22 +104,27 @@ function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMi
   const prevTsRef = useRef<number | null>(null)
   const xpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const formRef = useRef<HTMLFormElement>(null)
+  const confirmedRef = useRef(false)
 
   useEffect(() => {
     if (!result || result.ts === prevTsRef.current) return
     prevTsRef.current = result.ts
     if (result.error) { toast.error('No se pudo completar el logro'); return }
-    playMissionComplete()
     if (result.shieldGranted) playShieldGained()
     if (result.levelUp) setTimeout(() => playLevelUp(), 300)
     toast('Logro completado', { description: `+${result.xpReward} XP`, duration: 2500 })
     if (result.shieldGranted) toast('Escudo ganado', { description: 'Racha de 7 días completada', icon: <ShieldCheck size={16} />, duration: 4000 })
     if (result.levelUp) setTimeout(() => setLevelUpData({ level: result.newLevel }), 800)
-  }, [result])
+    router.refresh()
+  }, [result, router])
 
   useEffect(() => () => { if (xpTimerRef.current) clearTimeout(xpTimerRef.current) }, [])
 
   function handleSubmit(e: React.FormEvent) {
+    if (confirmedRef.current) {
+      confirmedRef.current = false
+      return
+    }
     if (isManualOrExternal) {
       e.preventDefault()
       setShowConfirm(true)
@@ -133,6 +140,8 @@ function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMi
     setShowConfirm(false)
     setCompleting(true)
     setShowXp(true)
+    playMissionComplete()
+    confirmedRef.current = true
     if (xpTimerRef.current) clearTimeout(xpTimerRef.current)
     xpTimerRef.current = setTimeout(() => setShowXp(false), 650)
     formRef.current?.requestSubmit()

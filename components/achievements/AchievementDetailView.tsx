@@ -68,12 +68,12 @@ export default function AchievementDetailView({
   const prevTsRef = useRef<number | null>(null)
   const xpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const formRef = useRef<HTMLFormElement>(null)
+  const confirmedRef = useRef(false)
 
   useEffect(() => {
     if (!result || result.ts === prevTsRef.current) return
     prevTsRef.current = result.ts
     if (result.error) { toast.error('No se pudo completar'); return }
-    playMissionComplete()
     if (result.shieldGranted) playShieldGained()
     if (result.levelUp) setTimeout(() => playLevelUp(), 300)
     toast(isBoss ? 'Jefe derrotado' : 'Logro completado', { description: `+${result.xpReward} XP`, duration: 2500 })
@@ -84,6 +84,10 @@ export default function AchievementDetailView({
   useEffect(() => () => { if (xpTimerRef.current) clearTimeout(xpTimerRef.current) }, [])
 
   function handleSubmit(e: React.FormEvent) {
+    if (confirmedRef.current) {
+      confirmedRef.current = false
+      return
+    }
     e.preventDefault()
     setShowConfirm(true)
   }
@@ -92,6 +96,8 @@ export default function AchievementDetailView({
     setShowConfirm(false)
     setCompleting(true)
     setShowXp(true)
+    playMissionComplete()
+    confirmedRef.current = true
     if (xpTimerRef.current) clearTimeout(xpTimerRef.current)
     xpTimerRef.current = setTimeout(() => setShowXp(false), 650)
     formRef.current?.requestSubmit()
