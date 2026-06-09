@@ -1,11 +1,13 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Flame, Pencil, Lock } from 'lucide-react'
+import { Flame, Pencil, Lock, Trophy } from 'lucide-react'
 import Sidebar from '@/components/dashboard/Sidebar'
 import BottomNav from '@/components/dashboard/BottomNav'
 import { CLASS_META, getClassMilestone } from '@/lib/constants/classes'
-import type { AvatarConfig, LifeClass, PackId } from '@/types/supabase'
+import { RARITY_META } from '@/lib/constants/medals'
+import { HexMedal } from '@/components/ui/HexMedal'
+import type { AvatarConfig, LifeClass, Medal, Rarity } from '@/types/supabase'
 import AvatarDisplay from '@/components/avatar/AvatarDisplay'
 import { FriendshipButton } from '@/components/social/FriendshipButton'
 import type { FriendshipState } from '@/components/social/FriendshipButton'
@@ -36,7 +38,7 @@ export default async function PublicProfilePage({
   const isOwner = user?.id === profile.id
   const isPrivate = !(profile.feed_public as boolean) && !isOwner
 
-  const [classProgressRes, friendshipRes] = await Promise.all([
+  const [classProgressRes, friendshipRes, completedMissionsRes] = await Promise.all([
     supabase
       .from('class_progress')
       .select('life_class, points')
@@ -51,12 +53,25 @@ export default async function PublicProfilePage({
             `and(requester_id.eq.${profile.id},addressee_id.eq.${user.id})`
           )
           .maybeSingle(),
+    isPrivate
+      ? Promise.resolve({ data: [] as { mission_id: string }[] })
+      : supabase.from('completed_missions').select('mission_id').eq('user_id', profile.id),
   ])
 
   const { data: classProgressRows } = classProgressRes
 
   const pointsByClass = Object.fromEntries(
     (classProgressRows ?? []).map(r => [r.life_class as string, r.points as number])
+  )
+
+  // Medals — query after getting completed mission IDs
+  const RARITY_ORDER: Record<Rarity, number> = { legendary: 0, epic: 1, rare: 2, uncommon: 3, common: 4 }
+  const uniqueMissionIds = [...new Set((completedMissionsRes.data ?? []).map(r => r.mission_id as string))]
+  const medalsRes = (!isPrivate && uniqueMissionIds.length > 0)
+    ? await supabase.from('medals').select('*').in('mission_id', uniqueMissionIds)
+    : { data: [] as Medal[] }
+  const earnedMedals = ((medalsRes.data ?? []) as Medal[]).sort(
+    (a, b) => RARITY_ORDER[a.rarity] - RARITY_ORDER[b.rarity]
   )
 
   const friendship = friendshipRes.data as { id: string; requester_id: string; status: string } | null
@@ -224,6 +239,36 @@ export default async function PublicProfilePage({
                   )
                 })}
               </div>
+            </div>
+
+            {/* Medals section */}
+            <div
+              className="rounded-card border border-border/60 p-6"
+              style={{ background: 'var(--color-surface)' }}
+            >
+              <div className="flex items-center gap-2 mb-4">
+                <Trophy size={15} strokeWidth={1.75} style={{ color: 'var(--color-text-muted)' }} aria-hidden />
+                <h2 className="text-sm font-semibold text-text-primary">Medallas</h2>
+              </div>
+
+              {earnedMedals.length === 0 ? (
+                <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
+                  Este jugador aún no tiene medallas
+                </p>
+              ) : (
+                <div className="grid grid-cols-4 sm:grid-cols-6 gap-4">
+                  {earnedMedals.map(medal => (
+                    <div key={medal.id} className="flex flex-col items-center gap-1.5" title={medal.name}>
+                      <div style={{ color: RARITY_META[medal.rarity].color }}>
+                        <HexMedal size={36} icon={medal.icon} />
+                      </div>
+                      <span className="text-[10px] text-center leading-tight truncate w-full" style={{ color: 'var(--color-text-muted)' }}>
+                        {medal.name}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             </>

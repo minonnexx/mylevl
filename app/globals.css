@@ -98,6 +98,15 @@ body {
   display: none;
 }
 
+/* ── Boss card active border pulse ────────────── */
+@keyframes boss-border-pulse {
+  0%, 100% { border-color: var(--color-accent); }
+  50%       { border-color: color-mix(in srgb, var(--color-accent) 35%, transparent); }
+}
+.boss-border-pulse {
+  animation: boss-border-pulse 2.2s ease-in-out infinite;
+}
+
 /* ── Reduced motion ────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

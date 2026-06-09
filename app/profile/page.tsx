@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import type { Profile, ClassProgress, LifeClass, Medal } from '@/types/supabase'
 import { RARITY_META } from '@/lib/constants/medals'
+import { HexMedal } from '@/components/ui/HexMedal'
 import { CLASS_META, getMilestoneProgress, getMilestoneTier } from '@/lib/constants/classes'
 import Sidebar from '@/components/dashboard/Sidebar'
 import BottomNav from '@/components/dashboard/BottomNav'
@@ -323,22 +324,6 @@ function RecentAchievements({ recent }: { recent: RecentItem[] }) {
 }
 
 // 5 ── Medals earned
-function HexMedalSmall({ color, size = 32 }: { color: string; size?: number }) {
-  const h = Math.round(size * 1.15)
-  return (
-    <svg viewBox="0 0 40 46" width={size} height={h} aria-hidden style={{ color }}>
-      <polygon
-        points="20,0 40,12 40,34 20,46 0,34 0,12"
-        fill="currentColor"
-        fillOpacity={0.2}
-        stroke="currentColor"
-        strokeOpacity={0.7}
-        strokeWidth={1.5}
-      />
-    </svg>
-  )
-}
-
 function MedalsSection({ medals }: { medals: Medal[] }) {
   return (
     <section aria-labelledby="section-medallas">
@@ -358,8 +343,10 @@ function MedalsSection({ medals }: { medals: Medal[] }) {
           <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-4">
             {medals.map(medal => (
               <div key={medal.id} className="flex flex-col items-center gap-1.5" title={medal.name}>
-                <HexMedalSmall color={RARITY_META[medal.rarity].color} size={36} />
-                <span className="text-[10px] text-text-muted text-center leading-tight truncate w-full text-center">
+                <div style={{ color: RARITY_META[medal.rarity].color }}>
+                  <HexMedal size={36} icon={medal.icon} />
+                </div>
+                <span className="text-[10px] text-text-muted text-center leading-tight truncate w-full">
                   {medal.name}
                 </span>
               </div>
