@@ -7,7 +7,7 @@ import { LevelUpParticles } from '@/components/ui/LevelUpParticles'
 const PHRASES = [
   'La constancia es la única ventaja injusta.',
   'Cada repetición es una deuda con tu yo futuro.',
-  'Consistency compounds.',
+  'La constancia lo cambia todo.',
   'El progreso no se ve día a día. Se ve año a año.',
   'No hay atajos. Solo hay el trabajo.',
 ]
@@ -25,6 +25,12 @@ export function LevelUpOverlay({ level, onClose }: Props) {
     const id = requestAnimationFrame(() => setVisible(true))
     return () => cancelAnimationFrame(id)
   }, [])
+
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', handleEsc)
+    return () => document.removeEventListener('keydown', handleEsc)
+  }, [onClose])
 
   const content = (
     <>

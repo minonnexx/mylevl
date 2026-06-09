@@ -544,7 +544,7 @@ export function RecapClient({ daySummary, weekData, monthData, profile }: RecapC
               period === tab.id
                 ? {
                     backgroundColor: 'var(--color-accent)',
-                    color: '#fff',
+                    color: 'var(--color-background)',
                     border: '1px solid transparent',
                   }
                 : {

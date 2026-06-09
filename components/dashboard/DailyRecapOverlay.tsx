@@ -56,6 +56,12 @@ function MissionRow({ item }: { item: MissionSummaryItem }) {
 export function DailyRecapOverlay({ daySummary, onClose }: Props) {
   const shouldReduceMotion = useReducedMotion()
 
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', handleEsc)
+    return () => document.removeEventListener('keydown', handleEsc)
+  }, [onClose])
+
   const { dailyMissions, bossMission, achievements } = daySummary
 
   const content = (
@@ -162,7 +168,7 @@ export function DailyRecapOverlay({ daySummary, onClose }: Props) {
             className="w-full text-center bg-accent text-white font-semibold py-2.5 rounded-component transition-opacity duration-150 hover:opacity-90 active:scale-[0.98] text-sm"
             onClick={onClose}
           >
-            Ver historial completo
+            Ver recap
           </Link>
           <button
             type="button"

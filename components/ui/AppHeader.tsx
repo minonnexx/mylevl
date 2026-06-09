@@ -18,7 +18,7 @@ export function AppHeader({ username, globalLevel, profile }: AppHeaderProps) {
       <header
         className="sticky top-0 z-20 h-14 px-4 md:px-8 flex items-center justify-between"
         style={{
-          background: 'rgba(14,14,16,0.9)',
+          background: 'color-mix(in srgb, var(--color-background) 90%, transparent)',
           backdropFilter: 'blur(16px)',
           WebkitBackdropFilter: 'blur(16px)',
           borderBottom: '1px solid var(--color-border)',

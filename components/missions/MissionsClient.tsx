@@ -82,6 +82,7 @@ function CompactMissionCard({
   const [completing, setCompleting] = useState(false)
   const prevTsRef = useRef<number | null>(null)
   const xpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pendingRecapRef = useRef<DaySummary | null>(null)
 
   useEffect(() => {
     if (!result || result.ts === prevTsRef.current) return
@@ -113,8 +114,12 @@ function CompactMissionCard({
       if (!sessionStorage.getItem(key)) {
         sessionStorage.setItem(key, '1')
         const summary = result.daySummary
-        const delay = result.levelUp ? 500 : 0
-        setTimeout(() => onAllCompleted?.(summary), delay)
+        if (result.levelUp) {
+          // Diferir hasta que cierre el level-up overlay
+          pendingRecapRef.current = summary
+        } else {
+          onAllCompleted?.(summary)
+        }
       }
     }
   }, [result, onAllCompleted])
@@ -135,13 +140,19 @@ function CompactMissionCard({
       {levelUpData && (
         <LevelUpOverlay
           level={levelUpData.level}
-          onClose={() => setLevelUpData(null)}
+          onClose={() => {
+            setLevelUpData(null)
+            if (pendingRecapRef.current) {
+              onAllCompleted?.(pendingRecapRef.current)
+              pendingRecapRef.current = null
+            }
+          }}
         />
       )}
       <article
         className="bg-surface rounded-card border border-border/60 p-4 flex flex-col gap-3 h-full"
         style={{
-          opacity: isCompleted || completing ? 0.5 : 1,
+          opacity: isCompleted || completing ? 1 : 0.5,
           transition: 'opacity 300ms ease',
         }}
         aria-label={mission.title}

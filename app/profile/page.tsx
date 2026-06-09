@@ -80,16 +80,15 @@ function ProfileHeader({ profile }: { profile: Profile }) {
             <AvatarDisplay config={profile.avatar_config} size={80} />
           ) : (
             <div
-              className="p-[2px] rounded-full"
+              className="w-20 h-20 rounded-full flex items-center justify-center"
               style={{
-                background: 'linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-light) 50%, var(--color-accent) 100%)',
+                background: 'var(--color-surface)',
+                border: '1px solid color-mix(in srgb, var(--color-accent) 30%, transparent)',
               }}
             >
-              <div className="w-20 h-20 rounded-full bg-surface flex items-center justify-center">
-                <span className="text-accent font-bold text-xl leading-none select-none">
-                  {initials}
-                </span>
-              </div>
+              <span className="text-accent font-bold text-xl leading-none select-none">
+                {initials}
+              </span>
             </div>
           )}
         </div>
@@ -259,7 +258,7 @@ function StatsGrid({ profile, completedCount, totalXp }: {
               <span className="text-text-muted">{icon}</span>
             </div>
             <div>
-              <p className="text-3xl font-bold text-text-primary tabular-nums leading-none">{value}</p>
+              <p className="text-2xl md:text-3xl font-bold text-text-primary tabular-nums leading-none">{value}</p>
               <p className="text-xs text-text-muted mt-1.5">{sub}</p>
             </div>
           </div>
@@ -398,7 +397,7 @@ function ClassBalance({ classProgress }: { classProgress: ClassProgress[] }) {
                 </div>
                 {isTop && !lagging && (
                   <span className="text-[10px] font-bold text-accent bg-accent/10 border border-accent/20 px-2 py-0.5 rounded-pill">
-                    LÍDER
+                    Líder
                   </span>
                 )}
                 {lagging && (
@@ -556,7 +555,7 @@ export default async function ProfilePage() {
 
             <MedalsSection medals={earnedMedals} />
 
-            {profile.current_streak === 0 && (
+            {heatmapData.length === 0 && (
               <section aria-labelledby="section-racha-historica">
                 <SectionTitle id="section-racha-historica">Historial de racha</SectionTitle>
                 <div className="bg-surface rounded-card border border-border/60">

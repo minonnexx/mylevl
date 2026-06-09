@@ -98,7 +98,7 @@ export default async function PublicProfilePage({
         <header
           className="sticky top-0 z-20 h-14 px-4 md:px-8 flex items-center justify-between"
           style={{
-            background: 'rgba(14,14,16,0.9)',
+            background: 'color-mix(in srgb, var(--color-background) 90%, transparent)',
             backdropFilter: 'blur(16px)',
             WebkitBackdropFilter: 'blur(16px)',
             borderBottom: '1px solid var(--color-border)',
@@ -166,18 +166,6 @@ export default async function PublicProfilePage({
               className="rounded-card p-6 border border-border/60 flex items-center gap-6"
               style={{ background: 'var(--color-surface)' }}
             >
-              {/* Avatar */}
-              <div
-                className="w-14 h-14 rounded-card flex items-center justify-center flex-shrink-0 text-lg font-bold"
-                style={{
-                  background: 'color-mix(in srgb, var(--color-accent) 12%, transparent)',
-                  color: 'var(--color-accent)',
-                  border: '1px solid color-mix(in srgb, var(--color-accent) 20%, transparent)',
-                }}
-              >
-                {(profile.username ?? 'JU').slice(0, 2).toUpperCase()}
-              </div>
-
               <div className="flex flex-col gap-2 flex-1 min-w-0">
                 {/* Level badge */}
                 <span

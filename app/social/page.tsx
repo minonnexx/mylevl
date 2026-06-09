@@ -14,16 +14,16 @@ import type { PackId } from '@/types/supabase'
 export default async function SocialPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/')
+  if (!user) redirect('/auth')
 
   const [feedRaw, friends, pendingRequests, profileRes] = await Promise.all([
     getFeed(),
     getFriends(),
     getPendingRequests(),
-    supabase.from('profiles').select('username, active_pack, feed_public, username_changed_at, avatar_config').eq('id', user.id).single(),
+    supabase.from('profiles').select('username, global_level, active_pack, feed_public, username_changed_at, avatar_config').eq('id', user.id).single(),
   ])
 
-  type SocialProfile = { username: string | null; active_pack: PackId | null; feed_public: boolean; username_changed_at: string | null; avatar_config: import('@/types/supabase').AvatarConfig | null }
+  type SocialProfile = { username: string | null; global_level: number; active_pack: PackId | null; feed_public: boolean; username_changed_at: string | null; avatar_config: import('@/types/supabase').AvatarConfig | null }
   const profileData = profileRes.data as SocialProfile | null
   const feedPublic = profileData?.feed_public ?? true
   const feed = feedRaw as unknown as FeedEventItem[]
@@ -36,6 +36,7 @@ export default async function SocialPage() {
 
         <AppHeader
           username={profileData?.username ?? undefined}
+          globalLevel={profileData?.global_level ?? null}
           profile={{
             username: profileData?.username ?? null,
             username_changed_at: profileData?.username_changed_at ?? null,

@@ -76,7 +76,7 @@ function PendingBadge({ count }: { count: number }) {
         height: '16px',
         borderRadius: '50%',
         background: 'var(--color-accent)',
-        color: '#fff',
+        color: 'var(--color-background)',
         fontSize: '10px',
         fontWeight: 700,
         display: 'flex',
@@ -152,7 +152,6 @@ export default function SidebarClient({ pendingCount = 0 }: { pendingCount?: num
                   opacity-0 pointer-events-none
                   group-hover:opacity-100
                   transition-opacity duration-150
-                  shadow-[0_4px_12px_rgba(0,0,0,0.4)]
                   z-50
                 "
                 role="tooltip"

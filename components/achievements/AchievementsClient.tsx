@@ -14,6 +14,7 @@ import { LevelUpOverlay } from '@/components/LevelUpOverlay'
 import { AvatarConfirmModal } from '@/components/achievements/AvatarConfirmModal'
 import { AnimatedBar } from '@/components/ui/AnimatedBar'
 import { Trophy, Swords, Lock, ShieldCheck, ChevronRight } from 'lucide-react'
+import { AUTO_ACHIEVEMENT_TITLES } from '@/lib/constants/achievements'
 
 const DIFF_META: Record<MissionDifficulty, { label: string; text: string; bg: string; border: string }> = {
   easy:   { label: 'Fácil',   text: 'text-fisico',     bg: 'bg-fisico/8',     border: 'border-fisico/20'     },
@@ -72,9 +73,12 @@ function isWithinLastWeek(iso: string): boolean {
 
 function autoProgressText(title: string, totalDaysActive: number, totalMissionsCount: number): string {
   const t = title.toLowerCase()
-  if (t.includes('30 días activos'))  return `Progreso: ${totalDaysActive}/30 días activos`
-  if (t.includes('365 días activos')) return `Progreso: ${totalDaysActive}/365 días activos`
-  if (t.includes('100 misiones'))     return `Progreso: ${totalMissionsCount}/100 misiones`
+  if (t.includes(AUTO_ACHIEVEMENT_TITLES.THIRTY_ACTIVE_DAYS.toLowerCase()))
+    return `Progreso: ${totalDaysActive}/30 días activos`
+  if (t.includes(AUTO_ACHIEVEMENT_TITLES.THREE_SIXTY_FIVE_ACTIVE_DAYS.toLowerCase()))
+    return `Progreso: ${totalDaysActive}/365 días activos`
+  if (t.includes(AUTO_ACHIEVEMENT_TITLES.ONE_HUNDRED_MISSIONS.toLowerCase()))
+    return `Progreso: ${totalMissionsCount}/100 misiones`
   return 'Se desbloquea automáticamente'
 }
 
@@ -474,7 +478,7 @@ export default function AchievementsClient({
                 className="h-8 px-4 rounded-pill text-sm font-medium transition-all duration-150 cursor-pointer"
                 style={{
                   backgroundColor: classFilter === value ? 'var(--color-accent)' : 'var(--color-surface)',
-                  color: classFilter === value ? '#fff' : 'var(--color-text-muted)',
+                  color: classFilter === value ? 'var(--color-background)' : 'var(--color-text-muted)',
                   border: classFilter === value ? '1px solid transparent' : '1px solid color-mix(in srgb, var(--color-border) 80%, transparent)',
                 }}
               >

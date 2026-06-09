@@ -112,7 +112,7 @@ function PendingBadge({ count }: { count: number }) {
         height: '16px',
         borderRadius: '50%',
         background: 'var(--color-accent)',
-        color: '#fff',
+        color: 'var(--color-background)',
         fontSize: '10px',
         fontWeight: 700,
         display: 'flex',
@@ -146,11 +146,10 @@ export default function BottomNavClient({ pendingCount = 0 }: { pendingCount?: n
       <div
         className="flex rounded-card overflow-hidden"
         style={{
-          background: 'rgba(26, 26, 29, 0.92)',
+          background: 'color-mix(in srgb, var(--color-surface) 92%, transparent)',
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
           border: '1px solid rgba(255,255,255,0.07)',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
         }}
       >
         {NAV_ITEMS.map(({ href, label, Icon }) => {

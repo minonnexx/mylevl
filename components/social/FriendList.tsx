@@ -122,9 +122,9 @@ function FriendRow({ friend }: { friend: Friend }) {
               disabled={isRemoving}
               className="h-7 px-2.5 rounded-component text-xs font-medium transition-colors disabled:opacity-40"
               style={{
-                background: 'color-mix(in srgb, #e53e3e 15%, transparent)',
-                color: '#fc8181',
-                border: '1px solid color-mix(in srgb, #e53e3e 25%, transparent)',
+                background: 'color-mix(in srgb, var(--color-error) 15%, transparent)',
+                color: 'var(--color-error)',
+                border: '1px solid color-mix(in srgb, var(--color-error) 25%, transparent)',
               }}
             >
               {isRemoving ? '...' : 'Sí, eliminar'}

@@ -31,22 +31,24 @@ export function HexMedal({
 
   const rarityData = rarity ? RARITY_META[rarity] : null
 
-  const borderColor   = locked ? '#444' : (rarityData?.color ?? 'currentColor')
-  const fillColor     = locked ? '#1a1a1a' : (rarityData?.bg ?? 'currentColor')
+  const borderColor   = locked ? 'var(--color-text-muted)' : (rarityData?.color ?? 'currentColor')
+  const fillColor     = locked ? 'var(--color-surface)' : (rarityData?.bg ?? 'currentColor')
   const fillOpacity   = rarityData || locked ? 1 : 0.18
   const strokeOpacity = locked ? 0.4 : 1
   const strokeWidth   = locked ? 1.5 : (rarityData?.strokeWidth ?? 1.5)
-  const iconColor     = locked ? '#555' : borderColor
+  const iconColor     = locked ? 'var(--color-text-muted)' : borderColor
 
   return (
     <svg viewBox="0 0 40 46" width={size} height={h} aria-hidden style={{ display: 'block', flexShrink: 0 }}>
       <polygon
         points="20,0 40,12 40,34 20,46 0,34 0,12"
-        fill={fillColor}
-        fillOpacity={fillOpacity}
-        stroke={borderColor}
-        strokeOpacity={strokeOpacity}
-        strokeWidth={strokeWidth}
+        style={{
+          fill: fillColor,
+          fillOpacity,
+          stroke: borderColor,
+          strokeOpacity,
+          strokeWidth,
+        }}
       />
       {locked ? (
         <foreignObject x="0" y="0" width="40" height="46">

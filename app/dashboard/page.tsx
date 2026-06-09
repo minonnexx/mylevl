@@ -192,16 +192,15 @@ export default async function DashboardPage() {
                         <AvatarDisplay config={profile.avatar_config} size={40} />
                       ) : (
                         <div
-                          className="p-[2px] rounded-full"
+                          className="w-10 h-10 rounded-full flex items-center justify-center"
                           style={{
-                            background: 'linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-light) 50%, var(--color-accent) 100%)',
+                            background: 'var(--color-surface)',
+                            border: '1px solid color-mix(in srgb, var(--color-accent) 30%, transparent)',
                           }}
                         >
-                          <div className="w-10 h-10 rounded-full bg-surface flex items-center justify-center">
-                            <span className="text-accent font-bold text-sm leading-none select-none">
-                              {(profile.username ?? 'JU').slice(0, 2).toUpperCase()}
-                            </span>
-                          </div>
+                          <span className="text-accent font-bold text-sm leading-none select-none">
+                            {(profile.username ?? 'JU').slice(0, 2).toUpperCase()}
+                          </span>
                         </div>
                       )}
                     </div>
@@ -247,7 +246,7 @@ export default async function DashboardPage() {
                     }
                   />
                   <StatRow
-                    label="Logros completados"
+                    label="Misiones completadas"
                     value={completedCount}
                     sub="misiones"
                     icon={

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition, useEffect } from 'react'
+import { useState, useTransition, useEffect, useCallback } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { X, Pencil, RefreshCw, LogOut, Globe, Lock, Dumbbell, BookOpen, Shield, Star } from 'lucide-react'
 import AvatarDisplay from '@/components/avatar/AvatarDisplay'
@@ -66,6 +66,16 @@ export function SettingsDrawer({ isOpen, onClose, profile }: Props) {
       setUsernameError('')
     }
   }, [isOpen])
+
+  // ESC closes the drawer
+  const handleEsc = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Escape') onClose()
+  }, [onClose])
+  useEffect(() => {
+    if (!isOpen) return
+    document.addEventListener('keydown', handleEsc)
+    return () => document.removeEventListener('keydown', handleEsc)
+  }, [isOpen, handleEsc])
 
   // ── Cooldown ─────────────────────────────────────────────────────────────────
   const availableAt = profile.username_changed_at
@@ -210,13 +220,13 @@ export function SettingsDrawer({ isOpen, onClose, profile }: Props) {
                       className="w-full px-3 py-2 text-sm rounded-component border outline-none transition-colors"
                       style={{
                         background: 'var(--color-background)',
-                        borderColor: usernameError ? 'var(--color-error, #e53e3e)' : 'var(--color-border)',
+                        borderColor: usernameError ? 'var(--color-error)' : 'var(--color-border)',
                         color: 'var(--color-text-primary)',
                       }}
                       placeholder="Nombre de usuario"
                     />
                     {usernameError && (
-                      <p className="text-xs" style={{ color: 'var(--color-error, #e53e3e)' }}>{usernameError}</p>
+                      <p className="text-xs" style={{ color: 'var(--color-error)' }}>{usernameError}</p>
                     )}
                     <div className="flex gap-2">
                       <button

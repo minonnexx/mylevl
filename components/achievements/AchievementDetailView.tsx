@@ -13,6 +13,7 @@ import { toast } from 'sonner'
 import { playLevelUp, playMissionComplete, playShieldGained } from '@/lib/sounds'
 import { completeAchievementAction, type AchievementActionResult } from '@/app/achievements/actions'
 import type { AvatarConfig, Medal, Mission, Rarity } from '@/types/supabase'
+import { AUTO_ACHIEVEMENT_TITLES } from '@/lib/constants/achievements'
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })
@@ -31,9 +32,12 @@ function progressForAchievement(
   totalMissionsCount: number,
 ): { value: number; max: number; label: string } | null {
   const t = title.toLowerCase()
-  if (t.includes('30 días activos'))  return { value: totalDaysActive, max: 30, label: 'días activos' }
-  if (t.includes('365 días activos')) return { value: totalDaysActive, max: 365, label: 'días activos' }
-  if (t.includes('100 misiones'))     return { value: totalMissionsCount, max: 100, label: 'misiones completadas' }
+  if (t.includes(AUTO_ACHIEVEMENT_TITLES.THIRTY_ACTIVE_DAYS.toLowerCase()))
+    return { value: totalDaysActive, max: 30, label: 'días activos' }
+  if (t.includes(AUTO_ACHIEVEMENT_TITLES.THREE_SIXTY_FIVE_ACTIVE_DAYS.toLowerCase()))
+    return { value: totalDaysActive, max: 365, label: 'días activos' }
+  if (t.includes(AUTO_ACHIEVEMENT_TITLES.ONE_HUNDRED_MISSIONS.toLowerCase()))
+    return { value: totalMissionsCount, max: 100, label: 'misiones completadas' }
   return null
 }
 
