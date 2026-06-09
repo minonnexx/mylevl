@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { checkAutoAchievements } from '@/lib/achievements'
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('authorization')
@@ -115,6 +116,13 @@ export async function GET(req: NextRequest) {
         await supabase.from('social_feed').insert(milestoneInserts)
       }
     } catch {}
+  }
+
+  // Auto-achievements for all users still active yesterday
+  if (activeYesterdayIds.size > 0) {
+    for (const uid of Array.from(activeYesterdayIds)) {
+      try { await checkAutoAchievements(supabase, uid) } catch {}
+    }
   }
 
   return NextResponse.json({

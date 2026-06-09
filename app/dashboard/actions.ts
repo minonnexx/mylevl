@@ -7,6 +7,7 @@ import { computeLevelUp } from '@/lib/xp'
 import { updateStreak } from '@/lib/streaks'
 import { getDaySummary } from '@/lib/recap'
 import type { DaySummary } from '@/lib/recap'
+import { checkAutoAchievements } from '@/lib/achievements'
 
 export async function markShieldNotificationSeen(): Promise<void> {
   const supabase = await createClient()
@@ -132,6 +133,8 @@ export async function completeMission(
         })
       } catch {}
     }
+
+    try { await checkAutoAchievements(supabase, user.id) } catch {}
 
     const summary = await getDaySummary(supabase, user.id)
     const allMissionsCompleted =

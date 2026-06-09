@@ -1,5 +1,16 @@
 export type LifeClass = 'fisico' | 'mental' | 'disciplina'
 
+export type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary'
+
+export interface Medal {
+  id: string
+  mission_id: string
+  name: string
+  icon: string
+  rarity: Rarity
+  created_at: string
+}
+
 export interface AvatarConfig {
   style: 'adventurer' | 'pixel-art'
   gender: 'male' | 'female'
@@ -67,6 +78,7 @@ export interface Mission {
   type: MissionType
   xp_reward: number
   verification: VerificationType
+  verification_type: 'automatic' | 'manual' | 'external'
   required_level: number
   sort_order: number | null
   pack: string | null
