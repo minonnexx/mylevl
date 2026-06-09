@@ -1,11 +1,13 @@
 export type LifeClass = 'fisico' | 'mental' | 'disciplina'
 
 export interface AvatarConfig {
+  style: 'adventurer' | 'pixel-art'
   gender: 'male' | 'female'
-  skin: 'light' | 'medium-light' | 'medium' | 'medium-dark' | 'dark'
+  skin: string
   hair: string
-  hairColor: 'black' | 'brown' | 'blonde' | 'red' | 'white'
-  eyes: 'variant01' | 'variant02' | 'variant03'
+  hairColor: string
+  eyes: string
+  mouth?: string
 }
 export type MissionDifficulty = 'easy' | 'medium' | 'hard' | 'boss'
 export type MissionType = 'daily' | 'streak' | 'achievement' | 'boss'

@@ -5,8 +5,9 @@ import AvatarDisplay from './AvatarDisplay'
 import {
   SKIN_TONES,
   HAIR_COLORS,
-  HAIR_STYLES_MALE,
-  HAIR_STYLES_FEMALE,
+  ADVENTURER_OPTIONS,
+  PIXEL_ART_OPTIONS,
+  type AvatarStyle,
 } from '@/lib/constants/avatar'
 import type { AvatarConfig } from '@/types/supabase'
 
@@ -14,90 +15,201 @@ interface Props {
   onComplete: (config: AvatarConfig) => void
 }
 
-const DEFAULT_CONFIG: AvatarConfig = {
+const SKIN_ORDER = ['light', 'medium-light', 'medium', 'medium-dark', 'dark']
+const HAIR_COLOR_ORDER = ['black', 'brown', 'blonde', 'red', 'white']
+
+const PIXEL_ART_PREVIEW: AvatarConfig = {
+  style: 'pixel-art',
   gender: 'male',
   skin: 'medium',
-  hair: HAIR_STYLES_MALE[0],
-  hairColor: 'black',
-  eyes: 'variant01',
+  hair: 'short02',
+  hairColor: 'brown',
+  eyes: 'variant02',
 }
 
-const SKIN_ORDER = ['light', 'medium-light', 'medium', 'medium-dark', 'dark'] as const
-const HAIR_COLOR_ORDER = ['black', 'brown', 'blonde', 'red', 'white'] as const
-const EYE_LABELS: Record<string, string> = {
-  variant01: 'Ojos 1',
-  variant02: 'Ojos 2',
-  variant03: 'Ojos 3',
+const ADVENTURER_PREVIEW: AvatarConfig = {
+  style: 'adventurer',
+  gender: 'female',
+  skin: 'medium-light',
+  hair: 'long02',
+  hairColor: 'blonde',
+  eyes: 'variant03',
+  mouth: 'variant02',
 }
 
 function hairLabel(style: string): string {
   const prefix = style.startsWith('short') ? 'Corto' : 'Largo'
-  const num = style.replace(/[a-z]/g, '')
+  const num = style.replace(/\D/g, '')
   return `${prefix} ${num}`
 }
 
-export default function AvatarCreator({ onComplete }: Props) {
-  const [config, setConfig] = useState<AvatarConfig>(DEFAULT_CONFIG)
+function optionLabel(key: string, prefix: string): string {
+  const num = key.replace(/\D/g, '')
+  return `${prefix} ${num}`
+}
 
-  function setGender(gender: AvatarConfig['gender']) {
-    const styles = gender === 'male' ? HAIR_STYLES_MALE : HAIR_STYLES_FEMALE
-    setConfig((prev) => ({ ...prev, gender, hair: styles[0] }))
+const selectedBtn: React.CSSProperties = {
+  border: '2px solid var(--color-accent)',
+  backgroundColor: 'var(--color-surface)',
+  color: 'var(--color-text-primary)',
+}
+const defaultBtn: React.CSSProperties = {
+  border: '2px solid var(--color-surface)',
+  backgroundColor: 'transparent',
+  color: 'var(--color-text-muted)',
+}
+
+function TraitButton({
+  label,
+  active,
+  onClick,
+}: {
+  label: string
+  active: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        flex: 1,
+        padding: '8px 0',
+        borderRadius: 'var(--radius-component)',
+        cursor: 'pointer',
+        fontSize: '13px',
+        ...(active ? selectedBtn : defaultBtn),
+      }}
+    >
+      {label}
+    </button>
+  )
+}
+
+// ── Step A: style selector ───────────────────────────────────────────────────
+
+function StyleStep({ onSelect }: { onSelect: (s: AvatarStyle) => void }) {
+  const [picked, setPicked] = useState<AvatarStyle | null>(null)
+
+  const cardStyle = (s: AvatarStyle): React.CSSProperties => ({
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '12px',
+    padding: '20px 12px',
+    borderRadius: 'var(--radius-card)',
+    backgroundColor: 'var(--color-surface)',
+    border: picked === s ? '2px solid var(--color-accent)' : '2px solid transparent',
+    cursor: 'pointer',
+  })
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <div style={{ textAlign: 'center' }}>
+        <h1 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--color-text-primary)', margin: 0 }}>
+          Elige tu estilo
+        </h1>
+      </div>
+
+      <div style={{ display: 'flex', gap: '12px' }}>
+        <button style={cardStyle('pixel-art')} onClick={() => setPicked('pixel-art')}>
+          <AvatarDisplay config={PIXEL_ART_PREVIEW} size={80} />
+          <span style={{ fontSize: '14px', fontWeight: 600, color: picked === 'pixel-art' ? 'var(--color-accent)' : 'var(--color-text-primary)' }}>
+            Pixel art
+          </span>
+        </button>
+
+        <button style={cardStyle('adventurer')} onClick={() => setPicked('adventurer')}>
+          <AvatarDisplay config={ADVENTURER_PREVIEW} size={80} />
+          <span style={{ fontSize: '14px', fontWeight: 600, color: picked === 'adventurer' ? 'var(--color-accent)' : 'var(--color-text-primary)' }}>
+            Ilustrado
+          </span>
+        </button>
+      </div>
+
+      <button
+        onClick={() => picked && onSelect(picked)}
+        disabled={!picked}
+        style={{
+          width: '100%',
+          padding: '12px 0',
+          borderRadius: 'var(--radius-component)',
+          backgroundColor: 'var(--color-accent)',
+          color: 'var(--color-text-primary)',
+          border: 'none',
+          cursor: picked ? 'pointer' : 'not-allowed',
+          fontSize: '15px',
+          fontWeight: 600,
+          opacity: picked ? 1 : 0.4,
+        }}
+      >
+        Continuar
+      </button>
+    </div>
+  )
+}
+
+// ── Step B: traits editor ────────────────────────────────────────────────────
+
+function TraitsStep({
+  style,
+  onComplete,
+}: {
+  style: AvatarStyle
+  onComplete: (cfg: AvatarConfig) => void
+}) {
+  const opts = style === 'pixel-art' ? PIXEL_ART_OPTIONS : ADVENTURER_OPTIONS
+  const maleHair = opts.hair.filter(h => h.startsWith('short'))
+  const femaleHair = opts.hair.filter(h => h.startsWith('long'))
+
+  const [config, setConfig] = useState<AvatarConfig>({
+    style,
+    gender: 'male',
+    skin: 'medium',
+    hair: maleHair[0],
+    hairColor: 'black',
+    eyes: opts.eyes[0],
+    mouth: style === 'adventurer' ? ADVENTURER_OPTIONS.mouth[0] : undefined,
+  })
+
+  function setGender(gender: 'male' | 'female') {
+    const hair = gender === 'male' ? maleHair[0] : femaleHair[0]
+    setConfig(prev => ({ ...prev, gender, hair }))
   }
 
   function set<K extends keyof AvatarConfig>(key: K, value: AvatarConfig[K]) {
-    setConfig((prev) => ({ ...prev, [key]: value }))
+    setConfig(prev => ({ ...prev, [key]: value }))
   }
 
-  const hairStyles = config.gender === 'male' ? HAIR_STYLES_MALE : HAIR_STYLES_FEMALE
-
-  const selectedBorder = '2px solid var(--color-accent)'
-  const defaultBorder = '2px solid transparent'
+  const hairStyles = config.gender === 'male' ? maleHair : femaleHair
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       {/* Preview */}
       <div style={{ display: 'flex', justifyContent: 'center' }}>
-        <AvatarDisplay config={config} pack={null} size={120} />
+        <AvatarDisplay config={config} size={120} />
       </div>
 
       {/* Género */}
       <section>
-        <p style={{ color: 'var(--color-text-muted)', fontSize: '12px', marginBottom: '8px' }}>
-          Género
-        </p>
+        <p style={{ color: 'var(--color-text-muted)', fontSize: '12px', marginBottom: '8px' }}>Género</p>
         <div style={{ display: 'flex', gap: '8px' }}>
-          {(['male', 'female'] as const).map((g) => (
-            <button
+          {(['male', 'female'] as const).map(g => (
+            <TraitButton
               key={g}
+              label={g === 'male' ? 'Masculino' : 'Femenino'}
+              active={config.gender === g}
               onClick={() => setGender(g)}
-              style={{
-                flex: 1,
-                padding: '8px 0',
-                borderRadius: 'var(--radius-component)',
-                border: config.gender === g ? selectedBorder : '2px solid var(--color-surface)',
-                backgroundColor:
-                  config.gender === g ? 'var(--color-surface)' : 'transparent',
-                color:
-                  config.gender === g
-                    ? 'var(--color-text-primary)'
-                    : 'var(--color-text-muted)',
-                cursor: 'pointer',
-                fontSize: '14px',
-              }}
-            >
-              {g === 'male' ? 'Masculino' : 'Femenino'}
-            </button>
+            />
           ))}
         </div>
       </section>
 
       {/* Tono de piel */}
       <section>
-        <p style={{ color: 'var(--color-text-muted)', fontSize: '12px', marginBottom: '8px' }}>
-          Tono de piel
-        </p>
+        <p style={{ color: 'var(--color-text-muted)', fontSize: '12px', marginBottom: '8px' }}>Tono de piel</p>
         <div style={{ display: 'flex', gap: '10px' }}>
-          {SKIN_ORDER.map((tone) => (
+          {SKIN_ORDER.map(tone => (
             <button
               key={tone}
               onClick={() => set('skin', tone)}
@@ -107,9 +219,10 @@ export default function AvatarCreator({ onComplete }: Props) {
                 height: '36px',
                 borderRadius: '50%',
                 backgroundColor: SKIN_TONES[tone],
-                border: config.skin === tone ? selectedBorder : defaultBorder,
+                border: config.skin === tone ? '2px solid var(--color-accent)' : '2px solid transparent',
                 cursor: 'pointer',
                 padding: 0,
+                flexShrink: 0,
               }}
             />
           ))}
@@ -118,43 +231,24 @@ export default function AvatarCreator({ onComplete }: Props) {
 
       {/* Pelo */}
       <section>
-        <p style={{ color: 'var(--color-text-muted)', fontSize: '12px', marginBottom: '8px' }}>
-          Pelo
-        </p>
+        <p style={{ color: 'var(--color-text-muted)', fontSize: '12px', marginBottom: '8px' }}>Pelo</p>
         <div style={{ display: 'flex', gap: '8px' }}>
-          {hairStyles.map((style) => (
-            <button
-              key={style}
-              onClick={() => set('hair', style)}
-              style={{
-                flex: 1,
-                padding: '8px 0',
-                borderRadius: 'var(--radius-component)',
-                border:
-                  config.hair === style ? selectedBorder : '2px solid var(--color-surface)',
-                backgroundColor:
-                  config.hair === style ? 'var(--color-surface)' : 'transparent',
-                color:
-                  config.hair === style
-                    ? 'var(--color-text-primary)'
-                    : 'var(--color-text-muted)',
-                cursor: 'pointer',
-                fontSize: '14px',
-              }}
-            >
-              {hairLabel(style)}
-            </button>
+          {hairStyles.map(h => (
+            <TraitButton
+              key={h}
+              label={hairLabel(h)}
+              active={config.hair === h}
+              onClick={() => set('hair', h)}
+            />
           ))}
         </div>
       </section>
 
       {/* Color de pelo */}
       <section>
-        <p style={{ color: 'var(--color-text-muted)', fontSize: '12px', marginBottom: '8px' }}>
-          Color de pelo
-        </p>
+        <p style={{ color: 'var(--color-text-muted)', fontSize: '12px', marginBottom: '8px' }}>Color de pelo</p>
         <div style={{ display: 'flex', gap: '10px' }}>
-          {HAIR_COLOR_ORDER.map((color) => (
+          {HAIR_COLOR_ORDER.map(color => (
             <button
               key={color}
               onClick={() => set('hairColor', color)}
@@ -164,9 +258,10 @@ export default function AvatarCreator({ onComplete }: Props) {
                 height: '36px',
                 borderRadius: '50%',
                 backgroundColor: HAIR_COLORS[color],
-                border: config.hairColor === color ? selectedBorder : defaultBorder,
+                border: config.hairColor === color ? '2px solid var(--color-accent)' : '2px solid transparent',
                 cursor: 'pointer',
                 padding: 0,
+                flexShrink: 0,
               }}
             />
           ))}
@@ -175,36 +270,36 @@ export default function AvatarCreator({ onComplete }: Props) {
 
       {/* Ojos */}
       <section>
-        <p style={{ color: 'var(--color-text-muted)', fontSize: '12px', marginBottom: '8px' }}>
-          Ojos
-        </p>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          {(['variant01', 'variant02', 'variant03'] as const).map((v) => (
-            <button
+        <p style={{ color: 'var(--color-text-muted)', fontSize: '12px', marginBottom: '8px' }}>Ojos</p>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          {opts.eyes.map(v => (
+            <TraitButton
               key={v}
+              label={optionLabel(v, 'Ojos')}
+              active={config.eyes === v}
               onClick={() => set('eyes', v)}
-              style={{
-                flex: 1,
-                padding: '8px 0',
-                borderRadius: 'var(--radius-component)',
-                border: config.eyes === v ? selectedBorder : '2px solid var(--color-surface)',
-                backgroundColor:
-                  config.eyes === v ? 'var(--color-surface)' : 'transparent',
-                color:
-                  config.eyes === v
-                    ? 'var(--color-text-primary)'
-                    : 'var(--color-text-muted)',
-                cursor: 'pointer',
-                fontSize: '14px',
-              }}
-            >
-              {EYE_LABELS[v]}
-            </button>
+            />
           ))}
         </div>
       </section>
 
-      {/* Continuar */}
+      {/* Boca — solo adventurer */}
+      {style === 'adventurer' && (
+        <section>
+          <p style={{ color: 'var(--color-text-muted)', fontSize: '12px', marginBottom: '8px' }}>Boca</p>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            {ADVENTURER_OPTIONS.mouth.map(m => (
+              <TraitButton
+                key={m}
+                label={optionLabel(m, 'Boca')}
+                active={config.mouth === m}
+                onClick={() => set('mouth', m)}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
       <button
         onClick={() => onComplete(config)}
         style={{
@@ -223,5 +318,30 @@ export default function AvatarCreator({ onComplete }: Props) {
         Continuar
       </button>
     </div>
+  )
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
+
+export default function AvatarCreator({ onComplete }: Props) {
+  const [step, setStep] = useState<'style' | 'traits'>('style')
+  const [chosenStyle, setChosenStyle] = useState<AvatarStyle | null>(null)
+
+  if (step === 'style') {
+    return (
+      <StyleStep
+        onSelect={s => {
+          setChosenStyle(s)
+          setStep('traits')
+        }}
+      />
+    )
+  }
+
+  return (
+    <TraitsStep
+      style={chosenStyle!}
+      onComplete={onComplete}
+    />
   )
 }

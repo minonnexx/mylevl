@@ -189,7 +189,7 @@ export default async function DashboardPage() {
                   <div className="flex items-center gap-4">
                     <div className="flex-shrink-0">
                       {profile.avatar_config ? (
-                        <AvatarDisplay config={profile.avatar_config} pack={profile.active_pack} size={40} />
+                        <AvatarDisplay config={profile.avatar_config} size={40} />
                       ) : (
                         <div
                           className="p-[2px] rounded-full"

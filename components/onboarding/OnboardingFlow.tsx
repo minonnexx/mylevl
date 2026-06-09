@@ -253,7 +253,7 @@ function CharacterIntroStep({
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.6, ease: 'easeOut' }}
       >
-        <AvatarDisplay config={avatarConfig} pack={null} size={160} />
+        <AvatarDisplay config={avatarConfig} size={160} />
       </motion.div>
 
       <div style={{ textAlign: 'center', minHeight: '120px' }}>

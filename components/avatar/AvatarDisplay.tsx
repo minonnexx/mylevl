@@ -1,18 +1,17 @@
 'use client'
 
 import { createAvatar } from '@dicebear/core'
-import { adventurer } from '@dicebear/collection'
+import { adventurer, pixelArt } from '@dicebear/collection'
 import { User } from 'lucide-react'
-import { SKIN_TONES, HAIR_COLORS, PACK_OUTFIT_COLORS } from '@/lib/constants/avatar'
-import type { AvatarConfig, PackId } from '@/types/supabase'
+import { SKIN_TONES, HAIR_COLORS } from '@/lib/constants/avatar'
+import type { AvatarConfig } from '@/types/supabase'
 
 interface Props {
   config: AvatarConfig | null
-  pack: PackId | null
   size?: number
 }
 
-export default function AvatarDisplay({ config, pack, size = 80 }: Props) {
+export default function AvatarDisplay({ config, size = 80 }: Props) {
   if (!config) {
     return (
       <div
@@ -24,6 +23,7 @@ export default function AvatarDisplay({ config, pack, size = 80 }: Props) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          flexShrink: 0,
         }}
       >
         <User size={Math.round(size * 0.45)} color="var(--color-text-muted)" />
@@ -31,43 +31,32 @@ export default function AvatarDisplay({ config, pack, size = 80 }: Props) {
     )
   }
 
-  const skinHex = SKIN_TONES[config.skin].replace('#', '')
-  const hairColorHex = HAIR_COLORS[config.hairColor].replace('#', '')
+  const skinHex = (SKIN_TONES[config.skin] ?? '#C68642').replace('#', '')
+  const hairColorHex = (HAIR_COLORS[config.hairColor] ?? '#1a1a1a').replace('#', '')
+  const styleEngine = config.style === 'pixel-art' ? pixelArt : adventurer
 
-  const svg = createAvatar(adventurer, {
-    seed: `${config.gender}-${config.hair}-${config.skin}-${config.hairColor}-${config.eyes}`,
+  const options: Record<string, unknown> = {
+    seed: [config.style, config.gender, config.hair, config.skin, config.hairColor, config.eyes, config.mouth ?? ''].join('-'),
     backgroundColor: ['transparent'],
-    skinColor: [skinHex] as never,
-    hair: [config.hair] as never,
-    hairColor: [hairColorHex] as never,
-    eyes: [config.eyes] as never,
-  }).toString()
+    skinColor: [skinHex],
+    hair: [config.hair],
+    hairColor: [hairColorHex],
+    eyes: [config.eyes],
+  }
 
-  const outfitColors = pack ? PACK_OUTFIT_COLORS[pack] : null
+  if (config.mouth && config.style === 'adventurer') {
+    options.mouth = [config.mouth]
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const svg = createAvatar(styleEngine as any, options as any).toString()
 
   return (
-    <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
+    <div style={{ width: size, height: size, flexShrink: 0 }}>
       <div
         dangerouslySetInnerHTML={{ __html: svg }}
         style={{ width: '100%', height: '100%' }}
       />
-      {outfitColors && (
-        <svg
-          viewBox="0 0 100 40"
-          preserveAspectRatio="none"
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            width: '100%',
-            height: '38%',
-            pointerEvents: 'none',
-          }}
-        >
-          <rect x="8" y="10" width="84" height="34" rx="10" fill={outfitColors.primary} />
-          <rect x="36" y="2" width="28" height="18" rx="4" fill={outfitColors.secondary} />
-        </svg>
-      )}
     </div>
   )
 }

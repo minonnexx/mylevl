@@ -182,7 +182,7 @@ export function SettingsDrawer({ isOpen, onClose, profile }: Props) {
 
                 {/* Avatar */}
                 <div className="flex flex-col items-center gap-3 mb-5">
-                  <AvatarDisplay config={profile.avatar_config} pack={profile.active_pack} size={64} />
+                  <AvatarDisplay config={profile.avatar_config} size={64} />
                   <button
                     disabled
                     className="flex items-center gap-1.5 text-xs rounded-component px-3 py-1.5 transition-opacity opacity-40 cursor-not-allowed"

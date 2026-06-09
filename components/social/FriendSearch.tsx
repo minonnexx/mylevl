@@ -106,7 +106,7 @@ export function FriendSearch() {
           style={{ background: 'var(--color-background)' }}
         >
           <div className="flex-shrink-0">
-            <AvatarDisplay config={result.avatar_config} pack={result.active_pack} size={32} />
+            <AvatarDisplay config={result.avatar_config} size={32} />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-text-primary truncate">

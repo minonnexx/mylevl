@@ -75,7 +75,7 @@ function ProfileHeader({ profile }: { profile: Profile }) {
       <div className="flex items-center gap-4">
         <div className="flex-shrink-0">
           {profile.avatar_config ? (
-            <AvatarDisplay config={profile.avatar_config} pack={profile.active_pack} size={80} />
+            <AvatarDisplay config={profile.avatar_config} size={80} />
           ) : (
             <div
               className="p-[2px] rounded-full"

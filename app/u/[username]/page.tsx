@@ -119,7 +119,6 @@ export default async function PublicProfilePage({
               <div className="flex items-center gap-4">
                 <AvatarDisplay
                   config={profile.avatar_config as AvatarConfig | null}
-                  pack={profile.active_pack as PackId | null}
                   size={80}
                 />
                 <div>
