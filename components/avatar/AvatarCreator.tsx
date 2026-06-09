@@ -13,6 +13,7 @@ import type { AvatarConfig } from '@/types/supabase'
 
 interface Props {
   onComplete: (config: AvatarConfig) => void
+  initialConfig?: AvatarConfig | null
 }
 
 const SKIN_ORDER = ['light', 'medium-light', 'medium', 'medium-dark', 'dark']
@@ -154,22 +155,27 @@ function StyleStep({ onSelect }: { onSelect: (s: AvatarStyle) => void }) {
 function TraitsStep({
   style,
   onComplete,
+  initialConfig,
 }: {
   style: AvatarStyle
   onComplete: (cfg: AvatarConfig) => void
+  initialConfig?: AvatarConfig | null
 }) {
   const opts = style === 'pixel-art' ? PIXEL_ART_OPTIONS : ADVENTURER_OPTIONS
   const maleHair = opts.hair.filter(h => h.startsWith('short'))
   const femaleHair = opts.hair.filter(h => h.startsWith('long'))
 
-  const [config, setConfig] = useState<AvatarConfig>({
-    style,
-    gender: 'male',
-    skin: 'medium',
-    hair: maleHair[0],
-    hairColor: 'black',
-    eyes: opts.eyes[0],
-    mouth: style === 'adventurer' ? ADVENTURER_OPTIONS.mouth[0] : undefined,
+  const [config, setConfig] = useState<AvatarConfig>(() => {
+    if (initialConfig && initialConfig.style === style) return initialConfig
+    return {
+      style,
+      gender: 'male',
+      skin: 'medium',
+      hair: maleHair[0],
+      hairColor: 'black',
+      eyes: opts.eyes[0],
+      mouth: style === 'adventurer' ? ADVENTURER_OPTIONS.mouth[0] : undefined,
+    }
   })
 
   function setGender(gender: 'male' | 'female') {
@@ -323,9 +329,9 @@ function TraitsStep({
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export default function AvatarCreator({ onComplete }: Props) {
-  const [step, setStep] = useState<'style' | 'traits'>('style')
-  const [chosenStyle, setChosenStyle] = useState<AvatarStyle | null>(null)
+export default function AvatarCreator({ onComplete, initialConfig }: Props) {
+  const [step, setStep] = useState<'style' | 'traits'>(initialConfig ? 'traits' : 'style')
+  const [chosenStyle, setChosenStyle] = useState<AvatarStyle | null>(initialConfig?.style ?? null)
 
   if (step === 'style') {
     return (
@@ -342,6 +348,7 @@ export default function AvatarCreator({ onComplete }: Props) {
     <TraitsStep
       style={chosenStyle!}
       onComplete={onComplete}
+      initialConfig={initialConfig}
     />
   )
 }
