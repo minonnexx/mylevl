@@ -1,14 +1,13 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { Users } from 'lucide-react'
 import Sidebar from '@/components/dashboard/Sidebar'
 import BottomNav from '@/components/dashboard/BottomNav'
 import { FriendSearch } from '@/components/social/FriendSearch'
 import { PendingRequests } from '@/components/social/PendingRequests'
 import { FriendList } from '@/components/social/FriendList'
-import { FeedItem } from '@/components/social/FeedItem'
 import { getFeed, getFriends, getPendingRequests } from '@/app/social/actions'
 import type { FeedEventItem } from '@/components/social/FeedItem'
+import { SocialFeed } from '@/components/social/SocialFeed'
 import { AppHeader } from '@/components/ui/AppHeader'
 import type { PackId } from '@/types/supabase'
 
@@ -65,22 +64,7 @@ export default async function SocialPage() {
                   </h2>
                 </div>
 
-                {feed.length === 0 ? (
-                  <div
-                    className="rounded-card p-6 border border-border/60 flex flex-col items-center gap-3 text-center"
-                    style={{ background: 'var(--color-surface)' }}
-                  >
-                    <Users size={32} strokeWidth={1.5} style={{ color: 'var(--color-text-muted)' }} aria-hidden />
-                    <p className="text-base font-semibold text-text-primary">Tu feed está vacío</p>
-                    <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
-                      Añade amigos para ver cuando suban de nivel, completen misiones o alcancen nuevas rachas
-                    </p>
-                  </div>
-                ) : (
-                  feed.map(event => (
-                    <FeedItem key={event.id} event={event} />
-                  ))
-                )}
+                <SocialFeed feed={feed} />
               </div>
 
               {/* ── RIGHT: Social management ────────────────────────────── */}

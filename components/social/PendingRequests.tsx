@@ -5,12 +5,16 @@ import { useRouter } from 'next/navigation'
 import { UserPlus, Check, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { acceptFriendRequest, rejectFriendRequest } from '@/app/social/actions'
+import AvatarDisplay from '@/components/avatar/AvatarDisplay'
+import type { AvatarConfig, PackId } from '@/types/supabase'
 
 type PendingRequest = {
   friendshipId: string
   userId: string
   username: string | null
   global_level: number
+  avatar_config: AvatarConfig | null
+  active_pack: PackId | null
 }
 
 export function PendingRequests({ requests }: { requests: PendingRequest[] }) {
@@ -80,6 +84,9 @@ function RequestRow({ request }: { request: PendingRequest }) {
       className="flex items-center gap-3 p-3 rounded-component border border-border/40"
       style={{ background: 'var(--color-background)' }}
     >
+      <div className="flex-shrink-0">
+        <AvatarDisplay config={request.avatar_config} size={32} />
+      </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-text-primary truncate">
           {request.username ?? 'jugador'}

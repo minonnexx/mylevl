@@ -138,7 +138,7 @@ export async function getPendingRequests() {
 
   const { data: profiles } = await supabase
     .from('profiles')
-    .select('id, username, global_level')
+    .select('id, username, global_level, avatar_config, active_pack')
     .in('id', requesterIds)
 
   return friendships.map(f => {
@@ -148,6 +148,8 @@ export async function getPendingRequests() {
       userId: f.requester_id as string,
       username: (profile?.username ?? null) as string | null,
       global_level: (profile?.global_level ?? 1) as number,
+      avatar_config: (profile?.avatar_config ?? null) as import('@/types/supabase').AvatarConfig | null,
+      active_pack: (profile?.active_pack ?? null) as import('@/types/supabase').PackId | null,
     }
   })
 }
