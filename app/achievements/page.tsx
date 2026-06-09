@@ -4,17 +4,17 @@ import Sidebar from '@/components/dashboard/Sidebar'
 import BottomNav from '@/components/dashboard/BottomNav'
 import AchievementsClient from '@/components/achievements/AchievementsClient'
 import { AppHeader } from '@/components/ui/AppHeader'
-import type { PackId } from '@/types/supabase'
+import type { Medal, PackId } from '@/types/supabase'
 
 export default async function AchievementsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth')
 
-  const [profileRes, achievementsRes, bossRes, completedRes] = await Promise.all([
+  const [profileRes, achievementsRes, bossRes, completedRes, medalsRes, completedCountRes] = await Promise.all([
     supabase
       .from('profiles')
-      .select('username, global_level, current_streak, active_pack, feed_public, username_changed_at, avatar_config')
+      .select('username, global_level, current_streak, active_pack, feed_public, username_changed_at, avatar_config, total_days_active')
       .eq('id', user.id)
       .single(),
     supabase
@@ -32,6 +32,11 @@ export default async function AchievementsPage() {
       .from('completed_missions')
       .select('mission_id, completed_at')
       .eq('user_id', user.id),
+    supabase.from('medals').select('*'),
+    supabase
+      .from('completed_missions')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id),
   ])
 
   const profile          = profileRes.data
@@ -42,6 +47,7 @@ export default async function AchievementsPage() {
   const feedPublic       = (profile as { feed_public?: boolean } | null)?.feed_public ?? true
   const usernameChangedAt = (profile as { username_changed_at?: string | null } | null)?.username_changed_at ?? null
   const avatarConfig = (profile as { avatar_config?: import('@/types/supabase').AvatarConfig | null } | null)?.avatar_config ?? null
+  const totalDaysActive = (profile as { total_days_active?: number } | null)?.total_days_active ?? 0
 
   // Build map: mission_id → most recent completed_at
   const completedMap: Record<string, string> = {}
@@ -52,6 +58,14 @@ export default async function AchievementsPage() {
       completedMap[row.mission_id as string] = current
     }
   }
+
+  // Build medals map: mission_id → Medal
+  const medalsMap: Record<string, Medal> = {}
+  for (const medal of medalsRes.data ?? []) {
+    medalsMap[(medal as Medal).mission_id] = medal as Medal
+  }
+
+  const totalMissionsCount = completedCountRes.count ?? 0
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -79,6 +93,9 @@ export default async function AchievementsPage() {
               bossMissions={bossRes.data ?? []}
               completedMap={completedMap}
               currentStreak={currentStreak}
+              medalsMap={medalsMap}
+              totalDaysActive={totalDaysActive}
+              totalMissionsCount={totalMissionsCount}
             />
           </div>
         </main>

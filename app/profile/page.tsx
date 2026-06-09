@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import type { Profile, ClassProgress, LifeClass } from '@/types/supabase'
+import type { Profile, ClassProgress, LifeClass, Medal } from '@/types/supabase'
+import { RARITY_META } from '@/lib/constants/medals'
 import { CLASS_META, getMilestoneProgress, getMilestoneTier } from '@/lib/constants/classes'
 import Sidebar from '@/components/dashboard/Sidebar'
 import BottomNav from '@/components/dashboard/BottomNav'
@@ -321,7 +322,56 @@ function RecentAchievements({ recent }: { recent: RecentItem[] }) {
   )
 }
 
-// 5 ── Class balance
+// 5 ── Medals earned
+function HexMedalSmall({ color, size = 32 }: { color: string; size?: number }) {
+  const h = Math.round(size * 1.15)
+  return (
+    <svg viewBox="0 0 40 46" width={size} height={h} aria-hidden style={{ color }}>
+      <polygon
+        points="20,0 40,12 40,34 20,46 0,34 0,12"
+        fill="currentColor"
+        fillOpacity={0.2}
+        stroke="currentColor"
+        strokeOpacity={0.7}
+        strokeWidth={1.5}
+      />
+    </svg>
+  )
+}
+
+function MedalsSection({ medals }: { medals: Medal[] }) {
+  return (
+    <section aria-labelledby="section-medallas">
+      <SectionTitle id="section-medallas">Medallas</SectionTitle>
+
+      {medals.length === 0 ? (
+        <div className="bg-surface rounded-card border border-border/60">
+          <EmptyState
+            icon={<Trophy size={40} strokeWidth={1.5} aria-hidden />}
+            title="Sin medallas aún"
+            description="Completa logros para ganar medallas"
+            action={{ label: 'Ver logros', href: '/achievements' }}
+          />
+        </div>
+      ) : (
+        <div className="bg-surface rounded-card border border-border/60 p-6">
+          <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-4">
+            {medals.map(medal => (
+              <div key={medal.id} className="flex flex-col items-center gap-1.5" title={medal.name}>
+                <HexMedalSmall color={RARITY_META[medal.rarity].color} size={36} />
+                <span className="text-[10px] text-text-muted text-center leading-tight truncate w-full text-center">
+                  {medal.name}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </section>
+  )
+}
+
+// 6 ── Class balance
 function ClassBalance({ classProgress }: { classProgress: ClassProgress[] }) {
   const classes: LifeClass[] = ['fisico', 'mental', 'disciplina']
 
@@ -406,7 +456,7 @@ export default async function ProfilePage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth')
 
-  const [profileRes, classProgressRes, completedCountRes, recentRes, xpTotalRes] = await Promise.all([
+  const [profileRes, classProgressRes, completedCountRes, recentRes, xpTotalRes, completedMissionIdsRes] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', user.id).single(),
     supabase.from('class_progress').select('*').eq('user_id', user.id),
     supabase.from('completed_missions').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
@@ -416,6 +466,7 @@ export default async function ProfilePage() {
       .order('completed_at', { ascending: false })
       .limit(5),
     supabase.from('completed_missions').select('missions(xp_reward)').eq('user_id', user.id),
+    supabase.from('completed_missions').select('mission_id').eq('user_id', user.id),
   ])
 
   const profile: Profile = (profileRes.data as Profile | null) ?? {
@@ -440,16 +491,23 @@ export default async function ProfilePage() {
   }, 0)
 
   const createdAtStr = profile.created_at.slice(0, 10)
+  const uniqueMissionIds = [...new Set((completedMissionIdsRes.data ?? []).map(r => r.mission_id as string))]
 
-  const heatmapRes = await supabase
-    .from('streaks')
-    .select('date, missions_completed')
-    .eq('user_id', user.id)
-    .gte('date', createdAtStr)
-    .order('date', { ascending: true })
+  const [heatmapRes, medalsRes] = await Promise.all([
+    supabase
+      .from('streaks')
+      .select('date, missions_completed')
+      .eq('user_id', user.id)
+      .gte('date', createdAtStr)
+      .order('date', { ascending: true }),
+    uniqueMissionIds.length > 0
+      ? supabase.from('medals').select('*').in('mission_id', uniqueMissionIds)
+      : Promise.resolve({ data: [] as Medal[], error: null }),
+  ])
 
   type HeatmapRow = { date: string; missions_completed: number }
   const heatmapData = (heatmapRes.data ?? []) as HeatmapRow[]
+  const earnedMedals = (medalsRes.data ?? []) as Medal[]
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -508,6 +566,8 @@ export default async function ProfilePage() {
             <ActivityHeatmap data={heatmapData} createdAt={profile.created_at} />
 
             <RecentAchievements recent={recent} />
+
+            <MedalsSection medals={earnedMedals} />
 
             {profile.current_streak === 0 && (
               <section aria-labelledby="section-racha-historica">

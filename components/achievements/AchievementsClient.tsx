@@ -1,8 +1,9 @@
 'use client'
 
-import { useActionState, useCallback, useEffect, useRef, useState } from 'react'
-import type { Mission, MissionDifficulty } from '@/types/supabase'
+import { useActionState, useEffect, useRef, useState } from 'react'
+import type { Medal, Mission, MissionDifficulty } from '@/types/supabase'
 import { CLASS_META } from '@/lib/constants/classes'
+import { RARITY_META } from '@/lib/constants/medals'
 import { completeAchievementAction, type AchievementActionResult } from '@/app/achievements/actions'
 import { toast } from 'sonner'
 import { playLevelUp, playMissionComplete, playShieldGained } from '@/lib/sounds'
@@ -39,7 +40,7 @@ function DiffBadge({ difficulty }: { difficulty: MissionDifficulty }) {
 
 function IconCheck() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 text-fisico flex-shrink-0" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <svg viewBox="0 0 24 24" fill="none" className="w-3.5 h-3.5 flex-shrink-0" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden style={{ color: 'var(--color-fisico)' }}>
       <polyline points="20 6 9 17 4 12" />
     </svg>
   )
@@ -57,13 +58,53 @@ function isWithinLastWeek(iso: string): boolean {
   return completed >= weekAgo
 }
 
-// ─── Achievement card ─────────────────────────────────────────────────────────
-function AchievementCard({ mission, completedAt }: {
+// ─── Hex medal shape ──────────────────────────────────────────────────────────
+// Uses currentColor — set `color` on the parent element to control the fill.
+function HexMedal({ locked = false, size = 40 }: { locked?: boolean; size?: number }) {
+  const h = Math.round(size * 1.15)
+  return (
+    <div className="relative flex-shrink-0" style={{ width: size, height: h }}>
+      <svg viewBox="0 0 40 46" width={size} height={h} aria-hidden>
+        <polygon
+          points="20,0 40,12 40,34 20,46 0,34 0,12"
+          fill="currentColor"
+          fillOpacity={locked ? 0.07 : 0.18}
+          stroke="currentColor"
+          strokeOpacity={locked ? 0.25 : 0.65}
+          strokeWidth={1.5}
+        />
+      </svg>
+      {locked && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <Lock size={12} strokeWidth={1.75} style={{ color: 'var(--color-text-muted)' }} aria-hidden />
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Auto-verification progress text ─────────────────────────────────────────
+function autoProgressText(title: string, totalDaysActive: number, totalMissionsCount: number): string {
+  const t = title.toLowerCase()
+  if (t.includes('30 días activos'))  return `Progreso: ${totalDaysActive}/30 días activos`
+  if (t.includes('365 días activos')) return `Progreso: ${totalDaysActive}/365 días activos`
+  if (t.includes('100 misiones'))     return `Progreso: ${totalMissionsCount}/100 misiones`
+  return 'Se desbloquea automáticamente'
+}
+
+// ─── Compact achievement card ─────────────────────────────────────────────────
+function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMissionsCount }: {
   mission: Mission
   completedAt: string | null
+  medal: Medal | null
+  totalDaysActive: number
+  totalMissionsCount: number
 }) {
   const isCompleted = completedAt !== null
+  const isAuto = mission.verification_type === 'automatic'
   const classMeta = CLASS_META[mission.life_class]
+  const hexColor: string = medal ? RARITY_META[medal.rarity].color : classMeta.color
+
   const [result, formAction] = useActionState<AchievementActionResult, FormData>(completeAchievementAction, null)
   const [showXp, setShowXp] = useState(false)
   const [levelUpData, setLevelUpData] = useState<{ level: number } | null>(null)
@@ -113,80 +154,68 @@ function AchievementCard({ mission, completedAt }: {
         <LevelUpOverlay level={levelUpData.level} onClose={() => setLevelUpData(null)} />
       )}
       <article
-        className="bg-surface rounded-card overflow-hidden flex border border-border/60 min-w-0 relative"
-        style={{
-          opacity: isCompleted ? 1 : completing ? 1 : 0.4,
-          transition: 'opacity 300ms ease',
-        }}
+        className="bg-surface rounded-card border border-border/60 p-4 flex flex-col gap-3"
+        style={{ opacity: isCompleted || completing ? 1 : 0.5, transition: 'opacity 300ms ease' }}
         aria-label={mission.title}
       >
-        {/* Colored left border */}
-        <div className="w-1 flex-shrink-0" style={{ backgroundColor: classMeta.color }} aria-hidden />
-
-        {/* Lock overlay for uncompleted */}
-        {!isCompleted && (
-          <div
-            className="absolute top-3 right-3"
-            style={{ color: 'var(--color-text-muted)' }}
-            aria-hidden
-          >
-            <Lock size={14} strokeWidth={1.75} />
+        {/* Hex medal + rarity */}
+        <div className="flex items-start justify-between gap-2">
+          <div style={{ color: hexColor }}>
+            <HexMedal locked={!isCompleted} size={40} />
           </div>
-        )}
-
-        <div className="flex-1 p-6 flex flex-col gap-4">
-          <div className="flex items-center gap-2 flex-wrap">
-            <ClassBadge lifeClass={mission.life_class} />
+          {medal ? (
+            <span className="text-[10px] font-semibold" style={{ color: RARITY_META[medal.rarity].color }}>
+              {RARITY_META[medal.rarity].label}
+            </span>
+          ) : (
             <DiffBadge difficulty={mission.difficulty} />
-          </div>
-
-          <div className="flex-1">
-            <h3 className="font-semibold text-text-primary text-base leading-snug">{mission.title}</h3>
-            {mission.description && (
-              <p className="text-sm text-text-muted mt-1.5 leading-relaxed">{mission.description}</p>
-            )}
-          </div>
-
-          <div className="flex items-center justify-between gap-4 pt-1 border-t border-border/40">
-            <div className="flex items-baseline gap-1">
-              <span className="text-xl font-bold text-accent tabular-nums">+{mission.xp_reward}</span>
-              <span className="text-xs text-text-muted">XP</span>
-            </div>
-
-            {isCompleted ? (
-              <div className="flex items-center gap-1.5 text-sm text-text-muted">
-                <IconCheck />
-                {formatDate(completedAt)}
-              </div>
-            ) : (
-              <div className="flex items-center gap-3 flex-wrap justify-end">
-                <span className="text-xs flex items-center gap-1" style={{ color: 'var(--color-text-muted)' }}>
-                  <Lock size={11} strokeWidth={1.75} aria-hidden />
-                  Pendiente de verificación
-                </span>
-                <form action={formAction} onSubmit={handleSubmit}>
-                  <input type="hidden" name="missionId"   value={mission.id} />
-                  <input type="hidden" name="xpReward"    value={mission.xp_reward} />
-                  <input type="hidden" name="lifeClass"   value={mission.life_class} />
-                  <input type="hidden" name="difficulty"  value={mission.difficulty} />
-                  <input type="hidden" name="missionType" value="achievement" />
-                  <div className="relative">
-                    <CompleteButton label="Completar" />
-                    {showXp && (
-                      <span
-                        className="absolute left-1/2 bottom-full mb-1 text-sm font-bold text-accent pointer-events-none whitespace-nowrap"
-                        style={{ animation: 'xp-float 650ms ease forwards' }}
-                        aria-hidden
-                      >
-                        +{mission.xp_reward} XP
-                      </span>
-                    )}
-                  </div>
-                </form>
-              </div>
-            )}
-          </div>
+          )}
         </div>
+
+        {/* Title */}
+        <p className="text-sm font-semibold text-text-primary leading-snug">{mission.title}</p>
+
+        {/* XP + class */}
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-xs font-bold tabular-nums" style={{ color: 'var(--color-accent)' }}>
+            +{mission.xp_reward} XP
+          </span>
+          <ClassBadge lifeClass={mission.life_class} />
+        </div>
+
+        {/* Status line */}
+        {isCompleted ? (
+          <div className="flex items-center gap-1.5">
+            <IconCheck />
+            <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+              {formatDate(completedAt)}
+            </span>
+          </div>
+        ) : isAuto ? (
+          <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+            {autoProgressText(mission.title, totalDaysActive, totalMissionsCount)}
+          </p>
+        ) : (
+          <form action={formAction} onSubmit={handleSubmit}>
+            <input type="hidden" name="missionId"   value={mission.id} />
+            <input type="hidden" name="xpReward"    value={mission.xp_reward} />
+            <input type="hidden" name="lifeClass"   value={mission.life_class} />
+            <input type="hidden" name="difficulty"  value={mission.difficulty} />
+            <input type="hidden" name="missionType" value="achievement" />
+            <div className="relative">
+              <CompleteButton label="Completar" />
+              {showXp && (
+                <span
+                  className="absolute left-1/2 bottom-full mb-1 text-sm font-bold pointer-events-none whitespace-nowrap"
+                  style={{ animation: 'xp-float 650ms ease forwards', color: 'var(--color-accent)' }}
+                  aria-hidden
+                >
+                  +{mission.xp_reward} XP
+                </span>
+              )}
+            </div>
+          </form>
+        )}
       </article>
     </>
   )
@@ -254,38 +283,31 @@ function BossCard({ mission, completedAt, currentStreak }: {
       )}
       <article
         className="rounded-card overflow-hidden border border-border/60 relative bg-surface"
-        style={{ opacity: isLocked || (completedThisWeek && !completing) ? (isLocked ? 0.4 : 1) : 1 }}
+        style={{ opacity: isLocked || (completedThisWeek && !completing) ? (isLocked ? 0.5 : 1) : 1 }}
         aria-label={mission.title}
       >
         <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ backgroundColor: classMeta.color }} aria-hidden />
 
-        {/* Lock overlay when locked */}
         {isLocked && (
-          <div
-            className="absolute top-3 right-3"
-            style={{ color: 'var(--color-text-muted)' }}
-            aria-hidden
-          >
+          <div className="absolute top-3 right-3" style={{ color: 'var(--color-text-muted)' }} aria-hidden>
             <Lock size={14} strokeWidth={1.75} />
           </div>
         )}
 
-        <div className="p-6 flex flex-col gap-5">
+        <div className="p-4 flex flex-col gap-4">
           <div className="flex items-start justify-between gap-6">
-            <div className="flex flex-col gap-3 flex-1 min-w-0">
+            <div className="flex flex-col gap-2 flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <ClassBadge lifeClass={mission.life_class} />
                 <DiffBadge difficulty={mission.difficulty} />
               </div>
-              <div>
-                <h3 className="font-bold text-text-primary text-xl">{mission.title}</h3>
-                {mission.description && (
-                  <p className="text-sm text-text-muted mt-2 leading-relaxed max-w-xl">{mission.description}</p>
-                )}
-              </div>
+              <h3 className="font-bold text-text-primary text-lg leading-snug">{mission.title}</h3>
+              {mission.description && (
+                <p className="text-sm text-text-muted leading-relaxed max-w-xl">{mission.description}</p>
+              )}
             </div>
             <div className="flex-shrink-0 text-right">
-              <p className="text-3xl font-bold text-accent tabular-nums">+{mission.xp_reward}</p>
+              <p className="text-2xl font-bold tabular-nums" style={{ color: 'var(--color-accent)' }}>+{mission.xp_reward}</p>
               <p className="text-xs text-text-muted font-medium mt-0.5">XP</p>
             </div>
           </div>
@@ -305,11 +327,7 @@ function BossCard({ mission, completedAt, currentStreak }: {
                   </span>
                   <span className="tabular-nums font-medium text-text-primary">{daysProgress}/7 días</span>
                 </div>
-                <AnimatedBar
-                  value={daysProgress / 7}
-                  color="var(--color-accent)"
-                  height="h-1.5"
-                />
+                <AnimatedBar value={daysProgress / 7} color="var(--color-accent)" height="h-1.5" />
               </div>
             ) : (
               <div className="flex items-center justify-between gap-4 flex-1">
@@ -330,8 +348,8 @@ function BossCard({ mission, completedAt, currentStreak }: {
                     <CompleteButton label="Reclamar" />
                     {showXp && (
                       <span
-                        className="absolute left-1/2 bottom-full mb-1 text-sm font-bold text-accent pointer-events-none whitespace-nowrap"
-                        style={{ animation: 'xp-float 650ms ease forwards' }}
+                        className="absolute left-1/2 bottom-full mb-1 text-sm font-bold pointer-events-none whitespace-nowrap"
+                        style={{ animation: 'xp-float 650ms ease forwards', color: 'var(--color-accent)' }}
                         aria-hidden
                       >
                         +{mission.xp_reward} XP
@@ -372,11 +390,17 @@ export default function AchievementsClient({
   bossMissions,
   completedMap,
   currentStreak,
+  medalsMap,
+  totalDaysActive,
+  totalMissionsCount,
 }: {
   achievements: Mission[]
   bossMissions: Mission[]
   completedMap: Record<string, string>
   currentStreak: number
+  medalsMap: Record<string, Medal>
+  totalDaysActive: number
+  totalMissionsCount: number
 }) {
   const sortedAchievements = [...achievements].sort((a, b) => {
     const aDone = completedMap[a.id] ? 1 : 0
@@ -395,7 +419,6 @@ export default function AchievementsClient({
   return (
     <div className="flex flex-col gap-8">
 
-      {/* Page title */}
       <div>
         <h1 className="text-2xl font-semibold text-text-primary">Logros</h1>
         <p className="text-sm text-text-muted mt-1">
@@ -403,7 +426,6 @@ export default function AchievementsClient({
         </p>
       </div>
 
-      {/* Logros únicos */}
       {achievements.length > 0 && (
         <section aria-labelledby="section-achievements" className="flex flex-col gap-4">
           <SectionHeader
@@ -412,20 +434,21 @@ export default function AchievementsClient({
             count={completedAchievementsCount}
             total={achievements.length}
           />
-          <div className="flex md:grid md:grid-cols-2 gap-3 overflow-x-auto md:overflow-x-visible snap-x snap-mandatory md:snap-none scrollbar-hide pb-1 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {sortedAchievements.map(m => (
-              <div key={m.id} className="w-[calc(100vw-32px)] md:min-w-0 md:w-auto flex-shrink-0 snap-start">
-                <AchievementCard
-                  mission={m}
-                  completedAt={completedMap[m.id] ?? null}
-                />
-              </div>
+              <AchievementCard
+                key={m.id}
+                mission={m}
+                completedAt={completedMap[m.id] ?? null}
+                medal={medalsMap[m.id] ?? null}
+                totalDaysActive={totalDaysActive}
+                totalMissionsCount={totalMissionsCount}
+              />
             ))}
           </div>
         </section>
       )}
 
-      {/* Jefe semanal */}
       {bossMissions.length > 0 && (
         <section aria-labelledby="section-boss" className="flex flex-col gap-4">
           <SectionHeader
@@ -434,15 +457,14 @@ export default function AchievementsClient({
             count={completedBossCount}
             total={bossMissions.length}
           />
-          <div className="flex md:flex-col gap-3 overflow-x-auto md:overflow-x-visible snap-x snap-mandatory md:snap-none scrollbar-hide pb-1 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0">
+          <div className="flex flex-col gap-3">
             {bossMissions.map(m => (
-              <div key={m.id} className="w-[calc(100vw-32px)] md:min-w-0 md:w-auto flex-shrink-0 snap-start">
-                <BossCard
-                  mission={m}
-                  completedAt={completedMap[m.id] ?? null}
-                  currentStreak={currentStreak}
-                />
-              </div>
+              <BossCard
+                key={m.id}
+                mission={m}
+                completedAt={completedMap[m.id] ?? null}
+                currentStreak={currentStreak}
+              />
             ))}
           </div>
         </section>
