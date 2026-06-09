@@ -49,7 +49,7 @@ export default function AvatarDisplay({ config, size = 80 }: Props) {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const svg = createAvatar(styleEngine as any, options as any).toString()
+  const svg = createAvatar(styleEngine as any, { ...options, size } as any).toString()
 
   return (
     <div style={{ width: size, height: size, flexShrink: 0 }}>
