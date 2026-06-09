@@ -1,7 +1,7 @@
 'use client'
 
 import { useActionState, useEffect, useRef, useState } from 'react'
-import type { Medal, Mission, MissionDifficulty, LifeClass } from '@/types/supabase'
+import type { AvatarConfig, Medal, Mission, MissionDifficulty, LifeClass } from '@/types/supabase'
 import { CLASS_META } from '@/lib/constants/classes'
 import { RARITY_META } from '@/lib/constants/medals'
 import { HexMedal } from '@/components/ui/HexMedal'
@@ -10,8 +10,9 @@ import { toast } from 'sonner'
 import { playLevelUp, playMissionComplete, playShieldGained } from '@/lib/sounds'
 import { CompleteButton } from '@/components/dashboard/CompleteButton'
 import { LevelUpOverlay } from '@/components/LevelUpOverlay'
+import { AvatarConfirmModal } from '@/components/achievements/AvatarConfirmModal'
 import { AnimatedBar } from '@/components/ui/AnimatedBar'
-import { Trophy, Swords, Lock, ShieldCheck } from 'lucide-react'
+import { Trophy, Swords, Lock, ShieldCheck, ChevronRight } from 'lucide-react'
 
 const DIFF_META: Record<MissionDifficulty, { label: string; text: string; bg: string; border: string }> = {
   easy:   { label: 'Fácil',   text: 'text-fisico',     bg: 'bg-fisico/8',     border: 'border-fisico/20'     },
@@ -77,23 +78,30 @@ function autoProgressText(title: string, totalDaysActive: number, totalMissionsC
 }
 
 // ─── Compact achievement card ─────────────────────────────────────────────────
-function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMissionsCount, wrapperClass }: {
+function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMissionsCount, wrapperClass, username, avatarConfig, activePack }: {
   mission: Mission
   completedAt: string | null
   medal: Medal | null
   totalDaysActive: number
   totalMissionsCount: number
   wrapperClass?: string
+  username: string
+  avatarConfig: AvatarConfig | null
+  activePack: string | null
 }) {
   const isCompleted = completedAt !== null
   const isAuto = mission.verification_type === 'automatic'
+  const isManualOrExternal = mission.verification_type === 'manual' || mission.verification_type === 'external'
 
   const [result, formAction] = useActionState<AchievementActionResult, FormData>(completeAchievementAction, null)
   const [showXp, setShowXp] = useState(false)
   const [levelUpData, setLevelUpData] = useState<{ level: number } | null>(null)
   const [completing, setCompleting] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [hovered, setHovered] = useState(false)
   const prevTsRef = useRef<number | null>(null)
   const xpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const formRef = useRef<HTMLFormElement>(null)
 
   useEffect(() => {
     if (!result || result.ts === prevTsRef.current) return
@@ -109,11 +117,25 @@ function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMi
 
   useEffect(() => () => { if (xpTimerRef.current) clearTimeout(xpTimerRef.current) }, [])
 
-  function handleSubmit() {
+  function handleSubmit(e: React.FormEvent) {
+    if (isManualOrExternal) {
+      e.preventDefault()
+      setShowConfirm(true)
+    } else {
+      setCompleting(true)
+      setShowXp(true)
+      if (xpTimerRef.current) clearTimeout(xpTimerRef.current)
+      xpTimerRef.current = setTimeout(() => setShowXp(false), 650)
+    }
+  }
+
+  function handleConfirm() {
+    setShowConfirm(false)
     setCompleting(true)
     setShowXp(true)
     if (xpTimerRef.current) clearTimeout(xpTimerRef.current)
     xpTimerRef.current = setTimeout(() => setShowXp(false), 650)
+    formRef.current?.requestSubmit()
   }
 
   function handleCardClick(e: React.MouseEvent) {
@@ -121,14 +143,33 @@ function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMi
     window.location.href = `/achievements/${mission.id}`
   }
 
+  const borderColor = hovered
+    ? 'color-mix(in srgb, var(--color-text-muted) 40%, transparent)'
+    : 'color-mix(in srgb, var(--color-border) 60%, transparent)'
+
   return (
     <div className={wrapperClass}>
       {levelUpData && <LevelUpOverlay level={levelUpData.level} onClose={() => setLevelUpData(null)} />}
+      {showConfirm && (
+        <AvatarConfirmModal
+          username={username}
+          avatarConfig={avatarConfig}
+          activePack={activePack}
+          onConfirm={handleConfirm}
+          onCancel={() => setShowConfirm(false)}
+        />
+      )}
       <article
-        className="bg-surface rounded-card border border-border/60 p-4 flex flex-col gap-3 cursor-pointer hover:border-border h-full"
-        style={{ opacity: isCompleted || completing ? 1 : 0.5, transition: 'opacity 300ms ease, border-color 150ms ease' }}
+        className="bg-surface rounded-card border p-4 flex flex-col gap-3 cursor-pointer h-full relative"
+        style={{
+          borderColor,
+          opacity: isCompleted || completing ? 1 : 0.5,
+          transition: 'opacity 300ms ease, border-color 150ms ease',
+        }}
         aria-label={mission.title}
         onClick={handleCardClick}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
         tabIndex={0}
         onKeyDown={(e) => { if (e.key === 'Enter') window.location.href = `/achievements/${mission.id}` }}
       >
@@ -162,7 +203,7 @@ function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMi
             {autoProgressText(mission.title, totalDaysActive, totalMissionsCount)}
           </p>
         ) : (
-          <form action={formAction} onSubmit={handleSubmit}>
+          <form ref={formRef} action={formAction} onSubmit={handleSubmit}>
             <input type="hidden" name="missionId"   value={mission.id} />
             <input type="hidden" name="xpReward"    value={mission.xp_reward} />
             <input type="hidden" name="lifeClass"   value={mission.life_class} />
@@ -178,6 +219,19 @@ function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMi
             </div>
           </form>
         )}
+
+        <ChevronRight
+          size={14}
+          strokeWidth={1.75}
+          aria-hidden
+          style={{
+            position: 'absolute',
+            bottom: '12px',
+            right: '12px',
+            color: 'var(--color-text-muted)',
+            pointerEvents: 'none',
+          }}
+        />
       </article>
     </div>
   )
@@ -351,6 +405,9 @@ export default function AchievementsClient({
   medalsMap,
   totalDaysActive,
   totalMissionsCount,
+  username,
+  avatarConfig,
+  activePack,
 }: {
   achievements: Mission[]
   bossMissions: Mission[]
@@ -359,6 +416,9 @@ export default function AchievementsClient({
   medalsMap: Record<string, Medal>
   totalDaysActive: number
   totalMissionsCount: number
+  username: string
+  avatarConfig: AvatarConfig | null
+  activePack: string | null
 }) {
   const [classFilter, setClassFilter] = useState<ClassFilter>('all')
 
@@ -428,6 +488,9 @@ export default function AchievementsClient({
                   totalDaysActive={totalDaysActive}
                   totalMissionsCount={totalMissionsCount}
                   wrapperClass={wrapperClass}
+                  username={username}
+                  avatarConfig={avatarConfig}
+                  activePack={activePack}
                 />
               )
             })}

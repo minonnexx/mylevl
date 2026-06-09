@@ -96,6 +96,9 @@ export default async function AchievementsPage() {
               medalsMap={medalsMap}
               totalDaysActive={totalDaysActive}
               totalMissionsCount={totalMissionsCount}
+              username={username}
+              avatarConfig={avatarConfig}
+              activePack={activePack}
             />
           </div>
         </main>

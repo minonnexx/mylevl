@@ -3,159 +3,16 @@
 import { useActionState, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { ChevronLeft, Star, ShieldCheck } from 'lucide-react'
-import { motion } from 'motion/react'
 import { HexMedal } from '@/components/ui/HexMedal'
 import { AnimatedBar } from '@/components/ui/AnimatedBar'
 import { CompleteButton } from '@/components/dashboard/CompleteButton'
 import { LevelUpOverlay } from '@/components/LevelUpOverlay'
-import AvatarDisplay from '@/components/avatar/AvatarDisplay'
+import { AvatarConfirmModal } from '@/components/achievements/AvatarConfirmModal'
 import { RARITY_META } from '@/lib/constants/medals'
 import { toast } from 'sonner'
 import { playLevelUp, playMissionComplete, playShieldGained } from '@/lib/sounds'
 import { completeAchievementAction, type AchievementActionResult } from '@/app/achievements/actions'
 import type { AvatarConfig, Medal, Mission, Rarity } from '@/types/supabase'
-
-const CONFIRM_DIALOGUE = (username: string) => [
-  `Oye, ${username}.`,
-  '¿De verdad lo has conseguido?',
-  'Esta app eres tú. Si mientes aquí, solo te mientes a ti mismo.',
-]
-
-const sleep = (ms: number) => new Promise<void>(res => setTimeout(res, ms))
-
-function ConfirmOverlay({
-  username,
-  avatarConfig,
-  onConfirm,
-  onCancel,
-}: {
-  username: string
-  avatarConfig: AvatarConfig | null
-  onConfirm: () => void
-  onCancel: () => void
-}) {
-  const [text, setText] = useState('')
-  const [done, setDone] = useState(false)
-
-  useEffect(() => {
-    let cancelled = false
-    const segments = CONFIRM_DIALOGUE(username)
-
-    async function run() {
-      let accumulated = ''
-      for (let s = 0; s < segments.length; s++) {
-        if (s > 0) {
-          await sleep(700)
-          if (cancelled) return
-          accumulated += '\n\n'
-          setText(accumulated)
-        }
-        const segment = segments[s]
-        for (let c = 0; c < segment.length; c++) {
-          if (cancelled) return
-          accumulated += segment[c]
-          setText(accumulated)
-          await sleep(44)
-        }
-        if (s < segments.length - 1) await sleep(900)
-      }
-      if (!cancelled) setDone(true)
-    }
-
-    run()
-    return () => { cancelled = true }
-  }, [username])
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0,0,0,0.8)',
-        zIndex: 50,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '24px',
-      }}
-    >
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '32px', maxWidth: '360px', width: '100%' }}>
-        <AvatarDisplay config={avatarConfig} size={80} />
-
-        <p
-          style={{
-            color: 'var(--color-text-primary)',
-            fontSize: '18px',
-            lineHeight: '1.75',
-            whiteSpace: 'pre-wrap',
-            textAlign: 'center',
-            minHeight: '110px',
-          }}
-        >
-          {text}
-          {!done && (
-            <span
-              style={{
-                display: 'inline-block',
-                width: '2px',
-                height: '1.1em',
-                backgroundColor: 'var(--color-accent)',
-                verticalAlign: 'text-bottom',
-                marginLeft: '2px',
-                animation: 'blink 1s step-end infinite',
-              }}
-            />
-          )}
-        </p>
-
-        {done && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.4 }}
-            style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}
-          >
-            <button
-              onClick={onConfirm}
-              style={{
-                width: '100%',
-                padding: '12px',
-                borderRadius: 'var(--radius-component)',
-                backgroundColor: 'var(--color-accent)',
-                color: 'var(--color-text-primary)',
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: '15px',
-                fontWeight: 600,
-              }}
-            >
-              Sí, lo he conseguido
-            </button>
-            <button
-              onClick={onCancel}
-              style={{
-                width: '100%',
-                padding: '12px',
-                borderRadius: 'var(--radius-component)',
-                backgroundColor: 'transparent',
-                color: 'var(--color-text-muted)',
-                border: '1px solid var(--color-border)',
-                cursor: 'pointer',
-                fontSize: '15px',
-                fontWeight: 500,
-              }}
-            >
-              Aún no
-            </button>
-          </motion.div>
-        )}
-      </div>
-    </motion.div>
-  )
-}
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })
@@ -257,9 +114,10 @@ export default function AchievementDetailView({
     <>
       {levelUpData && <LevelUpOverlay level={levelUpData.level} onClose={() => setLevelUpData(null)} />}
       {showConfirm && (
-        <ConfirmOverlay
+        <AvatarConfirmModal
           username={username}
           avatarConfig={avatarConfig}
+          activePack={null}
           onConfirm={handleConfirm}
           onCancel={() => setShowConfirm(false)}
         />
