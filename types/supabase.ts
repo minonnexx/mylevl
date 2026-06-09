@@ -1,4 +1,12 @@
 export type LifeClass = 'fisico' | 'mental' | 'disciplina'
+
+export interface AvatarConfig {
+  gender: 'male' | 'female'
+  skin: 'light' | 'medium-light' | 'medium' | 'medium-dark' | 'dark'
+  hair: string
+  hairColor: 'black' | 'brown' | 'blonde' | 'red' | 'white'
+  eyes: 'variant01' | 'variant02' | 'variant03'
+}
 export type MissionDifficulty = 'easy' | 'medium' | 'hard' | 'boss'
 export type MissionType = 'daily' | 'streak' | 'achievement' | 'boss'
 export type VerificationType = 'healthkit' | 'health_connect' | 'manual'
@@ -22,6 +30,7 @@ export interface Profile {
   date_of_birth: string | null
   username_changed_at: string | null
   active_pack: 'guerrero' | 'sabio' | 'monje' | 'heroe' | null
+  avatar_config: AvatarConfig | null
   created_at: string
 }
 

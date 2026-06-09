@@ -63,6 +63,7 @@ export default async function DashboardPage() {
     date_of_birth: null,
     username_changed_at: null,
     active_pack: null,
+    avatar_config: null,
     created_at: new Date().toISOString(),
   }
 

@@ -69,7 +69,7 @@ export default async function RecapPage() {
     current_streak: 0, longest_streak: 0, total_days_active: 0,
     shield_count: 0, shield_active: false, shield_used_at: null,
     shield_notification_shown: false, feed_public: true,
-    date_of_birth: null, username_changed_at: null, active_pack: null, created_at: new Date().toISOString(),
+    date_of_birth: null, username_changed_at: null, active_pack: null, avatar_config: null, created_at: new Date().toISOString(),
   }
 
   type MonthRow = {
