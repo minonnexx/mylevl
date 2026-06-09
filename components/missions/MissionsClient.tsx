@@ -20,10 +20,10 @@ function getTodayKey(): string {
 }
 
 const DIFF_META: Record<MissionDifficulty, { label: string; text: string; bg: string; border: string }> = {
-  easy:   { label: 'Fácil',  text: 'text-fisico',     bg: 'bg-fisico/8',     border: 'border-fisico/20'     },
-  medium: { label: 'Medio',  text: 'text-disciplina', bg: 'bg-disciplina/8', border: 'border-disciplina/20' },
-  hard:   { label: 'Difícil', text: 'text-error',     bg: 'bg-error/8',      border: 'border-error/20'      },
-  boss:   { label: 'Jefe',   text: 'text-accent',     bg: 'bg-accent/8',     border: 'border-accent/20'     },
+  easy:   { label: 'Fácil',   text: 'text-fisico',     bg: 'bg-fisico/8',     border: 'border-fisico/20'     },
+  medium: { label: 'Medio',   text: 'text-disciplina', bg: 'bg-disciplina/8', border: 'border-disciplina/20' },
+  hard:   { label: 'Difícil', text: 'text-error',      bg: 'bg-error/8',      border: 'border-error/20'      },
+  boss:   { label: 'Jefe',    text: 'text-accent',     bg: 'bg-accent/8',     border: 'border-accent/20'     },
 }
 
 const SECTION_META: Partial<Record<MissionType, { title: string; isBoss: boolean }>> = {
@@ -45,16 +45,6 @@ const FILTER_PILLS: { value: FilterValue; label: string }[] = [
   { value: 'hard',       label: 'Difícil'    },
 ]
 
-// ─── Badge components ────────────────────────────────────────────────────────
-function ClassBadge({ lifeClass }: { lifeClass: keyof typeof CLASS_META }) {
-  const m = CLASS_META[lifeClass]
-  return (
-    <span className={`inline-flex text-xs font-semibold px-2.5 py-1 rounded-pill ${m.badgeClasses}`}>
-      {m.label}
-    </span>
-  )
-}
-
 function DiffBadge({ difficulty }: { difficulty: MissionDifficulty }) {
   const m = DIFF_META[difficulty]
   if (!m) return null
@@ -67,21 +57,23 @@ function DiffBadge({ difficulty }: { difficulty: MissionDifficulty }) {
 
 function IconCheck() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 text-fisico flex-shrink-0" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <svg viewBox="0 0 24 24" fill="none" className="w-3.5 h-3.5 text-fisico flex-shrink-0" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
       <polyline points="20 6 9 17 4 12" />
     </svg>
   )
 }
 
-// ─── Standard mission card ───────────────────────────────────────────────────
-function MissionCard({
+// ─── Compact mission card (matches achievement card style) ───────────────────
+function CompactMissionCard({
   mission,
   isCompleted,
   onAllCompleted,
+  wrapperClass,
 }: {
   mission: Mission
   isCompleted: boolean
   onAllCompleted?: (summary: DaySummary) => void
+  wrapperClass?: string
 }) {
   const classMeta = CLASS_META[mission.life_class]
   const [result, formAction] = useActionState<MissionActionResult, FormData>(completeMissionAction, null)
@@ -91,7 +83,6 @@ function MissionCard({
   const prevTsRef = useRef<number | null>(null)
   const xpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Only use result for level-up/shield — animations fire optimistically from onSubmit
   useEffect(() => {
     if (!result || result.ts === prevTsRef.current) return
     prevTsRef.current = result.ts
@@ -101,13 +92,11 @@ function MissionCard({
       return
     }
 
-    // Sonidos — siempre se ejecutan, independientes de los overlays
     playMissionComplete()
     if (result.shieldGranted) playShieldGained()
     if (result.levelUp) setTimeout(() => playLevelUp(), 300)
     if (result.allMissionsCompleted) setTimeout(() => playDayComplete(), 400)
 
-    // Toasts
     toast('Misión completada', { description: `+${result.xpReward} XP`, duration: 2500 })
     if (result.shieldGranted) {
       toast('Escudo ganado', {
@@ -117,7 +106,6 @@ function MissionCard({
       })
     }
 
-    // Overlays — independientes de los sonidos
     if (result.levelUp) setTimeout(() => setLevelUpData({ level: result.newLevel }), 800)
 
     if (result.allMissionsCompleted && result.daySummary) {
@@ -143,73 +131,67 @@ function MissionCard({
   }
 
   return (
-    <>
+    <div className={wrapperClass}>
       {levelUpData && (
         <LevelUpOverlay
           level={levelUpData.level}
           onClose={() => setLevelUpData(null)}
         />
       )}
-
       <article
-        className="bg-surface rounded-card overflow-hidden flex border border-border/60 min-w-0 group hover:border-border"
+        className="bg-surface rounded-card border border-border/60 p-4 flex flex-col gap-3 h-full"
         style={{
-          transition: 'opacity 300ms ease, transform 300ms ease',
           opacity: isCompleted || completing ? 0.5 : 1,
-          transform: completing && !isCompleted ? 'scale(0.985)' : 'scale(1)',
+          transition: 'opacity 300ms ease',
         }}
         aria-label={mission.title}
       >
-        <div className="w-1 flex-shrink-0" style={{ backgroundColor: classMeta.color }} aria-hidden />
-
-        <div className="flex-1 p-6 flex flex-col gap-4">
-          <div className="flex items-center gap-2 flex-wrap">
-            <ClassBadge lifeClass={mission.life_class} />
-            <DiffBadge difficulty={mission.difficulty} />
-          </div>
-
-          <div className="flex-1">
-            <h3 className="font-semibold text-text-primary text-base leading-snug">{mission.title}</h3>
-            {mission.description && (
-              <p className="text-sm text-text-muted mt-1.5 leading-relaxed">{mission.description}</p>
-            )}
-          </div>
-
-          <div className="flex items-center justify-between gap-4 pt-1 border-t border-border/40">
-            <div className="flex items-baseline gap-1">
-              <span className="text-xl font-bold text-accent tabular-nums">+{mission.xp_reward}</span>
-              <span className="text-xs text-text-muted">XP</span>
-            </div>
-
-            {isCompleted ? (
-              <div className="flex items-center gap-1.5 text-sm text-text-muted">
-                <IconCheck />
-                Completada hoy
-              </div>
-            ) : (
-              <form action={formAction} onSubmit={handleSubmit}>
-                <input type="hidden" name="missionId"  value={mission.id} />
-                <input type="hidden" name="xpReward"   value={mission.xp_reward} />
-                <input type="hidden" name="lifeClass"  value={mission.life_class} />
-                <input type="hidden" name="difficulty" value={mission.difficulty} />
-                <div className="relative">
-                  <CompleteButton label="Completar" />
-                  {showXp && (
-                    <span
-                      className="absolute left-1/2 bottom-full mb-1 text-sm font-bold text-accent pointer-events-none whitespace-nowrap"
-                      style={{ animation: 'xp-float 650ms ease forwards' }}
-                      aria-hidden
-                    >
-                      +{mission.xp_reward} XP
-                    </span>
-                  )}
-                </div>
-              </form>
-            )}
-          </div>
+        {/* Top row: class dot + diff badge */}
+        <div className="flex items-center justify-between gap-2">
+          <span
+            className="w-2 h-2 rounded-full flex-shrink-0"
+            style={{ backgroundColor: classMeta.color }}
+            aria-hidden
+          />
+          <DiffBadge difficulty={mission.difficulty} />
         </div>
+
+        {/* Title */}
+        <p className="text-sm font-semibold text-text-primary leading-snug flex-1">{mission.title}</p>
+
+        {/* XP */}
+        <span className="text-xs font-bold tabular-nums" style={{ color: 'var(--color-accent)' }}>
+          +{mission.xp_reward} XP
+        </span>
+
+        {/* Action */}
+        {isCompleted ? (
+          <div className="flex items-center gap-1.5">
+            <IconCheck />
+            <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Completada hoy</span>
+          </div>
+        ) : (
+          <form action={formAction} onSubmit={handleSubmit}>
+            <input type="hidden" name="missionId"  value={mission.id} />
+            <input type="hidden" name="xpReward"   value={mission.xp_reward} />
+            <input type="hidden" name="lifeClass"  value={mission.life_class} />
+            <input type="hidden" name="difficulty" value={mission.difficulty} />
+            <div className="relative">
+              <CompleteButton label="Completar" />
+              {showXp && (
+                <span
+                  className="absolute left-1/2 bottom-full mb-1 text-sm font-bold text-accent pointer-events-none whitespace-nowrap"
+                  style={{ animation: 'xp-float 650ms ease forwards' }}
+                  aria-hidden
+                >
+                  +{mission.xp_reward} XP
+                </span>
+              )}
+            </div>
+          </form>
+        )}
       </article>
-    </>
+    </div>
   )
 }
 
@@ -224,7 +206,6 @@ function BossMissionCard({
   currentStreak: number
 }) {
   const classMeta = CLASS_META[mission.life_class]
-  // Days completed in the current 7-day cycle (0–7)
   const daysProgress = currentStreak % 7 === 0 && currentStreak > 0 ? 7 : currentStreak % 7
   const isWeekComplete = daysProgress === 7
   const barColor = isWeekComplete ? 'var(--color-fisico)' : 'var(--color-accent)'
@@ -241,7 +222,6 @@ function BossMissionCard({
         <div className="flex items-start justify-between gap-6">
           <div className="flex flex-col gap-3 flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <ClassBadge lifeClass={mission.life_class} />
               <DiffBadge difficulty={mission.difficulty} />
             </div>
             <div>
@@ -269,11 +249,7 @@ function BossMissionCard({
                 <span>Progreso semanal — se completa automáticamente</span>
                 <span className="tabular-nums font-medium text-text-primary">{daysProgress}/7 días</span>
               </div>
-              <AnimatedBar
-                value={daysProgress / 7}
-                color={barColor}
-                height="h-1.5"
-              />
+              <AnimatedBar value={daysProgress / 7} color={barColor} height="h-1.5" />
             </div>
           )}
         </div>
@@ -301,6 +277,12 @@ function MissionSection({
   if (missions.length === 0) return null
 
   const completedCount = missions.filter(m => completedIds.has(m.id)).length
+  const sorted = [...missions].sort((a, b) => {
+    const aDone = completedIds.has(a.id) ? 1 : 0
+    const bDone = completedIds.has(b.id) ? 1 : 0
+    if (aDone !== bDone) return aDone - bDone
+    return (a.sort_order ?? 999) - (b.sort_order ?? 999)
+  })
 
   return (
     <section aria-labelledby={`section-${title}`} className="flex flex-col gap-4">
@@ -317,31 +299,32 @@ function MissionSection({
       </div>
 
       {isBoss ? (
-        <div className="flex md:flex-col gap-3 overflow-x-auto md:overflow-x-visible snap-x snap-mandatory md:snap-none scrollbar-hide pb-1 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0">
-          {missions.map(m => (
-            <div key={m.id} className="w-[calc(100vw-32px)] md:min-w-0 md:w-auto flex-shrink-0 snap-start">
-              <BossMissionCard
-                mission={m}
-                isCompleted={completedIds.has(m.id)}
-                currentStreak={currentStreak}
-              />
-            </div>
+        <div className="flex flex-col gap-3">
+          {sorted.map(m => (
+            <BossMissionCard
+              key={m.id}
+              mission={m}
+              isCompleted={completedIds.has(m.id)}
+              currentStreak={currentStreak}
+            />
           ))}
         </div>
       ) : (
-        <div className="flex md:grid md:grid-cols-2 gap-3 overflow-x-auto md:overflow-x-visible snap-x snap-mandatory md:snap-none scrollbar-hide pb-1 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0">
-          {[...missions]
-            .sort((a, b) => {
-              const aDone = completedIds.has(a.id) ? 1 : 0
-              const bDone = completedIds.has(b.id) ? 1 : 0
-              if (aDone !== bDone) return aDone - bDone
-              return (a.sort_order ?? 999) - (b.sort_order ?? 999)
-            })
-            .map(m => (
-              <div key={m.id} className="w-[calc(100vw-32px)] md:min-w-0 md:w-auto flex-shrink-0 snap-start">
-                <MissionCard mission={m} isCompleted={completedIds.has(m.id)} onAllCompleted={onAllCompleted} />
-              </div>
-            ))}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 w-full">
+          {sorted.map((m, idx) => {
+            const isLast = idx === sorted.length - 1
+            const isOdd  = sorted.length % 2 !== 0
+            const wrapperClass = isLast && isOdd ? 'col-span-2 md:col-span-1' : undefined
+            return (
+              <CompactMissionCard
+                key={m.id}
+                mission={m}
+                isCompleted={completedIds.has(m.id)}
+                onAllCompleted={onAllCompleted}
+                wrapperClass={wrapperClass}
+              />
+            )
+          })}
         </div>
       )}
     </section>
@@ -423,7 +406,6 @@ export default function MissionsClient({
     )}
     <div className="flex flex-col gap-8">
 
-      {/* ── Page title ──────────────────────────────────────────────────── */}
       <div className="flex items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-text-primary">Misiones</h1>
@@ -439,12 +421,8 @@ export default function MissionsClient({
         )}
       </div>
 
-      {/* ── Filter bar ──────────────────────────────────────────────────── */}
-      <div
-        className="flex items-center gap-2 flex-wrap"
-        role="group"
-        aria-label="Filtrar misiones"
-      >
+      {/* Filter bar */}
+      <div className="flex items-center gap-2 flex-wrap" role="group" aria-label="Filtrar misiones">
         {FILTER_PILLS.map(({ value, label }) => (
           <button
             key={value}
@@ -465,10 +443,8 @@ export default function MissionsClient({
         ))}
       </div>
 
-      {/* ── All-daily-done banner ───────────────────────────────────────── */}
       {allDailyDone && <AllDailyDoneBanner />}
 
-      {/* ── Sections ────────────────────────────────────────────────────── */}
       {totalFiltered > 0 ? (
         <div className="flex flex-col gap-10">
           {TYPE_ORDER.map(type => {

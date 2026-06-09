@@ -1,7 +1,7 @@
 'use client'
 
 import { useActionState, useEffect, useRef, useState } from 'react'
-import type { Medal, Mission, MissionDifficulty } from '@/types/supabase'
+import type { Medal, Mission, MissionDifficulty, LifeClass } from '@/types/supabase'
 import { CLASS_META } from '@/lib/constants/classes'
 import { RARITY_META } from '@/lib/constants/medals'
 import { HexMedal } from '@/components/ui/HexMedal'
@@ -12,7 +12,6 @@ import { CompleteButton } from '@/components/dashboard/CompleteButton'
 import { LevelUpOverlay } from '@/components/LevelUpOverlay'
 import { AnimatedBar } from '@/components/ui/AnimatedBar'
 import { Trophy, Swords, Lock, ShieldCheck } from 'lucide-react'
-import Link from 'next/link'
 
 const DIFF_META: Record<MissionDifficulty, { label: string; text: string; bg: string; border: string }> = {
   easy:   { label: 'Fácil',   text: 'text-fisico',     bg: 'bg-fisico/8',     border: 'border-fisico/20'     },
@@ -20,6 +19,15 @@ const DIFF_META: Record<MissionDifficulty, { label: string; text: string; bg: st
   hard:   { label: 'Difícil', text: 'text-error',      bg: 'bg-error/8',      border: 'border-error/20'      },
   boss:   { label: 'Jefe',    text: 'text-accent',     bg: 'bg-accent/8',     border: 'border-accent/20'     },
 }
+
+type ClassFilter = 'all' | LifeClass
+
+const CLASS_FILTER_PILLS: { value: ClassFilter; label: string }[] = [
+  { value: 'all',        label: 'Todos'      },
+  { value: 'fisico',     label: 'Físico'     },
+  { value: 'mental',     label: 'Mental'     },
+  { value: 'disciplina', label: 'Disciplina' },
+]
 
 function ClassBadge({ lifeClass }: { lifeClass: keyof typeof CLASS_META }) {
   const m = CLASS_META[lifeClass]
@@ -68,13 +76,14 @@ function autoProgressText(title: string, totalDaysActive: number, totalMissionsC
   return 'Se desbloquea automáticamente'
 }
 
-// ─── Compact achievement card (grid 2/3 cols) ─────────────────────────────────
-function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMissionsCount }: {
+// ─── Compact achievement card ─────────────────────────────────────────────────
+function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMissionsCount, wrapperClass }: {
   mission: Mission
   completedAt: string | null
   medal: Medal | null
   totalDaysActive: number
   totalMissionsCount: number
+  wrapperClass?: string
 }) {
   const isCompleted = completedAt !== null
   const isAuto = mission.verification_type === 'automatic'
@@ -107,20 +116,21 @@ function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMi
     xpTimerRef.current = setTimeout(() => setShowXp(false), 650)
   }
 
+  function handleCardClick(e: React.MouseEvent) {
+    if ((e.target as HTMLElement).closest('button, [type="submit"], form')) return
+    window.location.href = `/achievements/${mission.id}`
+  }
+
   return (
-    <>
+    <div className={wrapperClass}>
       {levelUpData && <LevelUpOverlay level={levelUpData.level} onClose={() => setLevelUpData(null)} />}
-      <Link href={`/achievements/${mission.id}`} className="block" tabIndex={-1} aria-hidden>
-        <span className="sr-only">{mission.title}</span>
-      </Link>
       <article
-        className="bg-surface rounded-card border border-border/60 p-4 flex flex-col gap-3 cursor-pointer hover:border-border transition-colors"
-        style={{ opacity: isCompleted || completing ? 1 : 0.5, transition: 'opacity 300ms ease' }}
+        className="bg-surface rounded-card border border-border/60 p-4 flex flex-col gap-3 cursor-pointer hover:border-border h-full"
+        style={{ opacity: isCompleted || completing ? 1 : 0.5, transition: 'opacity 300ms ease, border-color 150ms ease' }}
         aria-label={mission.title}
-        onClick={(e) => {
-          if ((e.target as HTMLElement).closest('form,button')) return
-          window.location.href = `/achievements/${mission.id}`
-        }}
+        onClick={handleCardClick}
+        tabIndex={0}
+        onKeyDown={(e) => { if (e.key === 'Enter') window.location.href = `/achievements/${mission.id}` }}
       >
         <div className="flex items-start justify-between gap-2">
           <HexMedal locked={!isCompleted} icon={medal?.icon} rarity={medal?.rarity} size={40} />
@@ -169,14 +179,14 @@ function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMi
           </form>
         )}
       </article>
-    </>
+    </div>
   )
 }
 
 function bossThreshold(title: string): number {
   const t = title.toLowerCase()
-  if (t.includes('imparable'))      return 30
-  if (t.includes('gran desafío'))   return 14
+  if (t.includes('imparable'))    return 30
+  if (t.includes('gran desafío')) return 14
   return 7
 }
 
@@ -237,11 +247,9 @@ function BossCard({ mission, completedAt, currentStreak, medal }: {
         }}
         aria-label={mission.title}
       >
-        {/* Top accent line */}
         <div className="h-[2px] w-full" style={{ backgroundColor: classMeta.color }} aria-hidden />
 
         <div className="p-6 flex flex-col gap-5">
-          {/* Header: hex medal + title + XP */}
           <div className="flex items-start gap-5">
             <HexMedal locked={isLocked} icon={medal?.icon} rarity={medal?.rarity} size={64} />
 
@@ -269,7 +277,6 @@ function BossCard({ mission, completedAt, currentStreak, medal }: {
             </div>
           </div>
 
-          {/* Footer: progress / status */}
           <div className="pt-1 border-t border-border/40">
             {completedThisWeek ? (
               <div className="flex items-center gap-2 text-sm text-text-muted">
@@ -353,12 +360,16 @@ export default function AchievementsClient({
   totalDaysActive: number
   totalMissionsCount: number
 }) {
-  const sortedAchievements = [...achievements].sort((a, b) => {
-    const aDone = completedMap[a.id] ? 1 : 0
-    const bDone = completedMap[b.id] ? 1 : 0
-    if (aDone !== bDone) return aDone - bDone
-    return (a.sort_order ?? 999) - (b.sort_order ?? 999)
-  })
+  const [classFilter, setClassFilter] = useState<ClassFilter>('all')
+
+  const sorted = [...achievements]
+    .sort((a, b) => {
+      const aDone = completedMap[a.id] ? 1 : 0
+      const bDone = completedMap[b.id] ? 1 : 0
+      if (aDone !== bDone) return aDone - bDone
+      return (a.sort_order ?? 999) - (b.sort_order ?? 999)
+    })
+    .filter(m => classFilter === 'all' || m.life_class === classFilter)
 
   const completedAchievementsCount = achievements.filter(m => completedMap[m.id]).length
   const completedBossCount = bossMissions.filter(m => {
@@ -382,17 +393,44 @@ export default function AchievementsClient({
             count={completedAchievementsCount}
             total={achievements.length}
           />
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {sortedAchievements.map(m => (
-              <AchievementCard
-                key={m.id}
-                mission={m}
-                completedAt={completedMap[m.id] ?? null}
-                medal={medalsMap[m.id] ?? null}
-                totalDaysActive={totalDaysActive}
-                totalMissionsCount={totalMissionsCount}
-              />
+
+          {/* Class filters */}
+          <div className="flex items-center gap-2 flex-wrap" role="group" aria-label="Filtrar por clase">
+            {CLASS_FILTER_PILLS.map(({ value, label }) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setClassFilter(value)}
+                aria-pressed={classFilter === value}
+                className="h-8 px-4 rounded-pill text-sm font-medium transition-all duration-150 cursor-pointer"
+                style={{
+                  backgroundColor: classFilter === value ? 'var(--color-accent)' : 'var(--color-surface)',
+                  color: classFilter === value ? '#fff' : 'var(--color-text-muted)',
+                  border: classFilter === value ? '1px solid transparent' : '1px solid color-mix(in srgb, var(--color-border) 80%, transparent)',
+                }}
+              >
+                {label}
+              </button>
             ))}
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 w-full">
+            {sorted.map((m, idx) => {
+              const isLast = idx === sorted.length - 1
+              const isOdd  = sorted.length % 2 !== 0
+              const wrapperClass = isLast && isOdd ? 'col-span-2 md:col-span-1' : undefined
+              return (
+                <AchievementCard
+                  key={m.id}
+                  mission={m}
+                  completedAt={completedMap[m.id] ?? null}
+                  medal={medalsMap[m.id] ?? null}
+                  totalDaysActive={totalDaysActive}
+                  totalMissionsCount={totalMissionsCount}
+                  wrapperClass={wrapperClass}
+                />
+              )
+            })}
           </div>
         </section>
       )}
