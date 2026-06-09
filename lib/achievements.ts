@@ -50,8 +50,9 @@ export async function checkAutoAchievements(
   const MEDITACION_TITLE   = 'Medita 10 minutos'
   const EJERCICIO_TITLE    = 'Entrena 30 minutos'
   const REDES_TITLE        = 'No redes sociales por 2 horas'
+  const LIBRO_TITLE        = 'Terminar un libro'
 
-  const [meditacionRes, ejercicioRes, redesRes] = await Promise.all([
+  const [meditacionRes, ejercicioRes, redesRes, libroRes] = await Promise.all([
     supabase
       .from('completed_missions')
       .select('completed_at, missions!inner(title)')
@@ -67,6 +68,11 @@ export async function checkAutoAchievements(
       .select('completed_at, missions!inner(title)')
       .eq('user_id', userId)
       .eq('missions.title', REDES_TITLE),
+    supabase
+      .from('completed_missions')
+      .select('completed_at, missions!inner(title)')
+      .eq('user_id', userId)
+      .eq('missions.title', LIBRO_TITLE),
   ])
 
   // Helper: extract unique UTC date strings from completed_at rows
@@ -76,6 +82,7 @@ export async function checkAutoAchievements(
   const meditacionDates = toDates(meditacionRes.data as { completed_at: string }[] | null)
   const ejercicioDates  = toDates(ejercicioRes.data  as { completed_at: string }[] | null)
   const redesDates      = toDates(redesRes.data      as { completed_at: string }[] | null)
+  const booksRead       = (libroRes.data ?? []).length
 
   // Helper: check N consecutive dates exist in a sorted array
   function hasConsecutiveDays(dates: string[], n: number): boolean {
@@ -114,6 +121,8 @@ export async function checkAutoAchievements(
       met = ejercicioDates.length >= 30
     } else if (t.includes('redes')) {
       met = hasConsecutiveDays(redesDates, 7)
+    } else if (t.includes('5 libros') || t.includes('leer 5')) {
+      met = booksRead >= 5
     }
 
     if (met) unlocked.push(mission)

@@ -12,6 +12,7 @@ import { CompleteButton } from '@/components/dashboard/CompleteButton'
 import { LevelUpOverlay } from '@/components/LevelUpOverlay'
 import { AnimatedBar } from '@/components/ui/AnimatedBar'
 import { Trophy, Swords, Lock, ShieldCheck } from 'lucide-react'
+import Link from 'next/link'
 
 const DIFF_META: Record<MissionDifficulty, { label: string; text: string; bg: string; border: string }> = {
   easy:   { label: 'Fácil',   text: 'text-fisico',     bg: 'bg-fisico/8',     border: 'border-fisico/20'     },
@@ -77,8 +78,6 @@ function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMi
 }) {
   const isCompleted = completedAt !== null
   const isAuto = mission.verification_type === 'automatic'
-  const classMeta = CLASS_META[mission.life_class]
-  const hexColor: string = medal ? RARITY_META[medal.rarity].color : classMeta.color
 
   const [result, formAction] = useActionState<AchievementActionResult, FormData>(completeAchievementAction, null)
   const [showXp, setShowXp] = useState(false)
@@ -111,15 +110,20 @@ function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMi
   return (
     <>
       {levelUpData && <LevelUpOverlay level={levelUpData.level} onClose={() => setLevelUpData(null)} />}
+      <Link href={`/achievements/${mission.id}`} className="block" tabIndex={-1} aria-hidden>
+        <span className="sr-only">{mission.title}</span>
+      </Link>
       <article
-        className="bg-surface rounded-card border border-border/60 p-4 flex flex-col gap-3"
+        className="bg-surface rounded-card border border-border/60 p-4 flex flex-col gap-3 cursor-pointer hover:border-border transition-colors"
         style={{ opacity: isCompleted || completing ? 1 : 0.5, transition: 'opacity 300ms ease' }}
         aria-label={mission.title}
+        onClick={(e) => {
+          if ((e.target as HTMLElement).closest('form,button')) return
+          window.location.href = `/achievements/${mission.id}`
+        }}
       >
         <div className="flex items-start justify-between gap-2">
-          <div style={{ color: hexColor }}>
-            <HexMedal locked={!isCompleted} icon={medal?.icon} size={40} />
-          </div>
+          <HexMedal locked={!isCompleted} icon={medal?.icon} rarity={medal?.rarity} size={40} />
           {medal ? (
             <span className="text-[10px] font-semibold" style={{ color: RARITY_META[medal.rarity].color }}>
               {RARITY_META[medal.rarity].label}
@@ -169,6 +173,13 @@ function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMi
   )
 }
 
+function bossThreshold(title: string): number {
+  const t = title.toLowerCase()
+  if (t.includes('imparable'))      return 30
+  if (t.includes('gran desafío'))   return 14
+  return 7
+}
+
 // ─── Boss card — full width, prominent ────────────────────────────────────────
 function BossCard({ mission, completedAt, currentStreak, medal }: {
   mission: Mission
@@ -177,12 +188,11 @@ function BossCard({ mission, completedAt, currentStreak, medal }: {
   medal: Medal | null
 }) {
   const classMeta = CLASS_META[mission.life_class]
-  const isUnlocked = currentStreak >= 7
+  const threshold = bossThreshold(mission.title)
+  const isUnlocked = currentStreak >= threshold
   const completedThisWeek = completedAt !== null && isWithinLastWeek(completedAt)
   const isLocked = !isUnlocked && !completedThisWeek
   const isActive = isUnlocked && !completedThisWeek
-
-  const hexColor: string = medal ? RARITY_META[medal.rarity].color : classMeta.color
 
   const [result, formAction] = useActionState<AchievementActionResult, FormData>(completeAchievementAction, null)
   const [showXp, setShowXp] = useState(false)
@@ -212,7 +222,7 @@ function BossCard({ mission, completedAt, currentStreak, medal }: {
     xpTimerRef.current = setTimeout(() => setShowXp(false), 650)
   }
 
-  const daysProgress = Math.min(currentStreak, 7)
+  const daysProgress = Math.min(currentStreak, threshold)
 
   return (
     <>
@@ -233,9 +243,7 @@ function BossCard({ mission, completedAt, currentStreak, medal }: {
         <div className="p-6 flex flex-col gap-5">
           {/* Header: hex medal + title + XP */}
           <div className="flex items-start gap-5">
-            <div style={{ color: hexColor }}>
-              <HexMedal locked={isLocked} icon={medal?.icon} size={64} />
-            </div>
+            <HexMedal locked={isLocked} icon={medal?.icon} rarity={medal?.rarity} size={64} />
 
             <div className="flex-1 min-w-0 flex flex-col gap-2">
               <div className="flex items-center gap-2 flex-wrap">
@@ -273,18 +281,18 @@ function BossCard({ mission, completedAt, currentStreak, medal }: {
                 <div className="flex items-center justify-between text-xs text-text-muted">
                   <span className="flex items-center gap-1">
                     <Lock size={11} strokeWidth={1.75} aria-hidden />
-                    Completa 7 días consecutivos para desbloquear
+                    Completa {threshold} días consecutivos para desbloquear
                   </span>
-                  <span className="tabular-nums font-medium text-text-primary">{daysProgress}/7 días</span>
+                  <span className="tabular-nums font-medium text-text-primary">{daysProgress}/{threshold} días</span>
                 </div>
-                <AnimatedBar value={daysProgress / 7} color="var(--color-accent)" height="h-1.5" />
+                <AnimatedBar value={daysProgress / threshold} color="var(--color-accent)" height="h-1.5" />
               </div>
             ) : (
               <div className="flex items-center justify-between gap-4">
                 <div className="flex flex-col gap-2 flex-1">
                   <div className="flex items-center justify-between text-xs text-text-muted">
                     <span>Racha completada — lista para reclamar</span>
-                    <span className="tabular-nums font-medium text-text-primary">7/7 días</span>
+                    <span className="tabular-nums font-medium text-text-primary">{threshold}/{threshold} días</span>
                   </div>
                   <AnimatedBar value={1} color="var(--color-fisico)" height="h-1.5" />
                 </div>
