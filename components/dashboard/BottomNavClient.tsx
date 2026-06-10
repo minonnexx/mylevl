@@ -99,11 +99,16 @@ function IconUsers({ active: _active }: { active: boolean }) {
   )
 }
 
-function PendingBadge({ count }: { count: number }) {
-  if (count <= 0) return null
+function PendingBadge({ friendCount, leagueCount }: { friendCount: number; leagueCount: number }) {
+  const total = friendCount + leagueCount
+  if (total <= 0) return null
+  const color = friendCount > 0 ? 'var(--color-accent)' : 'var(--color-disciplina)'
+  const label = friendCount > 0
+    ? `${friendCount} solicitudes de amistad pendientes`
+    : `${leagueCount} invitaciones a ligas pendientes`
   return (
     <span
-      aria-label={`${count} solicitudes de amistad pendientes`}
+      aria-label={label}
       style={{
         position: 'absolute',
         top: '-2px',
@@ -111,7 +116,7 @@ function PendingBadge({ count }: { count: number }) {
         width: '16px',
         height: '16px',
         borderRadius: '50%',
-        background: 'var(--color-accent)',
+        background: color,
         color: 'var(--color-background)',
         fontSize: '10px',
         fontWeight: 700,
@@ -122,7 +127,7 @@ function PendingBadge({ count }: { count: number }) {
         pointerEvents: 'none',
       }}
     >
-      {count > 9 ? '9+' : count}
+      {total > 9 ? '9+' : total}
     </span>
   )
 }
@@ -135,7 +140,7 @@ const NAV_ITEMS = [
   { href: '/profile',      label: 'Perfil',   Icon: IconUser   },
 ] as const
 
-export default function BottomNavClient({ pendingCount = 0 }: { pendingCount?: number }) {
+export default function BottomNavClient({ pendingFriendCount = 0, pendingLeagueCount = 0 }: { pendingFriendCount?: number; pendingLeagueCount?: number }) {
   const pathname = usePathname()
 
   return (
@@ -175,7 +180,7 @@ export default function BottomNavClient({ pendingCount = 0 }: { pendingCount?: n
               )}
               <span className="relative inline-flex">
                 <Icon active={active} />
-                {isSocial && <PendingBadge count={pendingCount} />}
+                {isSocial && <PendingBadge friendCount={pendingFriendCount} leagueCount={pendingLeagueCount} />}
               </span>
               <span
                 className={`text-[10px] font-medium leading-none transition-all duration-200 ${

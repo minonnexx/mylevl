@@ -5,7 +5,8 @@ import BottomNav from '@/components/dashboard/BottomNav'
 import { FriendSearch } from '@/components/social/FriendSearch'
 import { PendingRequests } from '@/components/social/PendingRequests'
 import { FriendList } from '@/components/social/FriendList'
-import { getFeed, getFriends, getPendingRequests } from '@/app/social/actions'
+import { LeagueSection } from '@/components/social/LeagueSection'
+import { getFeed, getFriends, getPendingRequests, getMyLeagues, getPendingLeagueInvites } from '@/app/social/actions'
 import type { FeedEventItem } from '@/components/social/FeedItem'
 import { SocialFeed } from '@/components/social/SocialFeed'
 import { AppHeader } from '@/components/ui/AppHeader'
@@ -16,11 +17,13 @@ export default async function SocialPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth')
 
-  const [feedRaw, friends, pendingRequests, profileRes] = await Promise.all([
+  const [feedRaw, friends, pendingRequests, profileRes, myLeagues, pendingLeagueInvites] = await Promise.all([
     getFeed(),
     getFriends(),
     getPendingRequests(),
     supabase.from('profiles').select('username, global_level, active_pack, feed_public, username_changed_at, avatar_config').eq('id', user.id).single(),
+    getMyLeagues(),
+    getPendingLeagueInvites(),
   ])
 
   type SocialProfile = { username: string | null; global_level: number; active_pack: PackId | null; feed_public: boolean; username_changed_at: string | null; avatar_config: import('@/types/supabase').AvatarConfig | null }
@@ -71,6 +74,11 @@ export default async function SocialPage() {
               {/* ── RIGHT: Social management ────────────────────────────── */}
               <div className="flex flex-col gap-4">
                 <FriendSearch />
+                <LeagueSection
+                  myLeagues={myLeagues}
+                  pendingLeagueInvites={pendingLeagueInvites}
+                  friends={friends}
+                />
                 <PendingRequests requests={pendingRequests} />
                 <FriendList friends={friends} />
               </div>

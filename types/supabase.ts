@@ -94,3 +94,18 @@ export interface ClassProgress {
   life_class: LifeClass
   points: number
 }
+
+export interface League {
+  id: string
+  name: string
+  created_by: string
+  created_at: string
+}
+
+export interface LeagueMember {
+  id: string
+  league_id: string
+  user_id: string
+  status: 'pending' | 'accepted'
+  joined_at: string
+}
