@@ -19,6 +19,16 @@ export type AchievementActionResult = {
   ts: number
 } | null
 
+export async function markAvatarConfirmationShown(): Promise<void> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+  await supabase
+    .from('profiles')
+    .update({ avatar_confirmation_shown: true })
+    .eq('id', user.id)
+}
+
 export async function completeAchievementAction(
   _prev: AchievementActionResult,
   formData: FormData,

@@ -449,7 +449,7 @@ export default async function ProfilePage() {
     onboarding_completed: false,
     global_level: 1, current_xp: 0, xp_to_next_level: 100,
     current_streak: 0, longest_streak: 0, total_days_active: 0,
-    shield_count: 0, shield_used_at: null, shield_notification_shown: true, feed_public: true,
+    shield_count: 0, shield_used_at: null, shield_notification_shown: true, avatar_confirmation_shown: false, feed_public: true,
     date_of_birth: null, username_changed_at: null, active_pack: null, avatar_config: null, created_at: new Date().toISOString(),
   }
 

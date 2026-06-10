@@ -40,6 +40,7 @@ export interface Profile {
   shield_active?: boolean
   shield_used_at: string | null
   shield_notification_shown: boolean
+  avatar_confirmation_shown: boolean
   feed_public: boolean
   date_of_birth: string | null
   username_changed_at: string | null

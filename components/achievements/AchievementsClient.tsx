@@ -6,7 +6,7 @@ import type { AvatarConfig, Medal, Mission, MissionDifficulty, LifeClass } from 
 import { CLASS_META } from '@/lib/constants/classes'
 import { RARITY_META } from '@/lib/constants/medals'
 import { HexMedal } from '@/components/ui/HexMedal'
-import { completeAchievementAction, type AchievementActionResult } from '@/app/achievements/actions'
+import { completeAchievementAction, markAvatarConfirmationShown, type AchievementActionResult } from '@/app/achievements/actions'
 import { toast } from 'sonner'
 import { playLevelUp, playMissionComplete, playShieldGained } from '@/lib/sounds'
 import { CompleteButton } from '@/components/dashboard/CompleteButton'
@@ -85,7 +85,7 @@ function autoProgressText(title: string, totalDaysActive: number, totalMissionsC
 }
 
 // ─── Compact achievement card ─────────────────────────────────────────────────
-function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMissionsCount, wrapperClass, username, avatarConfig, activePack }: {
+function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMissionsCount, wrapperClass, username, avatarConfig, activePack, avatarConfirmationShown }: {
   mission: Mission
   completedAt: string | null
   medal: Medal | null
@@ -95,6 +95,7 @@ function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMi
   username: string
   avatarConfig: AvatarConfig | null
   activePack: string | null
+  avatarConfirmationShown: boolean
 }) {
   const isCompleted = completedAt !== null
   const isAuto = mission.verification_type === 'automatic'
@@ -147,6 +148,7 @@ function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMi
 
   function handleConfirm() {
     setShowConfirm(false)
+    if (!avatarConfirmationShown) markAvatarConfirmationShown()
     setCompleting(true)
     setShowXp(true)
     playMissionComplete()
@@ -181,6 +183,7 @@ function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMi
           username={username}
           avatarConfig={avatarConfig}
           activePack={activePack}
+          alreadyShown={avatarConfirmationShown}
           onConfirm={handleConfirm}
           onCancel={() => setShowConfirm(false)}
         />
@@ -441,6 +444,7 @@ export default function AchievementsClient({
   username,
   avatarConfig,
   activePack,
+  avatarConfirmationShown,
 }: {
   achievements: Mission[]
   bossMissions: Mission[]
@@ -452,6 +456,7 @@ export default function AchievementsClient({
   username: string
   avatarConfig: AvatarConfig | null
   activePack: string | null
+  avatarConfirmationShown: boolean
 }) {
   const [classFilter, setClassFilter] = useState<ClassFilter>('all')
 
@@ -524,6 +529,7 @@ export default function AchievementsClient({
                   username={username}
                   avatarConfig={avatarConfig}
                   activePack={activePack}
+                  avatarConfirmationShown={avatarConfirmationShown}
                 />
               )
             })}

@@ -12,7 +12,7 @@ import { MedalUnlockOverlay } from '@/components/ui/MedalUnlockOverlay'
 import { RARITY_META } from '@/lib/constants/medals'
 import { toast } from 'sonner'
 import { playLevelUp, playMissionComplete, playShieldGained } from '@/lib/sounds'
-import { completeAchievementAction, type AchievementActionResult } from '@/app/achievements/actions'
+import { completeAchievementAction, markAvatarConfirmationShown, type AchievementActionResult } from '@/app/achievements/actions'
 import type { AvatarConfig, Medal, Mission, Rarity } from '@/types/supabase'
 import { AUTO_ACHIEVEMENT_TITLES } from '@/lib/constants/achievements'
 
@@ -51,6 +51,7 @@ export default function AchievementDetailView({
   currentStreak,
   username,
   avatarConfig,
+  avatarConfirmationShown,
 }: {
   mission: Mission
   medal: Medal | null
@@ -60,6 +61,7 @@ export default function AchievementDetailView({
   currentStreak: number
   username: string
   avatarConfig: AvatarConfig | null
+  avatarConfirmationShown: boolean
 }) {
   const isCompleted = completedAt !== null
   const isBoss = mission.type === 'boss'
@@ -101,6 +103,7 @@ export default function AchievementDetailView({
 
   function handleConfirm() {
     setShowConfirm(false)
+    if (!avatarConfirmationShown) markAvatarConfirmationShown()
     setCompleting(true)
     setShowXp(true)
     playMissionComplete()
@@ -138,6 +141,7 @@ export default function AchievementDetailView({
           username={username}
           avatarConfig={avatarConfig}
           activePack={null}
+          alreadyShown={avatarConfirmationShown}
           onConfirm={handleConfirm}
           onCancel={() => setShowConfirm(false)}
         />

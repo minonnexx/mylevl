@@ -19,7 +19,7 @@ export default async function AchievementDetailPage({
   const [profileRes, missionRes, medalRes, completedRes, totalCountRes] = await Promise.all([
     supabase
       .from('profiles')
-      .select('username, global_level, current_streak, active_pack, feed_public, username_changed_at, avatar_config, total_days_active')
+      .select('username, global_level, current_streak, active_pack, feed_public, username_changed_at, avatar_config, total_days_active, avatar_confirmation_shown')
       .eq('id', user.id)
       .single(),
     supabase
@@ -57,6 +57,7 @@ export default async function AchievementDetailPage({
   const feedPublic        = (profile as { feed_public?: boolean } | null)?.feed_public ?? true
   const usernameChangedAt = (profile as { username_changed_at?: string | null } | null)?.username_changed_at ?? null
   const avatarConfig      = (profile as { avatar_config?: import('@/types/supabase').AvatarConfig | null } | null)?.avatar_config ?? null
+  const avatarConfirmationShown = (profile as { avatar_confirmation_shown?: boolean } | null)?.avatar_confirmation_shown ?? false
 
   const totalMissionsCount = totalCountRes.count ?? 0
   const completedAt = (completedRes.data as { completed_at: string } | null)?.completed_at ?? null
@@ -86,6 +87,7 @@ export default async function AchievementDetailPage({
             currentStreak={currentStreak}
             username={username}
             avatarConfig={avatarConfig}
+            avatarConfirmationShown={avatarConfirmationShown}
           />
         </main>
       </div>
