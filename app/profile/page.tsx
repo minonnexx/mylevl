@@ -74,7 +74,11 @@ function ProfileHeader({ profile }: { profile: Profile }) {
       aria-label="Perfil del jugador"
     >
       <div className="flex items-center gap-4">
-        <div className="flex-shrink-0">
+        <Link
+          href={`/u/${profile.username}`}
+          aria-label={`Ver perfil público de ${profile.username ?? 'Jugador'}`}
+          className="flex-shrink-0 transition-opacity hover:opacity-75"
+        >
           {profile.avatar_config ? (
             <AvatarDisplay config={profile.avatar_config} size={80} />
           ) : (
@@ -90,7 +94,7 @@ function ProfileHeader({ profile }: { profile: Profile }) {
               </span>
             </div>
           )}
-        </div>
+        </Link>
         <div className="min-w-0 flex-1">
           <p className="font-semibold text-text-primary truncate">{profile.username ?? 'Jugador'}</p>
           <p className="text-xs text-text-muted mt-0.5">Nivel {profile.global_level} · Jugador</p>

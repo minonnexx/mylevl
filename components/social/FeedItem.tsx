@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { CheckCircle, TrendingUp, Flame } from 'lucide-react'
 import { CLASS_META } from '@/lib/constants/classes'
 import type { LifeClass } from '@/types/supabase'
@@ -51,7 +52,7 @@ export function FeedItem({ event }: { event: FeedEventItem }) {
     )
     content = (
       <p className="text-sm text-text-primary leading-relaxed">
-        <span className="font-semibold">{username}</span>
+        <Link href={`/u/${username}`} className="font-semibold hover:underline" style={{ color: 'inherit' }}>{username}</Link>
         {' completó '}
         <span className="font-medium">{metadata.mission_title ?? 'una misión'}</span>
         {meta && (
@@ -67,7 +68,7 @@ export function FeedItem({ event }: { event: FeedEventItem }) {
     )
     content = (
       <p className="text-sm text-text-primary leading-relaxed">
-        <span className="font-semibold">{username}</span>
+        <Link href={`/u/${username}`} className="font-semibold hover:underline" style={{ color: 'inherit' }}>{username}</Link>
         {' subió al nivel '}
         <span className="font-bold" style={{ color: 'var(--color-accent)' }}>
           {metadata.new_level}
@@ -80,7 +81,7 @@ export function FeedItem({ event }: { event: FeedEventItem }) {
     )
     content = (
       <p className="text-sm text-text-primary leading-relaxed">
-        <span className="font-semibold">{username}</span>
+        <Link href={`/u/${username}`} className="font-semibold hover:underline" style={{ color: 'inherit' }}>{username}</Link>
         {' alcanzó una racha de '}
         <span className="font-bold">{metadata.streak_days}</span>
         {' días'}

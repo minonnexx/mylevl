@@ -2,7 +2,9 @@
 
 import { useState } from 'react'
 import { Settings } from 'lucide-react'
+import Link from 'next/link'
 import { SettingsDrawer, type SettingsProfile } from './SettingsDrawer'
+import AvatarDisplay from '@/components/avatar/AvatarDisplay'
 
 interface AppHeaderProps {
   username?: string | null
@@ -32,13 +34,19 @@ export function AppHeader({ username, globalLevel, profile }: AppHeaderProps) {
         </div>
 
         <div className="flex items-center gap-3">
-          {username && (
-            <span className="text-xs text-text-muted">{username}</span>
-          )}
           {globalLevel != null && (
             <span className="text-xs font-bold text-accent bg-accent/12 border border-accent/20 px-3 py-1 rounded-pill tabular-nums">
               LVL {globalLevel}
             </span>
+          )}
+          {username && (
+            <Link
+              href={`/u/${username}`}
+              aria-label={`Ver perfil público de ${username}`}
+              className="flex items-center justify-center min-w-[44px] min-h-[44px] rounded-full transition-opacity hover:opacity-75"
+            >
+              <AvatarDisplay config={profile.avatar_config} size={40} />
+            </Link>
           )}
           <button
             onClick={() => setDrawerOpen(true)}

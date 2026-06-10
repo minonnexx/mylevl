@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Users, UserMinus, UserPlus, Flame, User } from 'lucide-react'
 import { toast } from 'sonner'
 import { removeFriend } from '@/app/social/actions'
@@ -77,9 +78,13 @@ function FriendRow({ friend }: { friend: Friend }) {
       className="flex items-center gap-3 p-3 rounded-component border border-border/40"
       style={{ background: 'var(--color-background)' }}
     >
-      <div className="flex-shrink-0">
+      <Link
+        href={`/u/${friend.username}`}
+        aria-label={`Ver perfil de ${friend.username}`}
+        className="flex-shrink-0 transition-opacity hover:opacity-75"
+      >
         <AvatarDisplay config={friend.avatar_config} size={32} />
-      </div>
+      </Link>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-text-primary truncate">
           {friend.username ?? 'jugador'}
