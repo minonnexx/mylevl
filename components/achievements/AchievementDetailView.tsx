@@ -8,6 +8,7 @@ import { AnimatedBar } from '@/components/ui/AnimatedBar'
 import { CompleteButton } from '@/components/dashboard/CompleteButton'
 import { LevelUpOverlay } from '@/components/LevelUpOverlay'
 import { AvatarConfirmModal } from '@/components/achievements/AvatarConfirmModal'
+import { MedalUnlockOverlay } from '@/components/ui/MedalUnlockOverlay'
 import { RARITY_META } from '@/lib/constants/medals'
 import { toast } from 'sonner'
 import { playLevelUp, playMissionComplete, playShieldGained } from '@/lib/sounds'
@@ -67,6 +68,7 @@ export default function AchievementDetailView({
   const [result, formAction] = useActionState<AchievementActionResult, FormData>(completeAchievementAction, null)
   const [showXp, setShowXp] = useState(false)
   const [levelUpData, setLevelUpData] = useState<{ level: number } | null>(null)
+  const [medalUnlockData, setMedalUnlockData] = useState<Medal | null>(null)
   const [completing, setCompleting] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const prevTsRef = useRef<number | null>(null)
@@ -82,8 +84,9 @@ export default function AchievementDetailView({
     if (result.levelUp) setTimeout(() => playLevelUp(), 300)
     toast(isBoss ? 'Jefe derrotado' : 'Logro completado', { description: `+${result.xpReward} XP`, duration: 2500 })
     if (result.shieldGranted) toast('Escudo ganado', { description: 'Racha de 7 días completada', icon: <ShieldCheck size={16} />, duration: 4000 })
+    if (medal) setMedalUnlockData(medal)
     if (result.levelUp) setTimeout(() => setLevelUpData({ level: result.newLevel }), 800)
-  }, [result, isBoss])
+  }, [result, isBoss, medal])
 
   useEffect(() => () => { if (xpTimerRef.current) clearTimeout(xpTimerRef.current) }, [])
 
@@ -122,7 +125,14 @@ export default function AchievementDetailView({
 
   return (
     <>
-      {levelUpData && <LevelUpOverlay level={levelUpData.level} onClose={() => setLevelUpData(null)} />}
+      {medalUnlockData && (
+        <MedalUnlockOverlay
+          medal={medalUnlockData}
+          missionTitle={mission.title}
+          onClose={() => setMedalUnlockData(null)}
+        />
+      )}
+      {!medalUnlockData && levelUpData && <LevelUpOverlay level={levelUpData.level} onClose={() => setLevelUpData(null)} />}
       {showConfirm && (
         <AvatarConfirmModal
           username={username}
@@ -160,6 +170,11 @@ export default function AchievementDetailView({
               <span className="text-sm font-semibold" style={{ color: RARITY_META[rarity].color }}>
                 {RARITY_META[rarity].label}
               </span>
+            )}
+            {medal && medal.unlock_percentage > 0 && (
+              <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+                {medal.unlock_percentage}% de jugadores la tienen
+              </p>
             )}
             <div className="flex items-center gap-1.5">
               <Star size={14} strokeWidth={1.75} style={{ color: 'var(--color-accent)' }} aria-hidden />

@@ -125,6 +125,60 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // Recalculate unlock_percentage for every medal
+  try {
+    const { count: totalUsers } = await supabase
+      .from('profiles')
+      .select('id', { count: 'exact', head: true })
+      .eq('onboarding_completed', true)
+
+    if (totalUsers && totalUsers > 0) {
+      const { data: allMedals } = await supabase
+        .from('medals')
+        .select('id, mission_id')
+
+      if (allMedals?.length) {
+        const missionIds = allMedals.map(m => m.mission_id as string)
+
+        const { data: completionCounts } = await supabase
+          .from('completed_missions')
+          .select('mission_id')
+          .in('mission_id', missionIds)
+
+        const countMap: Record<string, number> = {}
+        for (const row of completionCounts ?? []) {
+          const mid = row.mission_id as string
+          // Count distinct users — deduplicate by fetching user counts per mission
+          countMap[mid] = (countMap[mid] ?? 0) + 1
+        }
+
+        // For accuracy, count distinct users per mission
+        const distinctCountMap: Record<string, number> = {}
+        for (const missionId of missionIds) {
+          const { count } = await supabase
+            .from('completed_missions')
+            .select('user_id', { count: 'exact', head: true })
+            .eq('mission_id', missionId)
+          distinctCountMap[missionId] = count ?? 0
+        }
+
+        const updates = allMedals.map(medal => ({
+          id: medal.id as string,
+          unlock_percentage: Math.round(
+            ((distinctCountMap[medal.mission_id as string] ?? 0) / totalUsers) * 1000,
+          ) / 10,
+        }))
+
+        for (const upd of updates) {
+          await supabase
+            .from('medals')
+            .update({ unlock_percentage: upd.unlock_percentage })
+            .eq('id', upd.id)
+        }
+      }
+    }
+  } catch {}
+
   return NextResponse.json({
     reset: unshieldedIds.length,
     shielded: shieldUpdates.length,

@@ -1,13 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import type { Profile, ClassProgress, LifeClass, Medal } from '@/types/supabase'
-import { RARITY_META } from '@/lib/constants/medals'
-import { HexMedal } from '@/components/ui/HexMedal'
 import { CLASS_META, getMilestoneProgress, getMilestoneTier } from '@/lib/constants/classes'
 import Sidebar from '@/components/dashboard/Sidebar'
 import BottomNav from '@/components/dashboard/BottomNav'
 import { ShareButton } from '@/components/profile/ShareButton'
 import { ResetProfileButton } from '@/components/profile/ResetProfileButton'
+import { MedalsGrid } from '@/components/profile/MedalsGrid'
 import { AppHeader } from '@/components/ui/AppHeader'
 import { ClassRadarChart } from '@/components/profile/ClassRadarChart'
 import { ActivityHeatmap } from '@/components/profile/ActivityHeatmap'
@@ -339,18 +338,7 @@ function MedalsSection({ medals }: { medals: Medal[] }) {
         </div>
       ) : (
         <div className="bg-surface rounded-card border border-border/60 p-6">
-          <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-4">
-            {medals.map(medal => (
-              <div key={medal.id} className="flex flex-col items-center gap-1.5" title={medal.name}>
-                <div style={{ color: RARITY_META[medal.rarity].color }}>
-                  <HexMedal size={36} icon={medal.icon} />
-                </div>
-                <span className="text-[10px] text-text-muted text-center leading-tight truncate w-full">
-                  {medal.name}
-                </span>
-              </div>
-            ))}
-          </div>
+          <MedalsGrid medals={medals} />
         </div>
       )}
     </section>

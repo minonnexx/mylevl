@@ -15,6 +15,8 @@ import { AvatarConfirmModal } from '@/components/achievements/AvatarConfirmModal
 import { AnimatedBar } from '@/components/ui/AnimatedBar'
 import { Trophy, Swords, Lock, ShieldCheck, ChevronRight } from 'lucide-react'
 import { AUTO_ACHIEVEMENT_TITLES } from '@/lib/constants/achievements'
+import { MedalUnlockOverlay } from '@/components/ui/MedalUnlockOverlay'
+import { MedalDetailModal } from '@/components/ui/MedalDetailModal'
 
 const DIFF_META: Record<MissionDifficulty, { label: string; text: string; bg: string; border: string }> = {
   easy:   { label: 'Fácil',   text: 'text-fisico',     bg: 'bg-fisico/8',     border: 'border-fisico/20'     },
@@ -102,6 +104,8 @@ function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMi
   const [result, formAction] = useActionState<AchievementActionResult, FormData>(completeAchievementAction, null)
   const [showXp, setShowXp] = useState(false)
   const [levelUpData, setLevelUpData] = useState<{ level: number } | null>(null)
+  const [medalUnlockData, setMedalUnlockData] = useState<Medal | null>(null)
+  const [selectedMedal, setSelectedMedal] = useState<Medal | null>(null)
   const [completing, setCompleting] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [hovered, setHovered] = useState(false)
@@ -118,9 +122,10 @@ function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMi
     if (result.levelUp) setTimeout(() => playLevelUp(), 300)
     toast('Logro completado', { description: `+${result.xpReward} XP`, duration: 2500 })
     if (result.shieldGranted) toast('Escudo ganado', { description: 'Racha de 7 días completada', icon: <ShieldCheck size={16} />, duration: 4000 })
+    if (medal) setMedalUnlockData(medal)
     if (result.levelUp) setTimeout(() => setLevelUpData({ level: result.newLevel }), 800)
     router.refresh()
-  }, [result, router])
+  }, [result, router, medal])
 
   useEffect(() => () => { if (xpTimerRef.current) clearTimeout(xpTimerRef.current) }, [])
 
@@ -162,7 +167,15 @@ function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMi
 
   return (
     <div className={wrapperClass}>
-      {levelUpData && <LevelUpOverlay level={levelUpData.level} onClose={() => setLevelUpData(null)} />}
+      {medalUnlockData && (
+        <MedalUnlockOverlay
+          medal={medalUnlockData}
+          missionTitle={mission.title}
+          onClose={() => setMedalUnlockData(null)}
+        />
+      )}
+      {!medalUnlockData && levelUpData && <LevelUpOverlay level={levelUpData.level} onClose={() => setLevelUpData(null)} />}
+      {selectedMedal && <MedalDetailModal medal={selectedMedal} onClose={() => setSelectedMedal(null)} />}
       {showConfirm && (
         <AvatarConfirmModal
           username={username}
@@ -187,7 +200,14 @@ function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMi
         onKeyDown={(e) => { if (e.key === 'Enter') window.location.href = `/achievements/${mission.id}` }}
       >
         <div className="flex items-start justify-between gap-2">
-          <HexMedal locked={!isCompleted} icon={medal?.icon} rarity={medal?.rarity} size={40} />
+          <button
+            type="button"
+            onClick={isCompleted && medal ? (e) => { e.stopPropagation(); setSelectedMedal(medal) } : undefined}
+            style={{ cursor: isCompleted && medal ? 'pointer' : 'default', background: 'none', border: 'none', padding: 0 }}
+            aria-label={isCompleted && medal ? `Ver detalle de medalla: ${medal.name}` : undefined}
+          >
+            <HexMedal locked={!isCompleted} icon={medal?.icon} rarity={medal?.rarity} size={40} />
+          </button>
           {medal ? (
             <span className="text-[10px] font-semibold" style={{ color: RARITY_META[medal.rarity].color }}>
               {RARITY_META[medal.rarity].label}

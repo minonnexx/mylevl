@@ -8,6 +8,7 @@ export interface Medal {
   name: string
   icon: string
   rarity: Rarity
+  unlock_percentage: number
   created_at: string
 }
 
