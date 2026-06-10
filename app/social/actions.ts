@@ -316,6 +316,13 @@ export type LeagueDetailMember = {
   missions_completed: number
 }
 
+export type InvitableFriend = {
+  userId: string
+  username: string | null
+  global_level: number
+  avatar_config: import('@/types/supabase').AvatarConfig | null
+}
+
 export type LeagueDetail = {
   id: string
   name: string
@@ -323,6 +330,8 @@ export type LeagueDetail = {
   currentUserId: string
   weekStart: string
   members: LeagueDetailMember[]
+  totalMembersCount: number
+  invitableFriends: InvitableFriend[]
 }
 
 export async function getLeagueDetail(leagueId: string): Promise<LeagueDetail | null> {
@@ -349,24 +358,33 @@ export async function getLeagueDetail(leagueId: string): Promise<LeagueDetail | 
 
   if (!league) return null
 
-  const { data: members } = await supabase
+  // All members (accepted + pending) for capacity and friend filtering
+  const { data: allMembersData } = await supabase
     .from('league_members')
-    .select('user_id')
+    .select('user_id, status')
     .eq('league_id', leagueId)
-    .eq('status', 'accepted')
 
-  const memberIds = (members ?? []).map(m => m.user_id as string)
+  const allMemberUserIds = new Set((allMembersData ?? []).map(m => m.user_id as string))
+  const totalMembersCount = allMemberUserIds.size
+  const acceptedMemberIds = (allMembersData ?? [])
+    .filter(m => m.status === 'accepted')
+    .map(m => m.user_id as string)
 
-  const [profilesRes, completionsRes] = await Promise.all([
+  const [profilesRes, completionsRes, friendshipsRes] = await Promise.all([
     supabase
       .from('profiles')
       .select('id, username, global_level, avatar_config')
-      .in('id', memberIds),
+      .in('id', acceptedMemberIds),
     supabase
       .from('completed_missions')
       .select('user_id, mission_id')
-      .in('user_id', memberIds)
+      .in('user_id', acceptedMemberIds)
       .gte('completed_at', getWeekStartISO()),
+    supabase
+      .from('friendships')
+      .select('requester_id, addressee_id')
+      .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`)
+      .eq('status', 'accepted'),
   ])
 
   const completions = completionsRes.data ?? []
@@ -382,7 +400,7 @@ export async function getLeagueDetail(leagueId: string): Promise<LeagueDetail | 
   }
 
   const statsMap: Record<string, { xp: number; missions: number }> = {}
-  for (const uid of memberIds) statsMap[uid] = { xp: 0, missions: 0 }
+  for (const uid of acceptedMemberIds) statsMap[uid] = { xp: 0, missions: 0 }
   for (const c of completions) {
     const uid = c.user_id as string
     if (statsMap[uid]) {
@@ -391,7 +409,7 @@ export async function getLeagueDetail(leagueId: string): Promise<LeagueDetail | 
     }
   }
 
-  const rankedMembers: LeagueDetailMember[] = memberIds
+  const rankedMembers: LeagueDetailMember[] = acceptedMemberIds
     .map(uid => {
       const profile = (profilesRes.data ?? []).find(p => p.id === uid)
       return {
@@ -408,6 +426,26 @@ export async function getLeagueDetail(leagueId: string): Promise<LeagueDetail | 
       return b.missions_completed - a.missions_completed
     })
 
+  // Friends not already in the league (accepted or pending)
+  const friendIds = (friendshipsRes.data ?? []).map(f =>
+    (f.requester_id as string) === user.id ? (f.addressee_id as string) : (f.requester_id as string)
+  )
+  const invitableFriendIds = friendIds.filter(id => !allMemberUserIds.has(id))
+
+  let invitableFriends: InvitableFriend[] = []
+  if (invitableFriendIds.length > 0) {
+    const { data: friendProfiles } = await supabase
+      .from('profiles')
+      .select('id, username, global_level, avatar_config')
+      .in('id', invitableFriendIds)
+    invitableFriends = (friendProfiles ?? []).map(p => ({
+      userId: p.id as string,
+      username: (p.username ?? null) as string | null,
+      global_level: (p.global_level ?? 1) as number,
+      avatar_config: (p.avatar_config ?? null) as import('@/types/supabase').AvatarConfig | null,
+    }))
+  }
+
   return {
     id: league.id as string,
     name: league.name as string,
@@ -415,7 +453,48 @@ export async function getLeagueDetail(leagueId: string): Promise<LeagueDetail | 
     currentUserId: user.id,
     weekStart: getWeekStartISO(),
     members: rankedMembers,
+    totalMembersCount,
+    invitableFriends,
   }
+}
+
+export async function inviteToLeague(leagueId: string, userIds: string[]) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'No autenticado' }
+
+  const { data: membership } = await supabase
+    .from('league_members')
+    .select('id')
+    .eq('league_id', leagueId)
+    .eq('user_id', user.id)
+    .eq('status', 'accepted')
+    .maybeSingle()
+
+  if (!membership) return { error: 'No eres miembro de esta liga' }
+
+  const { count: currentCount } = await supabase
+    .from('league_members')
+    .select('*', { count: 'exact', head: true })
+    .eq('league_id', leagueId)
+
+  const available = 10 - (currentCount ?? 0)
+  if (available <= 0) return { error: 'La liga está llena' }
+  if (userIds.length > available) {
+    return { error: `Solo hay ${available} plaza${available === 1 ? '' : 's'} disponible${available === 1 ? '' : 's'}` }
+  }
+
+  const inserts = userIds.map(uid => ({
+    league_id: leagueId,
+    user_id: uid,
+    status: 'pending',
+  }))
+
+  const { error } = await supabase
+    .from('league_members')
+    .upsert(inserts, { onConflict: 'league_id,user_id', ignoreDuplicates: true })
+
+  return error ? { error: error.message } : { success: true }
 }
 
 export async function leaveLeague(leagueId: string) {

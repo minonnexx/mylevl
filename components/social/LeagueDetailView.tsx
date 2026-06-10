@@ -1,13 +1,14 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { LogOut, Users } from 'lucide-react'
+import Link from 'next/link'
+import { LogOut, Users, ChevronLeft, UserPlus, Check, X } from 'lucide-react'
 import { toast } from 'sonner'
 import AvatarDisplay from '@/components/avatar/AvatarDisplay'
-import { leaveLeague } from '@/app/social/actions'
-import { LEAGUE_MOTIVATIONAL_MESSAGES } from '@/lib/constants/leagues'
-import type { LeagueDetail, LeagueDetailMember } from '@/app/social/actions'
+import { leaveLeague, inviteToLeague } from '@/app/social/actions'
+import { LEAGUE_MOTIVATIONAL_MESSAGES, LEAGUE_MAX_MEMBERS } from '@/lib/constants/leagues'
+import type { LeagueDetail, LeagueDetailMember, InvitableFriend } from '@/app/social/actions'
 
 // Medal colors — purely data/decorative like rarity colors
 const RANK_COLORS = {
@@ -32,14 +33,57 @@ interface LeagueDetailViewProps {
 }
 
 export function LeagueDetailView({ league }: LeagueDetailViewProps) {
-  const { members, currentUserId } = league
+  const { members, currentUserId, totalMembersCount, invitableFriends } = league
   const myRank = members.findIndex(m => m.userId === currentUserId) + 1
   const motivationalKey = getMotivationalKey(myRank, members.length)
   const top3 = members.slice(0, 3)
   const rest = members.slice(3)
+  const isFull = totalMembersCount >= LEAGUE_MAX_MEMBERS
+  const [inviteModalOpen, setInviteModalOpen] = useState(false)
 
   return (
     <div className="flex flex-col gap-6">
+
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <Link
+          href="/social"
+          aria-label="Volver a social"
+          className="flex items-center justify-center w-9 h-9 rounded-component transition-colors hover:bg-surface-elevated flex-shrink-0"
+          style={{ color: 'var(--color-text-muted)' }}
+        >
+          <ChevronLeft size={20} aria-hidden />
+        </Link>
+        <h1 className="text-2xl font-semibold text-text-primary truncate flex-1 min-w-0">
+          {league.name}
+        </h1>
+        {isFull ? (
+          <span
+            className="flex-shrink-0 text-xs font-medium px-3 py-1.5 rounded-pill"
+            style={{
+              color: 'var(--color-text-muted)',
+              border: '1px solid color-mix(in srgb, var(--color-text-muted) 20%, transparent)',
+            }}
+          >
+            Liga completa
+          </span>
+        ) : (
+          <button
+            onClick={() => setInviteModalOpen(true)}
+            aria-label="Invitar jugadores a la liga"
+            className="flex items-center gap-1.5 h-9 px-3 rounded-component text-xs font-medium transition-colors flex-shrink-0 min-w-[44px]"
+            style={{
+              background: 'color-mix(in srgb, var(--color-accent) 12%, transparent)',
+              color: 'var(--color-accent)',
+              border: '1px solid color-mix(in srgb, var(--color-accent) 20%, transparent)',
+            }}
+          >
+            <UserPlus size={13} aria-hidden />
+            <span>Invitar</span>
+          </button>
+        )}
+      </div>
+
       {/* Mensaje motivador */}
       {members.length > 1 && (
         <div
@@ -98,12 +142,7 @@ export function LeagueDetailView({ league }: LeagueDetailViewProps) {
               const rank = idx + 4
               const isMe = member.userId === currentUserId
               return (
-                <RankRow
-                  key={member.userId}
-                  member={member}
-                  rank={rank}
-                  isMe={isMe}
-                />
+                <RankRow key={member.userId} member={member} rank={rank} isMe={isMe} />
               )
             })}
           </div>
@@ -121,6 +160,16 @@ export function LeagueDetailView({ league }: LeagueDetailViewProps) {
 
       {/* Salir de la liga */}
       <LeaveButton leagueId={league.id} leagueName={league.name} />
+
+      {/* Modal de invitar */}
+      {inviteModalOpen && (
+        <InviteModal
+          leagueId={league.id}
+          invitableFriends={invitableFriends}
+          slotsAvailable={LEAGUE_MAX_MEMBERS - totalMembersCount}
+          onClose={() => setInviteModalOpen(false)}
+        />
+      )}
     </div>
   )
 }
@@ -151,11 +200,7 @@ function PodiumCard({
           : 'color-mix(in srgb, var(--color-text-muted) 15%, transparent)',
       }}
     >
-      {/* Rank badge */}
-      <span
-        className="text-xs font-bold tabular-nums"
-        style={{ color }}
-      >
+      <span className="text-xs font-bold tabular-nums" style={{ color }}>
         #{rank}
       </span>
       <AvatarDisplay config={member.avatar_config} size={avatarSize} />
@@ -210,15 +255,13 @@ function RankRow({
           </span>
         )}
       </span>
-      <div className="flex items-center gap-3 flex-shrink-0 text-right">
-        <div className="flex flex-col items-end">
-          <span className="text-xs font-bold tabular-nums text-text-primary">
-            {member.xp_earned} XP
-          </span>
-          <span className="text-xs tabular-nums" style={{ color: 'var(--color-text-muted)' }}>
-            {member.missions_completed}m
-          </span>
-        </div>
+      <div className="flex flex-col items-end flex-shrink-0">
+        <span className="text-xs font-bold tabular-nums text-text-primary">
+          {member.xp_earned} XP
+        </span>
+        <span className="text-xs tabular-nums" style={{ color: 'var(--color-text-muted)' }}>
+          {member.missions_completed}m
+        </span>
       </div>
     </div>
   )
@@ -250,11 +293,12 @@ function MembersList({
           </span>
         </div>
         <span
-          className="text-xs font-medium transition-transform"
+          className="text-xs font-medium"
           style={{
             color: 'var(--color-text-muted)',
             display: 'inline-block',
             transform: collapsed ? 'rotate(0deg)' : 'rotate(180deg)',
+            transition: 'transform 150ms',
           }}
         >
           ▾
@@ -366,6 +410,180 @@ function LeaveButton({ leagueId, leagueName }: { leagueId: string; leagueName: s
         >
           Cancelar
         </button>
+      </div>
+    </div>
+  )
+}
+
+function InviteModal({
+  leagueId,
+  invitableFriends,
+  slotsAvailable,
+  onClose,
+}: {
+  leagueId: string
+  invitableFriends: InvitableFriend[]
+  slotsAvailable: number
+  onClose: () => void
+}) {
+  const router = useRouter()
+  const overlayRef = useRef<HTMLDivElement>(null)
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [isSending, startSend] = useTransition()
+
+  const canSend = selectedIds.length > 0 && !isSending
+
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
+  }, [onClose])
+
+  function toggleFriend(userId: string) {
+    setSelectedIds(prev => {
+      if (prev.includes(userId)) return prev.filter(id => id !== userId)
+      if (prev.length >= slotsAvailable) return prev
+      return [...prev, userId]
+    })
+  }
+
+  function handleSend() {
+    if (!canSend) return
+    startSend(async () => {
+      const res = await inviteToLeague(leagueId, selectedIds)
+      if ('error' in res) {
+        toast.error(res.error)
+      } else {
+        const n = selectedIds.length
+        toast.success(`${n} invitación${n === 1 ? '' : 'es'} enviada${n === 1 ? '' : 's'}`)
+        router.refresh()
+        onClose()
+      }
+    })
+  }
+
+  return (
+    <div
+      ref={overlayRef}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: 'rgba(0,0,0,0.7)' }}
+      onClick={e => { if (e.target === overlayRef.current) onClose() }}
+    >
+      <div
+        className="w-full max-w-md rounded-card border border-border/60 flex flex-col max-h-[90vh]"
+        style={{ background: 'var(--color-surface)' }}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Invitar jugadores"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-5 border-b border-border/40 flex-shrink-0">
+          <div className="flex flex-col gap-0.5">
+            <h2 className="text-base font-semibold text-text-primary">Invitar jugadores</h2>
+            <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+              {slotsAvailable} {slotsAvailable === 1 ? 'plaza disponible' : 'plazas disponibles'}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            aria-label="Cerrar"
+            className="flex items-center justify-center w-8 h-8 rounded-component transition-colors"
+            style={{ color: 'var(--color-text-muted)' }}
+          >
+            <X size={16} aria-hidden />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto px-6 py-5 min-h-0">
+          {invitableFriends.length === 0 ? (
+            <p className="text-sm text-center py-6" style={{ color: 'var(--color-text-muted)' }}>
+              Todos tus amigos ya están en esta liga o no tienes amigos aún
+            </p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-xs font-medium" style={{ color: 'var(--color-text-muted)' }}>
+                  Tus amigos
+                </p>
+                <span
+                  className="text-xs font-bold tabular-nums px-2 py-0.5 rounded-pill"
+                  style={{
+                    color: selectedIds.length >= slotsAvailable && slotsAvailable > 0
+                      ? 'var(--color-disciplina)'
+                      : 'var(--color-text-muted)',
+                    background: selectedIds.length >= slotsAvailable && slotsAvailable > 0
+                      ? 'color-mix(in srgb, var(--color-disciplina) 12%, transparent)'
+                      : 'color-mix(in srgb, var(--color-text-muted) 10%, transparent)',
+                  }}
+                >
+                  {selectedIds.length} invitados
+                </span>
+              </div>
+              {invitableFriends.map(friend => {
+                const selected = selectedIds.includes(friend.userId)
+                const disabled = !selected && selectedIds.length >= slotsAvailable
+                return (
+                  <button
+                    key={friend.userId}
+                    onClick={() => toggleFriend(friend.userId)}
+                    disabled={disabled}
+                    className="flex items-center gap-3 p-2.5 rounded-component border transition-colors text-left w-full min-h-[44px] disabled:opacity-40"
+                    style={
+                      selected
+                        ? {
+                            background: 'color-mix(in srgb, var(--color-accent) 10%, transparent)',
+                            borderColor: 'color-mix(in srgb, var(--color-accent) 30%, transparent)',
+                          }
+                        : {
+                            background: 'var(--color-background)',
+                            borderColor: 'color-mix(in srgb, var(--color-text-muted) 15%, transparent)',
+                          }
+                    }
+                  >
+                    <AvatarDisplay config={friend.avatar_config} size={28} />
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm font-medium text-text-primary truncate block">
+                        {friend.username ?? 'jugador'}
+                      </span>
+                      <span
+                        className="text-xs tabular-nums font-bold"
+                        style={{ color: 'var(--color-accent)' }}
+                      >
+                        LVL {friend.global_level}
+                      </span>
+                    </div>
+                    {selected && (
+                      <Check size={14} style={{ color: 'var(--color-accent)', flexShrink: 0 }} aria-hidden />
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-5 border-t border-border/40 flex-shrink-0">
+          <button
+            onClick={handleSend}
+            disabled={!canSend}
+            className="w-full h-10 rounded-component text-sm font-semibold transition-colors disabled:opacity-40"
+            style={{
+              background: canSend
+                ? 'color-mix(in srgb, var(--color-accent) 20%, transparent)'
+                : 'color-mix(in srgb, var(--color-text-muted) 10%, transparent)',
+              color: canSend ? 'var(--color-accent)' : 'var(--color-text-muted)',
+              border: `1px solid ${canSend
+                ? 'color-mix(in srgb, var(--color-accent) 30%, transparent)'
+                : 'color-mix(in srgb, var(--color-text-muted) 15%, transparent)'}`,
+            }}
+          >
+            {isSending ? 'Enviando...' : 'Enviar invitaciones'}
+          </button>
+        </div>
       </div>
     </div>
   )

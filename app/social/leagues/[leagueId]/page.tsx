@@ -1,7 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
-import Link from 'next/link'
-import { ChevronLeft } from 'lucide-react'
 import Sidebar from '@/components/dashboard/Sidebar'
 import BottomNav from '@/components/dashboard/BottomNav'
 import { AppHeader } from '@/components/ui/AppHeader'
@@ -59,22 +57,6 @@ export default async function LeagueDetailPage({ params }: Props) {
 
         <main className="flex-1 py-6 px-4 md:py-8 md:px-8 pb-28 md:pb-8">
           <div className="max-w-[640px] mx-auto">
-
-            {/* Header */}
-            <div className="flex items-center gap-3 mb-6">
-              <Link
-                href="/social"
-                aria-label="Volver a social"
-                className="flex items-center justify-center w-9 h-9 rounded-component transition-colors hover:bg-surface-elevated flex-shrink-0"
-                style={{ color: 'var(--color-text-muted)' }}
-              >
-                <ChevronLeft size={20} aria-hidden />
-              </Link>
-              <h1 className="text-2xl font-semibold text-text-primary truncate min-w-0">
-                {league.name}
-              </h1>
-            </div>
-
             <LeagueDetailView league={league} />
           </div>
         </main>
