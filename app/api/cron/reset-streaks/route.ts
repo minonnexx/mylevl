@@ -179,6 +179,98 @@ export async function GET(req: NextRequest) {
     }
   } catch {}
 
+  // Weekly league stats reset — runs only on Mondays UTC
+  const todayUTCDay = new Date().getUTCDay()
+  if (todayUTCDay === 1) {
+    try {
+      const now = new Date()
+
+      // Previous week started 7 days ago (last Monday)
+      const prevWeekStart = new Date(now)
+      prevWeekStart.setUTCDate(now.getUTCDate() - 7)
+      prevWeekStart.setUTCHours(0, 0, 0, 0)
+
+      // Current week starts today (this Monday)
+      const currentWeekStart = new Date(now)
+      currentWeekStart.setUTCHours(0, 0, 0, 0)
+
+      const prevWeekStartStr = prevWeekStart.toISOString()
+      const currentWeekStartStr = currentWeekStart.toISOString()
+
+      // Get all leagues with at least one accepted member
+      const { data: allLeagues } = await supabase
+        .from('leagues')
+        .select('id')
+
+      for (const league of allLeagues ?? []) {
+        const leagueId = league.id as string
+
+        // Get accepted members
+        const { data: members } = await supabase
+          .from('league_members')
+          .select('user_id')
+          .eq('league_id', leagueId)
+          .eq('status', 'accepted')
+
+        const memberIds = (members ?? []).map(m => m.user_id as string)
+        if (!memberIds.length) continue
+
+        // 1. Save stats for the previous week
+        const { data: completions } = await supabase
+          .from('completed_missions')
+          .select('user_id, mission_id')
+          .in('user_id', memberIds)
+          .gte('completed_at', prevWeekStartStr)
+          .lt('completed_at', currentWeekStartStr)
+
+        const missionIds = [...new Set((completions ?? []).map(c => c.mission_id as string))]
+        let xpMap: Record<string, number> = {}
+        if (missionIds.length > 0) {
+          const { data: missionsData } = await supabase
+            .from('missions')
+            .select('id, xp_reward')
+            .in('id', missionIds)
+          xpMap = Object.fromEntries((missionsData ?? []).map(m => [m.id as string, m.xp_reward as number]))
+        }
+
+        const statsMap: Record<string, { xp: number; missions: number }> = {}
+        for (const uid of memberIds) statsMap[uid] = { xp: 0, missions: 0 }
+        for (const c of completions ?? []) {
+          const uid = c.user_id as string
+          if (statsMap[uid]) {
+            statsMap[uid].missions++
+            statsMap[uid].xp += xpMap[c.mission_id as string] ?? 0
+          }
+        }
+
+        const prevWeekUpserts = memberIds.map(uid => ({
+          league_id: leagueId,
+          user_id: uid,
+          week_start: prevWeekStart.toISOString().slice(0, 10),
+          xp_earned: statsMap[uid]?.xp ?? 0,
+          missions_completed: statsMap[uid]?.missions ?? 0,
+        }))
+
+        await supabase
+          .from('league_weekly_stats')
+          .upsert(prevWeekUpserts, { onConflict: 'league_id,user_id,week_start' })
+
+        // 2. Create fresh rows for the new week
+        const newWeekInserts = memberIds.map(uid => ({
+          league_id: leagueId,
+          user_id: uid,
+          week_start: currentWeekStart.toISOString().slice(0, 10),
+          xp_earned: 0,
+          missions_completed: 0,
+        }))
+
+        await supabase
+          .from('league_weekly_stats')
+          .upsert(newWeekInserts, { onConflict: 'league_id,user_id,week_start' })
+      }
+    } catch {}
+  }
+
   return NextResponse.json({
     reset: unshieldedIds.length,
     shielded: shieldUpdates.length,

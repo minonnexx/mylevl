@@ -2,7 +2,8 @@
 
 import { useState, useTransition, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, X, Check, Shield, Users } from 'lucide-react'
+import Link from 'next/link'
+import { Plus, X, Check, Shield, Users, ChevronRight } from 'lucide-react'
 import { toast } from 'sonner'
 import AvatarDisplay from '@/components/avatar/AvatarDisplay'
 import { createLeague, respondToLeagueInvite } from '@/app/social/actions'
@@ -106,8 +107,9 @@ export function LeagueSection({ myLeagues, pendingLeagueInvites, friends }: Leag
 
 function LeagueRow({ league }: { league: MyLeague }) {
   return (
-    <div
-      className="flex items-center gap-3 p-3 rounded-component border border-border/40"
+    <Link
+      href={`/social/leagues/${league.id}`}
+      className="flex items-center gap-3 p-3 rounded-component border border-border/40 transition-colors hover:border-border/70 min-h-[44px]"
       style={{ background: 'var(--color-background)' }}
     >
       <div className="flex-1 min-w-0">
@@ -119,7 +121,8 @@ function LeagueRow({ league }: { league: MyLeague }) {
           </span>
         </div>
       </div>
-    </div>
+      <ChevronRight size={14} style={{ color: 'var(--color-text-muted)', flexShrink: 0 }} aria-hidden />
+    </Link>
   )
 }
 

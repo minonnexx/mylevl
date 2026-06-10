@@ -109,3 +109,12 @@ export interface LeagueMember {
   status: 'pending' | 'accepted'
   joined_at: string
 }
+
+export interface LeagueWeeklyStat {
+  id: string
+  league_id: string
+  user_id: string
+  week_start: string
+  xp_earned: number
+  missions_completed: number
+}

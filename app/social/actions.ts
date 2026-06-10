@@ -297,6 +297,227 @@ export async function getPendingLeagueInvites() {
   })
 }
 
+function getWeekStartISO(): string {
+  const now = new Date()
+  const day = now.getUTCDay() // 0=Sun, 1=Mon ... 6=Sat
+  const diff = day === 0 ? -6 : 1 - day
+  const monday = new Date(now)
+  monday.setUTCDate(now.getUTCDate() + diff)
+  monday.setUTCHours(0, 0, 0, 0)
+  return monday.toISOString()
+}
+
+export type LeagueDetailMember = {
+  userId: string
+  username: string | null
+  global_level: number
+  avatar_config: import('@/types/supabase').AvatarConfig | null
+  xp_earned: number
+  missions_completed: number
+}
+
+export type LeagueDetail = {
+  id: string
+  name: string
+  created_by: string
+  currentUserId: string
+  weekStart: string
+  members: LeagueDetailMember[]
+}
+
+export async function getLeagueDetail(leagueId: string): Promise<LeagueDetail | null> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+
+  // Verify membership
+  const { data: membership } = await supabase
+    .from('league_members')
+    .select('id')
+    .eq('league_id', leagueId)
+    .eq('user_id', user.id)
+    .eq('status', 'accepted')
+    .maybeSingle()
+
+  if (!membership) return null
+
+  const { data: league } = await supabase
+    .from('leagues')
+    .select('id, name, created_by')
+    .eq('id', leagueId)
+    .single()
+
+  if (!league) return null
+
+  const { data: members } = await supabase
+    .from('league_members')
+    .select('user_id')
+    .eq('league_id', leagueId)
+    .eq('status', 'accepted')
+
+  const memberIds = (members ?? []).map(m => m.user_id as string)
+
+  const [profilesRes, completionsRes] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('id, username, global_level, avatar_config')
+      .in('id', memberIds),
+    supabase
+      .from('completed_missions')
+      .select('user_id, mission_id')
+      .in('user_id', memberIds)
+      .gte('completed_at', getWeekStartISO()),
+  ])
+
+  const completions = completionsRes.data ?? []
+  const missionIds = [...new Set(completions.map(c => c.mission_id as string))]
+
+  let xpMap: Record<string, number> = {}
+  if (missionIds.length > 0) {
+    const { data: missionsData } = await supabase
+      .from('missions')
+      .select('id, xp_reward')
+      .in('id', missionIds)
+    xpMap = Object.fromEntries((missionsData ?? []).map(m => [m.id as string, m.xp_reward as number]))
+  }
+
+  const statsMap: Record<string, { xp: number; missions: number }> = {}
+  for (const uid of memberIds) statsMap[uid] = { xp: 0, missions: 0 }
+  for (const c of completions) {
+    const uid = c.user_id as string
+    if (statsMap[uid]) {
+      statsMap[uid].missions++
+      statsMap[uid].xp += xpMap[c.mission_id as string] ?? 0
+    }
+  }
+
+  const rankedMembers: LeagueDetailMember[] = memberIds
+    .map(uid => {
+      const profile = (profilesRes.data ?? []).find(p => p.id === uid)
+      return {
+        userId: uid,
+        username: (profile?.username ?? null) as string | null,
+        global_level: (profile?.global_level ?? 1) as number,
+        avatar_config: (profile?.avatar_config ?? null) as import('@/types/supabase').AvatarConfig | null,
+        xp_earned: statsMap[uid]?.xp ?? 0,
+        missions_completed: statsMap[uid]?.missions ?? 0,
+      }
+    })
+    .sort((a, b) => {
+      if (b.xp_earned !== a.xp_earned) return b.xp_earned - a.xp_earned
+      return b.missions_completed - a.missions_completed
+    })
+
+  return {
+    id: league.id as string,
+    name: league.name as string,
+    created_by: league.created_by as string,
+    currentUserId: user.id,
+    weekStart: getWeekStartISO(),
+    members: rankedMembers,
+  }
+}
+
+export async function leaveLeague(leagueId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'No autenticado' }
+
+  const { data: members } = await supabase
+    .from('league_members')
+    .select('id, user_id, joined_at')
+    .eq('league_id', leagueId)
+    .eq('status', 'accepted')
+    .order('joined_at', { ascending: true })
+
+  const otherMembers = (members ?? []).filter(m => m.user_id !== user.id)
+
+  if (otherMembers.length === 0) {
+    const { error } = await supabase.from('leagues').delete().eq('id', leagueId)
+    return error ? { error: error.message } : { success: true }
+  }
+
+  const { data: league } = await supabase
+    .from('leagues')
+    .select('created_by')
+    .eq('id', leagueId)
+    .single()
+
+  if ((league?.created_by as string) === user.id) {
+    await supabase
+      .from('leagues')
+      .update({ created_by: otherMembers[0].user_id })
+      .eq('id', leagueId)
+  }
+
+  const { error } = await supabase
+    .from('league_members')
+    .delete()
+    .eq('league_id', leagueId)
+    .eq('user_id', user.id)
+
+  return error ? { error: error.message } : { success: true }
+}
+
+export async function calculateLeagueStats(leagueId: string, weekStart: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'No autenticado' }
+
+  const weekEnd = new Date(weekStart)
+  weekEnd.setUTCDate(weekEnd.getUTCDate() + 7)
+
+  const { data: members } = await supabase
+    .from('league_members')
+    .select('user_id')
+    .eq('league_id', leagueId)
+    .eq('status', 'accepted')
+
+  const memberIds = (members ?? []).map(m => m.user_id as string)
+  if (!memberIds.length) return { success: true }
+
+  const { data: completions } = await supabase
+    .from('completed_missions')
+    .select('user_id, mission_id')
+    .in('user_id', memberIds)
+    .gte('completed_at', weekStart)
+    .lt('completed_at', weekEnd.toISOString())
+
+  const missionIds = [...new Set((completions ?? []).map(c => c.mission_id as string))]
+  let xpMap: Record<string, number> = {}
+  if (missionIds.length > 0) {
+    const { data: missionsData } = await supabase
+      .from('missions')
+      .select('id, xp_reward')
+      .in('id', missionIds)
+    xpMap = Object.fromEntries((missionsData ?? []).map(m => [m.id as string, m.xp_reward as number]))
+  }
+
+  const statsMap: Record<string, { xp: number; missions: number }> = {}
+  for (const uid of memberIds) statsMap[uid] = { xp: 0, missions: 0 }
+  for (const c of completions ?? []) {
+    const uid = c.user_id as string
+    if (statsMap[uid]) {
+      statsMap[uid].missions++
+      statsMap[uid].xp += xpMap[c.mission_id as string] ?? 0
+    }
+  }
+
+  const upserts = memberIds.map(uid => ({
+    league_id: leagueId,
+    user_id: uid,
+    week_start: weekStart.slice(0, 10),
+    xp_earned: statsMap[uid]?.xp ?? 0,
+    missions_completed: statsMap[uid]?.missions ?? 0,
+  }))
+
+  const { error } = await supabase
+    .from('league_weekly_stats')
+    .upsert(upserts, { onConflict: 'league_id,user_id,week_start' })
+
+  return error ? { error: error.message } : { success: true }
+}
+
 export async function toggleFeedPublic() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
