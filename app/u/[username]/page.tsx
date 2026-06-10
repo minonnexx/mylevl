@@ -1,18 +1,13 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
-import Link from 'next/link'
-import { Flame, Pencil, Lock, Trophy } from 'lucide-react'
+import { Lock } from 'lucide-react'
 import Sidebar from '@/components/dashboard/Sidebar'
 import BottomNav from '@/components/dashboard/BottomNav'
-import { CLASS_META, getClassMilestone } from '@/lib/constants/classes'
-import { RARITY_META } from '@/lib/constants/medals'
-import { HexMedal } from '@/components/ui/HexMedal'
+import { PublicProfileContent } from '@/components/profile/PublicProfileContent'
 import type { AvatarConfig, LifeClass, Medal, Rarity } from '@/types/supabase'
-import AvatarDisplay from '@/components/avatar/AvatarDisplay'
-import { FriendshipButton } from '@/components/social/FriendshipButton'
 import type { FriendshipState } from '@/components/social/FriendshipButton'
 
-const LIFE_CLASSES: LifeClass[] = ['fisico', 'mental', 'disciplina']
+const RARITY_ORDER: Record<Rarity, number> = { legendary: 0, epic: 1, rare: 2, uncommon: 3, common: 4 }
 
 export default async function PublicProfilePage({
   params,
@@ -29,7 +24,7 @@ export default async function PublicProfilePage({
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, username, global_level, current_streak, feed_public, avatar_config, active_pack')
+    .select('id, username, global_level, current_streak, feed_public, avatar_config, active_pack, profile_show_medals, pinned_medals')
     .eq('username', username)
     .maybeSingle()
 
@@ -58,14 +53,10 @@ export default async function PublicProfilePage({
       : supabase.from('completed_missions').select('mission_id').eq('user_id', profile.id),
   ])
 
-  const { data: classProgressRows } = classProgressRes
-
   const pointsByClass = Object.fromEntries(
-    (classProgressRows ?? []).map(r => [r.life_class as string, r.points as number])
+    ((classProgressRes.data ?? []) as { life_class: string; points: number }[]).map(r => [r.life_class, r.points])
   )
 
-  // Medals — query after getting completed mission IDs
-  const RARITY_ORDER: Record<Rarity, number> = { legendary: 0, epic: 1, rare: 2, uncommon: 3, common: 4 }
   const uniqueMissionIds = [...new Set((completedMissionsRes.data ?? []).map(r => r.mission_id as string))]
   const medalsRes = (!isPrivate && uniqueMissionIds.length > 0)
     ? await supabase.from('medals').select('*').in('mission_id', uniqueMissionIds)
@@ -128,138 +119,20 @@ export default async function PublicProfilePage({
                 </p>
               </div>
             ) : (
-            <>
-            {/* Page title */}
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <AvatarDisplay
-                  config={profile.avatar_config as AvatarConfig | null}
-                  size={80}
-                />
-                <div>
-                  <h1 className="text-2xl font-semibold text-text-primary">
-                    {profile.username}
-                  </h1>
-                  <p className="text-sm mt-1" style={{ color: 'var(--color-text-muted)' }}>
-                    Perfil público
-                  </p>
-                </div>
-              </div>
-              {isOwner && (
-                <Link
-                  href="/profile"
-                  className="flex items-center gap-1.5 h-9 px-4 rounded-component text-sm font-medium transition-colors flex-shrink-0"
-                  style={{
-                    background: 'color-mix(in srgb, var(--color-accent) 12%, transparent)',
-                    color: 'var(--color-accent)',
-                    border: '1px solid color-mix(in srgb, var(--color-accent) 20%, transparent)',
-                  }}
-                >
-                  <Pencil size={13} aria-hidden />
-                  Editar perfil
-                </Link>
-              )}
-            </div>
-
-            {/* Stats card */}
-            <div
-              className="rounded-card p-6 border border-border/60 flex items-center gap-6"
-              style={{ background: 'var(--color-surface)' }}
-            >
-              <div className="flex flex-col gap-2 flex-1 min-w-0">
-                {/* Level badge */}
-                <span
-                  className="self-start text-xs font-bold px-3 py-1 rounded-pill tabular-nums"
-                  style={{
-                    color: 'var(--color-accent)',
-                    background: 'color-mix(in srgb, var(--color-accent) 12%, transparent)',
-                    border: '1px solid color-mix(in srgb, var(--color-accent) 20%, transparent)',
-                  }}
-                >
-                  LVL {profile.global_level}
-                </span>
-
-                {/* Streak */}
-                {(profile.current_streak as number) > 0 && (
-                  <div className="flex items-center gap-1.5 text-sm" style={{ color: 'var(--color-text-muted)' }}>
-                    <Flame size={14} aria-hidden />
-                    <span>
-                      <span className="font-semibold text-text-primary">{profile.current_streak}</span>
-                      {' días de racha'}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* Friendship action */}
-              {friendshipState && (
-                <div className="flex-shrink-0 ml-auto">
-                  <FriendshipButton state={friendshipState} />
-                </div>
-              )}
-            </div>
-
-            {/* Class milestones */}
-            <div
-              className="rounded-card p-6 border border-border/60"
-              style={{ background: 'var(--color-surface)' }}
-            >
-              <p
-                className="text-[11px] font-medium uppercase tracking-wider mb-4"
-                style={{ color: 'var(--color-text-muted)' }}
-              >
-                Clases de vida
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {LIFE_CLASSES.map(lc => {
-                  const meta = CLASS_META[lc]
-                  const points = pointsByClass[lc] ?? 0
-                  const milestone = getClassMilestone(points)
-                  return (
-                    <span
-                      key={lc}
-                      className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-pill ${meta.badgeClasses}`}
-                    >
-                      {meta.label}
-                      <span className="opacity-60">·</span>
-                      {milestone}
-                    </span>
-                  )
-                })}
-              </div>
-            </div>
-
-            {/* Medals section */}
-            <div
-              className="rounded-card border border-border/60 p-6"
-              style={{ background: 'var(--color-surface)' }}
-            >
-              <div className="flex items-center gap-2 mb-4">
-                <Trophy size={15} strokeWidth={1.75} style={{ color: 'var(--color-text-muted)' }} aria-hidden />
-                <h2 className="text-sm font-semibold text-text-primary">Medallas</h2>
-              </div>
-
-              {earnedMedals.length === 0 ? (
-                <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
-                  Este jugador aún no tiene medallas
-                </p>
-              ) : (
-                <div className="grid grid-cols-4 sm:grid-cols-6 gap-4">
-                  {earnedMedals.map(medal => (
-                    <div key={medal.id} className="flex flex-col items-center gap-1.5" title={medal.name}>
-                      <div style={{ color: RARITY_META[medal.rarity].color }}>
-                        <HexMedal size={36} icon={medal.icon} />
-                      </div>
-                      <span className="text-[10px] text-center leading-tight truncate w-full" style={{ color: 'var(--color-text-muted)' }}>
-                        {medal.name}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            </>
+              <PublicProfileContent
+                isOwner={isOwner}
+                profile={{
+                  username: profile.username as string,
+                  global_level: profile.global_level as number,
+                  current_streak: profile.current_streak as number,
+                  avatar_config: profile.avatar_config as AvatarConfig | null,
+                  profile_show_medals: (profile.profile_show_medals as boolean) ?? true,
+                  pinned_medals: (profile.pinned_medals as string[]) ?? [],
+                }}
+                classPoints={pointsByClass}
+                earnedMedals={earnedMedals}
+                friendshipState={friendshipState}
+              />
             )}
 
           </div>

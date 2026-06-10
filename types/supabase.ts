@@ -46,6 +46,8 @@ export interface Profile {
   username_changed_at: string | null
   active_pack: 'guerrero' | 'sabio' | 'monje' | 'heroe' | null
   avatar_config: AvatarConfig | null
+  profile_show_medals?: boolean
+  pinned_medals?: string[]
   created_at: string
 }
 

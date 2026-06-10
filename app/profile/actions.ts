@@ -75,6 +75,26 @@ export async function changeActivePack(
   revalidatePath('/missions')
 }
 
+export async function updatePublicProfileSettings(
+  showMedals: boolean,
+  pinnedMedalIds: string[],
+  username: string,
+): Promise<{ error: string } | undefined> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/auth')
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ profile_show_medals: showMedals, pinned_medals: pinnedMedalIds })
+    .eq('id', user.id)
+
+  if (error) return { error: 'No se pudo guardar los cambios.' }
+
+  revalidatePath(`/u/${username}`)
+  revalidatePath('/profile')
+}
+
 export async function resetProfileAction(): Promise<void> {
   if (process.env.NODE_ENV !== 'development') return
 
