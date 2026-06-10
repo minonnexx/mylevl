@@ -188,23 +188,27 @@ export default async function DashboardPage() {
                 {/* Player card */}
                 <div className="bg-surface rounded-card p-6 border border-border/60 flex flex-col gap-5">
                   <div className="flex items-center gap-4">
-                    <div className="flex-shrink-0">
+                    <Link
+                      href={`/u/${profile.username}`}
+                      aria-label={`Ver perfil público de ${profile.username ?? 'jugador'}`}
+                      className="flex-shrink-0 transition-opacity hover:opacity-75"
+                    >
                       {profile.avatar_config ? (
-                        <AvatarDisplay config={profile.avatar_config} size={40} />
+                        <AvatarDisplay config={profile.avatar_config} size={64} />
                       ) : (
                         <div
-                          className="w-10 h-10 rounded-full flex items-center justify-center"
+                          className="w-16 h-16 rounded-full flex items-center justify-center"
                           style={{
                             background: 'var(--color-surface)',
                             border: '1px solid color-mix(in srgb, var(--color-accent) 30%, transparent)',
                           }}
                         >
-                          <span className="text-accent font-bold text-sm leading-none select-none">
+                          <span className="text-accent font-bold text-base leading-none select-none">
                             {(profile.username ?? 'JU').slice(0, 2).toUpperCase()}
                           </span>
                         </div>
                       )}
-                    </div>
+                    </Link>
                     <div className="min-w-0 flex-1">
                       <p className="font-semibold text-text-primary truncate">{profile.username ?? 'Jugador'}</p>
                       <p className="text-xs text-text-muted mt-0.5">Nivel {profile.global_level} · Jugador</p>
