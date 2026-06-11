@@ -113,8 +113,11 @@ export function MissionAreaWrapper({
       if (!sessionStorage.getItem(key)) {
         sessionStorage.setItem(key, '1')
         setShowConfetti(true)
-        const delay = result.levelUp ? 500 : 0
-        setTimeout(() => setRecapData(result.daySummary!), delay)
+        if (result.levelUp) {
+          pendingRecapRef.current = result.daySummary
+        } else {
+          setRecapData(result.daySummary)
+        }
       }
     }
   }, [result])
