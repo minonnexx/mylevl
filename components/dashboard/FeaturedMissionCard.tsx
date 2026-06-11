@@ -20,10 +20,12 @@ export function FeaturedMissionCard({
   mission,
   formAction,
   onOptimisticComplete,
+  isProcessing,
 }: {
   mission: Mission
   formAction: (payload: FormData) => void
   onOptimisticComplete: (missionId: string) => void
+  isProcessing?: boolean
 }) {
   const meta = CLASS_META[mission.life_class]
   const [showXp, setShowXp] = useState(false)
@@ -97,7 +99,7 @@ export function FeaturedMissionCard({
               </motion.div>
             ) : (
               <motion.div key="button" initial={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <CompleteButton />
+                <CompleteButton disabled={isProcessing} />
               </motion.div>
             )}
           </AnimatePresence>

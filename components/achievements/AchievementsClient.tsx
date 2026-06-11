@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useEffect, useRef, useState } from 'react'
+import { useActionState, useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { AvatarConfig, Medal, Mission, MissionDifficulty, LifeClass } from '@/types/supabase'
 import { CLASS_META } from '@/lib/constants/classes'
@@ -85,7 +85,7 @@ function autoProgressText(title: string, totalDaysActive: number, totalMissionsC
 }
 
 // ─── Compact achievement card ─────────────────────────────────────────────────
-function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMissionsCount, wrapperClass, username, avatarConfig, activePack, avatarConfirmationShown }: {
+function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMissionsCount, wrapperClass, username, avatarConfig, activePack, avatarConfirmationShown, isProcessing, onProcessingChange }: {
   mission: Mission
   completedAt: string | null
   medal: Medal | null
@@ -96,6 +96,8 @@ function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMi
   avatarConfig: AvatarConfig | null
   activePack: string | null
   avatarConfirmationShown: boolean
+  isProcessing?: boolean
+  onProcessingChange?: (v: boolean) => void
 }) {
   const isCompleted = completedAt !== null
   const isAuto = mission.verification_type === 'automatic'
@@ -127,6 +129,8 @@ function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMi
       loadingToastRef.current = null
     }
 
+    onProcessingChange?.(false)
+
     if (result.error) {
       setOptimisticDone(false)
       toast.error('No se pudo completar el logro')
@@ -139,7 +143,7 @@ function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMi
     if (medal) setMedalUnlockData(medal)
     if (result.levelUp) setTimeout(() => setLevelUpData({ level: result.newLevel }), 800)
     router.refresh()
-  }, [result, router, medal])
+  }, [result, router, medal, onProcessingChange])
 
   useEffect(() => () => {
     if (xpTimerRef.current) clearTimeout(xpTimerRef.current)
@@ -158,6 +162,7 @@ function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMi
       setOptimisticDone(true)
       setShowXp(true)
       playMissionComplete()
+      onProcessingChange?.(true)
       loadingToastRef.current = toast.loading('Calculando recompensa...')
       if (xpTimerRef.current) clearTimeout(xpTimerRef.current)
       xpTimerRef.current = setTimeout(() => setShowXp(false), 650)
@@ -170,6 +175,7 @@ function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMi
     setOptimisticDone(true)
     setShowXp(true)
     playMissionComplete()
+    onProcessingChange?.(true)
     loadingToastRef.current = toast.loading('Calculando recompensa...')
     confirmedRef.current = true
     if (xpTimerRef.current) clearTimeout(xpTimerRef.current)
@@ -269,7 +275,7 @@ function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMi
             <input type="hidden" name="difficulty"  value={mission.difficulty} />
             <input type="hidden" name="missionType" value="achievement" />
             <div className="relative">
-              <CompleteButton label="Completar" />
+              <CompleteButton label="Completar" disabled={isProcessing} />
               {showXp && (
                 <span className="absolute left-1/2 bottom-full mb-1 text-sm font-bold pointer-events-none whitespace-nowrap" style={{ animation: 'xp-float 650ms ease forwards', color: 'var(--color-accent)' }} aria-hidden>
                   +{mission.xp_reward} XP
@@ -304,12 +310,14 @@ function bossThreshold(title: string): number {
 }
 
 // ─── Boss card — full width, prominent ────────────────────────────────────────
-function BossCard({ mission, completedAt, currentStreak, medal, avatarConfig }: {
+function BossCard({ mission, completedAt, currentStreak, medal, avatarConfig, isProcessing, onProcessingChange }: {
   mission: Mission
   completedAt: string | null
   currentStreak: number
   medal: Medal | null
   avatarConfig: AvatarConfig | null
+  isProcessing?: boolean
+  onProcessingChange?: (v: boolean) => void
 }) {
   const classMeta = CLASS_META[mission.life_class]
   const threshold = bossThreshold(mission.title)
@@ -336,6 +344,8 @@ function BossCard({ mission, completedAt, currentStreak, medal, avatarConfig }: 
       loadingToastRef.current = null
     }
 
+    onProcessingChange?.(false)
+
     if (result.error) {
       setOptimisticDone(false)
       toast.error('No se pudo completar el jefe')
@@ -347,7 +357,7 @@ function BossCard({ mission, completedAt, currentStreak, medal, avatarConfig }: 
     toast('Jefe derrotado', { description: `+${result.xpReward} XP`, duration: 2500 })
     if (result.shieldGranted) toast('Escudo ganado', { description: 'Racha de 7 días completada', icon: <ShieldCheck size={16} />, duration: 4000 })
     if (result.levelUp) setTimeout(() => setLevelUpData({ level: result.newLevel }), 800)
-  }, [result])
+  }, [result, onProcessingChange])
 
   useEffect(() => () => {
     if (xpTimerRef.current) clearTimeout(xpTimerRef.current)
@@ -358,6 +368,7 @@ function BossCard({ mission, completedAt, currentStreak, medal, avatarConfig }: 
     setOptimisticDone(true)
     setShowXp(true)
     playMissionComplete()
+    onProcessingChange?.(true)
     loadingToastRef.current = toast.loading('Calculando recompensa...')
     if (xpTimerRef.current) clearTimeout(xpTimerRef.current)
     xpTimerRef.current = setTimeout(() => setShowXp(false), 650)
@@ -442,7 +453,7 @@ function BossCard({ mission, completedAt, currentStreak, medal, avatarConfig }: 
                   <input type="hidden" name="difficulty"  value={mission.difficulty} />
                   <input type="hidden" name="missionType" value="boss" />
                   <div className="relative">
-                    <CompleteButton label="Reclamar recompensa" />
+                    <CompleteButton label="Reclamar recompensa" disabled={isProcessing} />
                     {showXp && (
                       <span className="absolute left-1/2 bottom-full mb-1 text-sm font-bold pointer-events-none whitespace-nowrap" style={{ animation: 'xp-float 650ms ease forwards', color: 'var(--color-accent)' }} aria-hidden>
                         +{mission.xp_reward} XP
@@ -501,6 +512,9 @@ export default function AchievementsClient({
   avatarConfirmationShown: boolean
 }) {
   const [classFilter, setClassFilter] = useState<ClassFilter>('all')
+  const [isProcessing, setIsProcessing] = useState(false)
+
+  const handleProcessingChange = useCallback((v: boolean) => setIsProcessing(v), [])
 
   const sorted = [...achievements]
     .sort((a, b) => {
@@ -572,6 +586,8 @@ export default function AchievementsClient({
                   avatarConfig={avatarConfig}
                   activePack={activePack}
                   avatarConfirmationShown={avatarConfirmationShown}
+                  isProcessing={isProcessing}
+                  onProcessingChange={handleProcessingChange}
                 />
               )
             })}
@@ -596,6 +612,8 @@ export default function AchievementsClient({
                 currentStreak={currentStreak}
                 medal={medalsMap[m.id] ?? null}
                 avatarConfig={avatarConfig}
+                isProcessing={isProcessing}
+                onProcessingChange={handleProcessingChange}
               />
             ))}
           </div>

@@ -33,6 +33,7 @@ export function MissionAreaWrapper({
   const [showConfetti, setShowConfetti] = useState(false)
   const [showShieldBanner, setShowShieldBanner] = useState(showShieldNotification)
   const [optimisticCompletedIds, setOptimisticCompletedIds] = useState<Set<string>>(new Set())
+  const [isProcessing, setIsProcessing] = useState(false)
   const prevTsRef = useRef<number>(-1)
   const pendingRecapRef = useRef<DaySummary | null>(null)
   const loadingToastRef = useRef<string | number | null>(null)
@@ -59,6 +60,7 @@ export function MissionAreaWrapper({
     setOptimisticCompletedIds(prev => new Set(prev).add(missionId))
     pendingMissionIdRef.current = missionId
     loadingToastRef.current = toast.loading('Calculando recompensa...')
+    setIsProcessing(true)
   }, [])
 
   useEffect(() => {
@@ -75,6 +77,8 @@ export function MissionAreaWrapper({
       toast.dismiss(loadingToastRef.current)
       loadingToastRef.current = null
     }
+
+    setIsProcessing(false)
 
     if (result.error) {
       setOptimisticCompletedIds(prev => {
@@ -145,6 +149,7 @@ export function MissionAreaWrapper({
                 mission={m}
                 formAction={formAction}
                 onOptimisticComplete={handleOptimisticComplete}
+                isProcessing={isProcessing}
               />
             </div>
           ))}

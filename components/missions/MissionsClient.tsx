@@ -79,12 +79,16 @@ function CompactMissionCard({
   onAllCompleted,
   wrapperClass,
   avatarConfig,
+  isProcessing,
+  onProcessingChange,
 }: {
   mission: Mission
   isCompleted: boolean
   onAllCompleted?: (summary: DaySummary) => void
   wrapperClass?: string
   avatarConfig: AvatarConfig | null
+  isProcessing?: boolean
+  onProcessingChange?: (v: boolean) => void
 }) {
   const classMeta = CLASS_META[mission.life_class]
   const [result, formAction] = useActionState<MissionActionResult, FormData>(completeMissionAction, null)
@@ -105,6 +109,8 @@ function CompactMissionCard({
       toast.dismiss(loadingToastRef.current)
       loadingToastRef.current = null
     }
+
+    onProcessingChange?.(false)
 
     if (result.error) {
       setOptimisticDone(false)
@@ -140,7 +146,7 @@ function CompactMissionCard({
         }
       }
     }
-  }, [result, onAllCompleted])
+  }, [result, onAllCompleted, onProcessingChange])
 
   useEffect(() => {
     return () => {
@@ -153,6 +159,7 @@ function CompactMissionCard({
     setOptimisticDone(true)
     setShowXp(true)
     playMissionComplete()
+    onProcessingChange?.(true)
     loadingToastRef.current = toast.loading('Calculando recompensa...')
     if (xpTimerRef.current) clearTimeout(xpTimerRef.current)
     xpTimerRef.current = setTimeout(() => setShowXp(false), 650)
@@ -209,7 +216,7 @@ function CompactMissionCard({
             <input type="hidden" name="lifeClass"  value={mission.life_class} />
             <input type="hidden" name="difficulty" value={mission.difficulty} />
             <div className="relative">
-              <CompleteButton label="Completar" />
+              <CompleteButton label="Completar" disabled={isProcessing} />
               {showXp && (
                 <span
                   className="absolute left-1/2 bottom-full mb-1 text-sm font-bold text-accent pointer-events-none whitespace-nowrap"
@@ -299,6 +306,8 @@ function MissionSection({
   currentStreak,
   onAllCompleted,
   avatarConfig,
+  isProcessing,
+  onProcessingChange,
 }: {
   title: string
   missions: Mission[]
@@ -307,6 +316,8 @@ function MissionSection({
   currentStreak: number
   onAllCompleted?: (summary: DaySummary) => void
   avatarConfig: AvatarConfig | null
+  isProcessing?: boolean
+  onProcessingChange?: (v: boolean) => void
 }) {
   if (missions.length === 0) return null
 
@@ -357,6 +368,8 @@ function MissionSection({
                 onAllCompleted={onAllCompleted}
                 wrapperClass={wrapperClass}
                 avatarConfig={avatarConfig}
+                isProcessing={isProcessing}
+                onProcessingChange={onProcessingChange}
               />
             )
           })}
@@ -402,7 +415,9 @@ export default function MissionsClient({
 }) {
   const [filter, setFilter] = useState<FilterValue>('all')
   const [recapData, setRecapData] = useState<DaySummary | null>(null)
+  const [isProcessing, setIsProcessing] = useState(false)
 
+  const handleProcessingChange = useCallback((v: boolean) => setIsProcessing(v), [])
   const handleAllCompleted = useCallback((summary: DaySummary) => {
     setRecapData(summary)
   }, [])
@@ -499,6 +514,8 @@ export default function MissionsClient({
                 currentStreak={currentStreak}
                 onAllCompleted={handleAllCompleted}
                 avatarConfig={avatarConfig}
+                isProcessing={isProcessing}
+                onProcessingChange={handleProcessingChange}
               />
             )
           })}

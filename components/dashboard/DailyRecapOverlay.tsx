@@ -187,23 +187,16 @@ export function DailyRecapOverlay({ daySummary, avatarConfig, onClose }: Props) 
             Continuar
           </button>
         </div>
-      </motion.div>
 
-      <div
-        style={{
-          position: 'absolute',
-          bottom: '16px',
-          left: '16px',
-          maxWidth: 'min(300px, calc(100vw - 32px))',
-        }}
-        onClick={e => e.stopPropagation()}
-      >
-        <AvatarSpeechBubble
-          message={avatarMessage}
-          avatarConfig={avatarConfig}
-          size={48}
-        />
-      </div>
+        {/* Avatar speech bubble */}
+        <div className="border-t border-border/40 pt-4">
+          <AvatarSpeechBubble
+            message={avatarMessage}
+            avatarConfig={avatarConfig}
+            size={48}
+          />
+        </div>
+      </motion.div>
     </div>
   )
 

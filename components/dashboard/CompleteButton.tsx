@@ -2,14 +2,15 @@
 
 import { useFormStatus } from 'react-dom'
 
-export function CompleteButton({ label = 'Completar misión' }: { label?: string }) {
+export function CompleteButton({ label = 'Completar misión', disabled: externalDisabled }: { label?: string; disabled?: boolean }) {
   const { pending } = useFormStatus()
+  const isDisabled = pending || (externalDisabled ?? false)
 
   return (
     <button
       type="submit"
-      disabled={pending}
-      aria-busy={pending}
+      disabled={isDisabled}
+      aria-busy={isDisabled}
       className="
         bg-accent text-white font-semibold px-4 py-2.5 rounded-component whitespace-nowrap
         inline-flex items-center justify-center gap-2
