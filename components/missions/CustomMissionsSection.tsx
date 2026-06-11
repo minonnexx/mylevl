@@ -1,21 +1,23 @@
 'use client'
 
 import { useActionState, useCallback, useEffect, useRef, useState, useTransition } from 'react'
-import { Plus, ShieldCheck, Trash2, X } from 'lucide-react'
+import { Flame, Plus, Shield, ShieldCheck, Trash2, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { CLASS_META } from '@/lib/constants/classes'
-import type { AvatarConfig, LifeClass, CustomMission, CustomMissionDifficulty, CustomMissionDuration } from '@/types/supabase'
+import type { AvatarConfig, LifeClass, CustomMission, CustomMissionDifficulty, CustomMissionDuration, Medal } from '@/types/supabase'
 import {
   createCustomMissionAction,
   deleteCustomMissionAction,
   completeCustomMissionAction,
   type MissionActionResult,
+  type MilestoneResult,
 } from '@/app/missions/actions'
 import { CompleteButton } from '@/components/dashboard/CompleteButton'
 import { LevelUpOverlay } from '@/components/LevelUpOverlay'
+import { MedalUnlockOverlay } from '@/components/ui/MedalUnlockOverlay'
 import { playLevelUp, playMissionComplete, playShieldGained } from '@/lib/sounds'
 
-type CustomMissionWithCompletion = CustomMission & { completed_today: boolean }
+type CustomMissionWithCompletion = CustomMission & { completed_today: boolean; streak: number }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -50,6 +52,10 @@ function getDaysLabel(endsAt: string): string {
   if (days === 0) return 'Último día'
   if (days === 1) return '1 día restante'
   return `${days} días restantes`
+}
+
+function makeMedal(m: MilestoneResult): Medal {
+  return { id: '', mission_id: '', name: m.medalName, icon: m.medalIcon, rarity: 'epic', unlock_percentage: 0, created_at: '' }
 }
 
 function IconCheck() {
@@ -100,10 +106,13 @@ function CustomMissionCard({
   const [optimisticDone, setOptimisticDone] = useState(false)
   const [showXp, setShowXp] = useState(false)
   const [levelUpData, setLevelUpData] = useState<{ level: number } | null>(null)
+  const [milestoneData, setMilestoneData] = useState<MilestoneResult | null>(null)
+  const [currentStreak, setCurrentStreak] = useState(mission.streak)
   const effectiveDone = mission.completed_today || optimisticDone
   const prevTsRef = useRef<number | null>(null)
   const xpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const loadingToastRef = useRef<string | number | null>(null)
+  const pendingMilestoneRef = useRef<MilestoneResult | null>(null)
   const classMeta = CLASS_META[mission.life_class]
 
   const [result, formAction] = useActionState<MissionActionResult, FormData>(completeCustomMissionAction, null)
@@ -124,6 +133,7 @@ function CustomMissionCard({
       return
     }
 
+    if (result.streak !== undefined) setCurrentStreak(result.streak)
     if (result.shieldGranted) playShieldGained()
     if (result.levelUp) setTimeout(() => playLevelUp(), 300)
 
@@ -135,8 +145,16 @@ function CustomMissionCard({
         duration: 4000,
       })
     }
+    if (result.milestone) {
+      toast(`¡Hito desbloqueado!`, { description: result.milestone.medalName, duration: 3000 })
+    }
 
-    if (result.levelUp) setTimeout(() => setLevelUpData({ level: result.newLevel }), 800)
+    if (result.levelUp) {
+      if (result.milestone) pendingMilestoneRef.current = result.milestone
+      setTimeout(() => setLevelUpData({ level: result.newLevel }), 800)
+    } else if (result.milestone) {
+      setTimeout(() => setMilestoneData(result.milestone!), 500)
+    }
   }, [result, onProcessingChange])
 
   useEffect(() => {
@@ -162,7 +180,20 @@ function CustomMissionCard({
         <LevelUpOverlay
           level={levelUpData.level}
           avatarConfig={avatarConfig}
-          onClose={() => setLevelUpData(null)}
+          onClose={() => {
+            setLevelUpData(null)
+            if (pendingMilestoneRef.current) {
+              setMilestoneData(pendingMilestoneRef.current)
+              pendingMilestoneRef.current = null
+            }
+          }}
+        />
+      )}
+      {milestoneData && (
+        <MedalUnlockOverlay
+          medal={makeMedal(milestoneData)}
+          missionTitle={milestoneData.medalName}
+          onClose={() => setMilestoneData(null)}
         />
       )}
       <article
@@ -181,7 +212,27 @@ function CustomMissionCard({
         </div>
 
         {/* Title */}
-        <p className="text-sm font-semibold text-text-primary leading-snug flex-1">{mission.title}</p>
+        <p className="text-sm font-semibold text-text-primary leading-snug">{mission.title}</p>
+
+        {/* Streak + strict mode */}
+        <div className="flex flex-col gap-1">
+          {currentStreak > 0 && (
+            <div className="flex items-center gap-1.5">
+              <Flame size={12} style={{ color: 'var(--color-disciplina)' }} aria-hidden />
+              <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+                {currentStreak} {currentStreak === 1 ? 'día seguido' : 'días seguidos'}
+              </span>
+            </div>
+          )}
+          {mission.strict_mode && (
+            <div className="flex items-center gap-1.5">
+              <Shield size={12} style={{ color: 'var(--color-disciplina)' }} aria-hidden />
+              <span className="text-xs font-medium" style={{ color: 'var(--color-disciplina)' }}>
+                Modo estricto
+              </span>
+            </div>
+          )}
+        </div>
 
         {/* XP */}
         <span className="text-xs font-bold tabular-nums" style={{ color: 'var(--color-accent)' }}>
@@ -270,6 +321,7 @@ function CreateMissionModal({ onClose }: { onClose: () => void }) {
   const [lifeClass, setLifeClass] = useState<LifeClass | null>(null)
   const [difficulty, setDifficulty] = useState<CustomMissionDifficulty | null>(null)
   const [duration, setDuration] = useState<CustomMissionDuration>('30')
+  const [strictMode, setStrictMode] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
   const inputRef = useRef<HTMLInputElement>(null)
@@ -294,6 +346,7 @@ function CreateMissionModal({ onClose }: { onClose: () => void }) {
         life_class: lifeClass,
         difficulty,
         duration,
+        strict_mode: strictMode,
       })
       if (result.error) {
         setFormError(result.error)
@@ -448,6 +501,38 @@ function CreateMissionModal({ onClose }: { onClose: () => void }) {
           </div>
         </div>
 
+        {/* Strict mode toggle */}
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-col gap-0.5 flex-1">
+            <span className="text-sm font-medium text-text-primary">Modo estricto</span>
+            <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+              Si no la completas un día, el contador se reinicia a 0
+            </span>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={strictMode}
+            onClick={() => setStrictMode(v => !v)}
+            className="relative w-11 h-6 rounded-pill border transition-all flex-shrink-0"
+            style={strictMode ? {
+              background: 'var(--color-disciplina)',
+              borderColor: 'var(--color-disciplina)',
+            } : {
+              background: 'transparent',
+              borderColor: 'color-mix(in srgb, var(--color-text-muted) 30%, transparent)',
+            }}
+          >
+            <span
+              className="absolute top-0.5 w-5 h-5 rounded-full transition-all"
+              style={{
+                background: strictMode ? 'white' : 'var(--color-text-muted)',
+                left: strictMode ? 'calc(100% - 1.375rem)' : '2px',
+              }}
+            />
+          </button>
+        </div>
+
         {/* Error message */}
         {formError && (
           <p className="text-sm" style={{ color: 'var(--color-error)' }}>{formError}</p>
@@ -501,9 +586,7 @@ export default function CustomMissionsSection({
     startDeleteTransition(async () => {
       const result = await deleteCustomMissionAction(id)
       setDeletingId(null)
-      if (result.error) {
-        toast.error('No se pudo eliminar la misión')
-      }
+      if (result.error) toast.error('No se pudo eliminar la misión')
     })
   }
 

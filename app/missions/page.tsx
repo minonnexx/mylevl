@@ -61,7 +61,10 @@ export default async function MissionsPage() {
   const [missionsRes, customMissionsRes, customCompletionsRes] = await Promise.all([
     missionsQuery,
     supabase.from('custom_missions').select('*').eq('user_id', user.id).eq('active', true).order('created_at'),
-    supabase.from('custom_mission_completions').select('custom_mission_id').eq('user_id', user.id).gte('completed_at', todayUTC.toISOString()),
+    supabase.from('custom_mission_completions')
+      .select('custom_mission_id, completed_at')
+      .eq('user_id', user.id)
+      .order('completed_at', { ascending: false }),
   ])
   let { data: missions } = missionsRes
 
@@ -80,13 +83,49 @@ export default async function MissionsPage() {
   // ── Completed today (UTC midnight boundary) ────────────────────────────────
   const completedTodayIds = completedToday.data?.map((c) => c.mission_id as string) ?? []
 
-  // ── Custom missions with completion flag ────────────────────────────────────
+  // ── Custom missions with streak + completion flag ─────────────────────────
+  type CompletionRow = { custom_mission_id: string; completed_at: string }
+  const allCustomCompletions = (customCompletionsRes.data ?? []) as CompletionRow[]
+  const todayStr = todayUTC.toISOString().slice(0, 10)
+
+  function computeStreakFromDates(sortedDescDates: string[]): number {
+    if (sortedDescDates.length === 0) return 0
+    if (sortedDescDates[0] !== todayStr) return 0
+    let streak = 1
+    for (let i = 1; i < sortedDescDates.length; i++) {
+      const a = new Date(sortedDescDates[i - 1] + 'T00:00:00Z')
+      const b = new Date(sortedDescDates[i] + 'T00:00:00Z')
+      if (Math.round((a.getTime() - b.getTime()) / 86_400_000) === 1) streak++
+      else break
+    }
+    return streak
+  }
+
   const completedCustomSet = new Set(
-    (customCompletionsRes.data ?? []).map(c => (c as { custom_mission_id: string }).custom_mission_id)
+    allCustomCompletions
+      .filter(c => c.completed_at >= todayUTC.toISOString())
+      .map(c => c.custom_mission_id)
   )
+
+  const completionsByMission = new Map<string, string[]>()
+  for (const c of allCustomCompletions) {
+    const dateStr = c.completed_at.slice(0, 10)
+    const existing = completionsByMission.get(c.custom_mission_id) ?? []
+    if (!existing.includes(dateStr)) {
+      existing.push(dateStr)
+      completionsByMission.set(c.custom_mission_id, existing)
+    }
+  }
+
   const customMissions = (customMissionsRes.data ?? []).map(m => {
     const mission = m as import('@/types/supabase').CustomMission
-    return { ...mission, completed_today: completedCustomSet.has(mission.id) }
+    const datesDesc = (completionsByMission.get(mission.id) ?? []).slice().sort().reverse()
+    const completedToday2 = completedCustomSet.has(mission.id)
+    // Ensure today is included when computing streak (already inserted before this renders)
+    const withToday = completedToday2 && !datesDesc.includes(todayStr)
+      ? [todayStr, ...datesDesc]
+      : datesDesc
+    return { ...mission, completed_today: completedToday2, streak: computeStreakFromDates(withToday) }
   })
 
   return (

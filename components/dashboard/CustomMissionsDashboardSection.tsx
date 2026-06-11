@@ -1,16 +1,17 @@
 'use client'
 
 import { useActionState, useCallback, useEffect, useRef, useState } from 'react'
-import { ShieldCheck } from 'lucide-react'
+import { Flame, Shield, ShieldCheck } from 'lucide-react'
 import { toast } from 'sonner'
 import { CLASS_META } from '@/lib/constants/classes'
-import type { AvatarConfig, CustomMission, CustomMissionDifficulty } from '@/types/supabase'
-import { completeCustomMissionAction, type MissionActionResult } from '@/app/missions/actions'
+import type { AvatarConfig, CustomMission, CustomMissionDifficulty, Medal } from '@/types/supabase'
+import { completeCustomMissionAction, type MissionActionResult, type MilestoneResult } from '@/app/missions/actions'
 import { CompleteButton } from '@/components/dashboard/CompleteButton'
 import { LevelUpOverlay } from '@/components/LevelUpOverlay'
+import { MedalUnlockOverlay } from '@/components/ui/MedalUnlockOverlay'
 import { playLevelUp, playMissionComplete, playShieldGained } from '@/lib/sounds'
 
-type CustomMissionWithCompletion = CustomMission & { completed_today: boolean }
+type CustomMissionWithCompletion = CustomMission & { completed_today: boolean; streak: number }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -34,6 +35,10 @@ function getDaysLabel(endsAt: string): string {
   if (days === 0) return 'Último día'
   if (days === 1) return '1 día restante'
   return `${days} días restantes`
+}
+
+function makeMedal(m: MilestoneResult): Medal {
+  return { id: '', mission_id: '', name: m.medalName, icon: m.medalIcon, rarity: 'epic', unlock_percentage: 0, created_at: '' }
 }
 
 function IconCheck() {
@@ -60,10 +65,13 @@ function CustomMissionDashboardCard({
   const [optimisticDone, setOptimisticDone] = useState(false)
   const [showXp, setShowXp] = useState(false)
   const [levelUpData, setLevelUpData] = useState<{ level: number } | null>(null)
+  const [milestoneData, setMilestoneData] = useState<MilestoneResult | null>(null)
+  const [currentStreak, setCurrentStreak] = useState(mission.streak)
   const effectiveDone = mission.completed_today || optimisticDone
   const prevTsRef = useRef<number | null>(null)
   const xpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const loadingToastRef = useRef<string | number | null>(null)
+  const pendingMilestoneRef = useRef<MilestoneResult | null>(null)
   const classMeta = CLASS_META[mission.life_class]
 
   const [result, formAction] = useActionState<MissionActionResult, FormData>(completeCustomMissionAction, null)
@@ -84,6 +92,7 @@ function CustomMissionDashboardCard({
       return
     }
 
+    if (result.streak !== undefined) setCurrentStreak(result.streak)
     if (result.shieldGranted) playShieldGained()
     if (result.levelUp) setTimeout(() => playLevelUp(), 300)
 
@@ -95,8 +104,16 @@ function CustomMissionDashboardCard({
         duration: 4000,
       })
     }
+    if (result.milestone) {
+      toast(`¡Hito desbloqueado!`, { description: result.milestone.medalName, duration: 3000 })
+    }
 
-    if (result.levelUp) setTimeout(() => setLevelUpData({ level: result.newLevel }), 800)
+    if (result.levelUp) {
+      if (result.milestone) pendingMilestoneRef.current = result.milestone
+      setTimeout(() => setLevelUpData({ level: result.newLevel }), 800)
+    } else if (result.milestone) {
+      setTimeout(() => setMilestoneData(result.milestone!), 500)
+    }
   }, [result, onProcessingChange])
 
   useEffect(() => {
@@ -122,7 +139,20 @@ function CustomMissionDashboardCard({
         <LevelUpOverlay
           level={levelUpData.level}
           avatarConfig={avatarConfig}
-          onClose={() => setLevelUpData(null)}
+          onClose={() => {
+            setLevelUpData(null)
+            if (pendingMilestoneRef.current) {
+              setMilestoneData(pendingMilestoneRef.current)
+              pendingMilestoneRef.current = null
+            }
+          }}
+        />
+      )}
+      {milestoneData && (
+        <MedalUnlockOverlay
+          medal={makeMedal(milestoneData)}
+          missionTitle={milestoneData.medalName}
+          onClose={() => setMilestoneData(null)}
         />
       )}
       <article
@@ -146,6 +176,26 @@ function CustomMissionDashboardCard({
 
         {/* Title */}
         <p className="text-sm font-semibold text-text-primary leading-snug flex-1">{mission.title}</p>
+
+        {/* Streak + strict mode */}
+        <div className="flex flex-col gap-1">
+          {currentStreak > 0 && (
+            <div className="flex items-center gap-1.5">
+              <Flame size={12} style={{ color: 'var(--color-disciplina)' }} aria-hidden />
+              <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+                {currentStreak} {currentStreak === 1 ? 'día seguido' : 'días seguidos'}
+              </span>
+            </div>
+          )}
+          {mission.strict_mode && (
+            <div className="flex items-center gap-1.5">
+              <Shield size={12} style={{ color: 'var(--color-disciplina)' }} aria-hidden />
+              <span className="text-xs font-medium" style={{ color: 'var(--color-disciplina)' }}>
+                Modo estricto
+              </span>
+            </div>
+          )}
+        </div>
 
         {/* XP + days remaining */}
         <div className="flex items-center justify-between gap-2">

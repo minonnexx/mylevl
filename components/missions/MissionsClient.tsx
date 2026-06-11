@@ -415,7 +415,7 @@ export default function MissionsClient({
   completedTodayIds: string[]
   currentStreak: number
   avatarConfig: AvatarConfig | null
-  customMissions: (CustomMission & { completed_today: boolean })[]
+  customMissions: (CustomMission & { completed_today: boolean; streak: number })[]
 }) {
   const [filter, setFilter] = useState<FilterValue>('all')
   const [recapData, setRecapData] = useState<DaySummary | null>(null)
