@@ -8,6 +8,102 @@ import { updateStreak } from '@/lib/streaks'
 import { getDaySummary } from '@/lib/recap'
 import type { DaySummary } from '@/lib/recap'
 import { checkAutoAchievements } from '@/lib/achievements'
+import { CHALLENGE_POOL } from '@/lib/constants/challenges'
+import { getCurrentWeekStart } from '@/lib/challenges'
+
+export type WeeklyChallengeActionResult = {
+  success: boolean
+  xpReward: number
+  levelUp: boolean
+  newLevel: number
+  medalName: string
+  medalIcon: string
+  error?: boolean
+  ts: number
+} | null
+
+export async function completeWeeklyChallenge(
+  weekStart: string,
+  challengeKey: string,
+): Promise<WeeklyChallengeActionResult> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return null
+
+    // Validate week_start matches current week to prevent replay
+    const currentWeekStart = getCurrentWeekStart().toISOString().slice(0, 10)
+    if (weekStart !== currentWeekStart) return null
+
+    const challenge = CHALLENGE_POOL.find(c => c.key === challengeKey)
+    if (!challenge) return null
+
+    // Idempotency check
+    const { data: existing } = await supabase
+      .from('challenge_completions')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('week_start', weekStart)
+      .maybeSingle()
+    if (existing) return null
+
+    await supabase.from('challenge_completions').insert({
+      user_id: user.id,
+      week_start: weekStart,
+    })
+
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('current_xp, global_level')
+      .eq('id', user.id)
+      .single()
+
+    const oldProfile = profileData as { current_xp: number; global_level: number } | null
+    const newGlobal = computeLevelUp(
+      oldProfile?.global_level ?? 1,
+      oldProfile?.current_xp ?? 0,
+      challenge.xp_reward,
+    )
+    const didLevelUp = newGlobal.level > (oldProfile?.global_level ?? 1)
+
+    await supabase
+      .from('profiles')
+      .update({
+        current_xp: newGlobal.current_xp,
+        global_level: newGlobal.level,
+        xp_to_next_level: newGlobal.xp_to_next_level,
+      })
+      .eq('id', user.id)
+
+    revalidatePath('/dashboard')
+    revalidatePath('/achievements')
+    revalidatePath('/profile')
+
+    if (didLevelUp) {
+      try {
+        await supabase.from('social_feed').insert({
+          user_id: user.id,
+          event_type: 'level_up',
+          metadata: { new_level: newGlobal.level },
+        })
+      } catch {}
+    }
+
+    try { await checkAutoAchievements(supabase, user.id) } catch {}
+
+    return {
+      success: true,
+      xpReward: challenge.xp_reward,
+      levelUp: didLevelUp,
+      newLevel: newGlobal.level,
+      medalName: challenge.medal_name,
+      medalIcon: challenge.medal_icon,
+      ts: Date.now(),
+    }
+  } catch {
+    return { success: false, xpReward: 0, levelUp: false, newLevel: 0, medalName: '', medalIcon: '', error: true, ts: Date.now() }
+  }
+}
 
 export async function markShieldNotificationSeen(): Promise<void> {
   const supabase = await createClient()

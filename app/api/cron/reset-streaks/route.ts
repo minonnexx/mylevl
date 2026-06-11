@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { checkAutoAchievements } from '@/lib/achievements'
+import { getISOWeekNumber } from '@/lib/challenges'
+import { getChallengeByWeekNumber } from '@/lib/constants/challenges'
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('authorization')
@@ -179,9 +181,23 @@ export async function GET(req: NextRequest) {
     }
   } catch {}
 
-  // Weekly league stats reset — runs only on Mondays UTC
+  // Weekly challenge seeding + league stats reset — runs only on Mondays UTC
   const todayUTCDay = new Date().getUTCDay()
   if (todayUTCDay === 1) {
+    try {
+      const now = new Date()
+
+      // Seed the weekly challenge row for the new week
+      const thisMonday = new Date(now)
+      thisMonday.setUTCHours(0, 0, 0, 0)
+      const thisWeekStr = thisMonday.toISOString().slice(0, 10)
+      const weekNumber = getISOWeekNumber(thisMonday)
+      const weekChallenge = getChallengeByWeekNumber(weekNumber)
+      await supabase
+        .from('weekly_challenges')
+        .upsert({ week_start: thisWeekStr, challenge_key: weekChallenge.key }, { onConflict: 'week_start' })
+    } catch {}
+
     try {
       const now = new Date()
 

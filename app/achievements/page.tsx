@@ -5,11 +5,15 @@ import BottomNav from '@/components/dashboard/BottomNav'
 import AchievementsClient from '@/components/achievements/AchievementsClient'
 import { AppHeader } from '@/components/ui/AppHeader'
 import type { Medal, PackId } from '@/types/supabase'
+import { getCurrentWeekStart, getOrCreateWeeklyChallenge, getWeeklyChallengeProgress } from '@/lib/challenges'
 
 export default async function AchievementsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth')
+
+  const weekStart = getCurrentWeekStart()
+  const weekStartStr = weekStart.toISOString().slice(0, 10)
 
   const [profileRes, achievementsRes, bossRes, completedRes, medalsRes, completedCountRes] = await Promise.all([
     supabase
@@ -68,6 +72,31 @@ export default async function AchievementsPage() {
 
   const totalMissionsCount = completedCountRes.count ?? 0
 
+  // Weekly challenge data
+  const weekChallengeData = await getOrCreateWeeklyChallenge(supabase, weekStart)
+  let weeklyProgress = 0
+  let weeklyIsCompleted = false
+  let weeklyCompletersCount = 0
+
+  if (weekChallengeData) {
+    const [progress, completionRes, completersRes] = await Promise.all([
+      getWeeklyChallengeProgress(supabase, user.id, weekStartStr, weekChallengeData.challenge),
+      supabase
+        .from('challenge_completions')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('week_start', weekStartStr)
+        .maybeSingle(),
+      supabase
+        .from('challenge_completions')
+        .select('id', { count: 'exact', head: true })
+        .eq('week_start', weekStartStr),
+    ])
+    weeklyProgress = progress
+    weeklyIsCompleted = !!completionRes.data
+    weeklyCompletersCount = completersRes.count ?? 0
+  }
+
   return (
     <div className="flex min-h-screen bg-background">
 
@@ -101,6 +130,11 @@ export default async function AchievementsPage() {
               avatarConfig={avatarConfig}
               activePack={activePack}
               avatarConfirmationShown={avatarConfirmationShown}
+              weeklyChallenge={weekChallengeData?.challenge ?? null}
+              weekStart={weekStartStr}
+              weeklyProgress={weeklyProgress}
+              weeklyIsCompleted={weeklyIsCompleted}
+              weeklyCompletersCount={weeklyCompletersCount}
             />
           </div>
         </main>

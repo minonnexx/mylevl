@@ -17,6 +17,8 @@ import { Trophy, Swords, Lock, ShieldCheck, ChevronRight } from 'lucide-react'
 import { AUTO_ACHIEVEMENT_TITLES } from '@/lib/constants/achievements'
 import { MedalUnlockOverlay } from '@/components/ui/MedalUnlockOverlay'
 import { MedalDetailModal } from '@/components/ui/MedalDetailModal'
+import { WeeklyChallengeSection } from '@/components/achievements/WeeklyChallengeSection'
+import type { ChallengeDefinition } from '@/lib/constants/challenges'
 
 const DIFF_META: Record<MissionDifficulty, { label: string; text: string; bg: string; border: string }> = {
   easy:   { label: 'Fácil',   text: 'text-fisico',     bg: 'bg-fisico/8',     border: 'border-fisico/20'     },
@@ -498,6 +500,11 @@ export default function AchievementsClient({
   avatarConfig,
   activePack,
   avatarConfirmationShown,
+  weeklyChallenge,
+  weekStart,
+  weeklyProgress,
+  weeklyIsCompleted,
+  weeklyCompletersCount,
 }: {
   achievements: Mission[]
   bossMissions: Mission[]
@@ -510,6 +517,11 @@ export default function AchievementsClient({
   avatarConfig: AvatarConfig | null
   activePack: string | null
   avatarConfirmationShown: boolean
+  weeklyChallenge: ChallengeDefinition | null
+  weekStart: string
+  weeklyProgress: number
+  weeklyIsCompleted: boolean
+  weeklyCompletersCount: number
 }) {
   const [classFilter, setClassFilter] = useState<ClassFilter>('all')
   const [isProcessing, setIsProcessing] = useState(false)
@@ -618,6 +630,17 @@ export default function AchievementsClient({
             ))}
           </div>
         </section>
+      )}
+
+      {weeklyChallenge && (
+        <WeeklyChallengeSection
+          challenge={weeklyChallenge}
+          weekStart={weekStart}
+          progress={weeklyProgress}
+          isCompleted={weeklyIsCompleted}
+          completersCount={weeklyCompletersCount}
+          avatarConfig={avatarConfig}
+        />
       )}
 
     </div>

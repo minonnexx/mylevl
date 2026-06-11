@@ -118,3 +118,17 @@ export interface LeagueWeeklyStat {
   xp_earned: number
   missions_completed: number
 }
+
+export interface WeeklyChallenge {
+  id: string
+  week_start: string
+  challenge_key: string
+  created_at: string
+}
+
+export interface ChallengeCompletion {
+  id: string
+  user_id: string
+  week_start: string
+  completed_at: string
+}

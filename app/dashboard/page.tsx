@@ -11,6 +11,8 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { Sword, Flame } from 'lucide-react'
 import { AppHeader } from '@/components/ui/AppHeader'
 import AvatarDisplay from '@/components/avatar/AvatarDisplay'
+import { WeeklyChallengeCard } from '@/components/dashboard/WeeklyChallengeCard'
+import { getCurrentWeekStart, getOrCreateWeeklyChallenge, getWeeklyChallengeProgress } from '@/lib/challenges'
 
 function StatRow({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: number; sub: string }) {
   return (
@@ -36,6 +38,8 @@ export default async function DashboardPage() {
 
   const todayUTC = new Date()
   todayUTC.setUTCHours(0, 0, 0, 0)
+
+  const weekStart = getCurrentWeekStart()
 
   const [profileRes, completedRes, completedTodayRes] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', user.id).single(),
@@ -89,6 +93,27 @@ export default async function DashboardPage() {
   const dailyMissions = (dailyMissionsRes.data as Mission[] | null) ?? []
   const pendingDaily  = dailyMissions.filter(m => !completedTodayIds.has(m.id))
   const allDailyDone  = dailyMissions.length > 0 && pendingDaily.length === 0
+
+  // Weekly challenge data
+  const weekChallengeData = await getOrCreateWeeklyChallenge(supabase, weekStart)
+  const weekStartStr = weekStart.toISOString().slice(0, 10)
+
+  let weeklyProgress = 0
+  let weeklyIsCompleted = false
+
+  if (weekChallengeData) {
+    const [progress, completionRes] = await Promise.all([
+      getWeeklyChallengeProgress(supabase, user.id, weekStartStr, weekChallengeData.challenge),
+      supabase
+        .from('challenge_completions')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('week_start', weekStartStr)
+        .maybeSingle(),
+    ])
+    weeklyProgress = progress
+    weeklyIsCompleted = !!completionRes.data
+  }
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -173,6 +198,16 @@ export default async function DashboardPage() {
                   <MissionAreaWrapper
                     missions={pendingDaily}
                     showShieldNotification={showShieldNotification}
+                    avatarConfig={profile.avatar_config}
+                  />
+                )}
+
+                {weekChallengeData && (
+                  <WeeklyChallengeCard
+                    challenge={weekChallengeData.challenge}
+                    weekStart={weekStartStr}
+                    progress={weeklyProgress}
+                    isCompleted={weeklyIsCompleted}
                     avatarConfig={profile.avatar_config}
                   />
                 )}
