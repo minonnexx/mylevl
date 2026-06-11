@@ -19,9 +19,11 @@ function ClassBadge({ lifeClass }: { lifeClass: keyof typeof CLASS_META }) {
 export function FeaturedMissionCard({
   mission,
   formAction,
+  onOptimisticComplete,
 }: {
   mission: Mission
   formAction: (payload: FormData) => void
+  onOptimisticComplete: (missionId: string) => void
 }) {
   const meta = CLASS_META[mission.life_class]
   const [showXp, setShowXp] = useState(false)
@@ -42,6 +44,7 @@ export function FeaturedMissionCard({
     if (navigator.vibrate) navigator.vibrate(40)
     setCompleting(true)
     setShowXp(true)
+    onOptimisticComplete(mission.id)
     if (xpTimerRef.current) clearTimeout(xpTimerRef.current)
     xpTimerRef.current = setTimeout(() => setShowXp(false), 650)
   }

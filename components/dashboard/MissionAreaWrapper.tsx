@@ -30,8 +30,11 @@ export function MissionAreaWrapper({
   const [recapData, setRecapData] = useState<DaySummary | null>(null)
   const [showConfetti, setShowConfetti] = useState(false)
   const [showShieldBanner, setShowShieldBanner] = useState(showShieldNotification)
+  const [optimisticCompletedIds, setOptimisticCompletedIds] = useState<Set<string>>(new Set())
   const prevTsRef = useRef<number>(-1)
   const pendingRecapRef = useRef<DaySummary | null>(null)
+  const loadingToastRef = useRef<string | number | null>(null)
+  const pendingMissionIdRef = useRef<string | null>(null)
 
   const handleShieldDismiss = useCallback(async () => {
     setShowShieldBanner(false)
@@ -49,17 +52,39 @@ export function MissionAreaWrapper({
     }
   }, [])
 
+  const handleOptimisticComplete = useCallback((missionId: string) => {
+    playMissionComplete()
+    setOptimisticCompletedIds(prev => new Set(prev).add(missionId))
+    pendingMissionIdRef.current = missionId
+    loadingToastRef.current = toast.loading('Calculando recompensa...')
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (loadingToastRef.current !== null) toast.dismiss(loadingToastRef.current)
+    }
+  }, [])
+
   useEffect(() => {
     if (!result || result.ts === prevTsRef.current) return
     prevTsRef.current = result.ts
 
+    if (loadingToastRef.current !== null) {
+      toast.dismiss(loadingToastRef.current)
+      loadingToastRef.current = null
+    }
+
     if (result.error) {
+      setOptimisticCompletedIds(prev => {
+        const next = new Set(prev)
+        if (pendingMissionIdRef.current) next.delete(pendingMissionIdRef.current)
+        return next
+      })
       toast.error('No se pudo completar la misión', { description: 'Inténtalo de nuevo' })
       return
     }
 
-    // Sonidos — siempre se ejecutan, independientes de los overlays
-    playMissionComplete()
+    // Sonido ya reproducido al hacer clic — solo efectos secundarios aquí
     if (result.shieldGranted) playShieldGained()
     if (result.levelUp) setTimeout(() => playLevelUp(), 300)
     if (result.allMissionsCompleted) setTimeout(() => playDayComplete(), 400)
@@ -74,7 +99,7 @@ export function MissionAreaWrapper({
       })
     }
 
-    // Overlays — independientes de los sonidos
+    // Overlays
     if (result.levelUp) setTimeout(() => setLevelUpData({ level: result.newLevel }), 800)
 
     if (result.allMissionsCompleted && result.daySummary) {
@@ -87,6 +112,8 @@ export function MissionAreaWrapper({
       }
     }
   }, [result])
+
+  const visibleMissions = missions.filter(m => !optimisticCompletedIds.has(m.id))
 
   return (
     <>
@@ -106,11 +133,15 @@ export function MissionAreaWrapper({
           onClose={handleRecapClose}
         />
       )}
-      {missions.length > 0 && (
+      {visibleMissions.length > 0 && (
         <div className="flex md:flex-col gap-3 overflow-x-auto md:overflow-x-visible snap-x snap-mandatory md:snap-none scrollbar-hide pb-1 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0">
-          {missions.map(m => (
+          {visibleMissions.map(m => (
             <div key={m.id} className="w-[calc(100vw-32px)] md:min-w-0 md:w-auto flex-shrink-0 snap-start">
-              <FeaturedMissionCard mission={m} formAction={formAction} />
+              <FeaturedMissionCard
+                mission={m}
+                formAction={formAction}
+                onOptimisticComplete={handleOptimisticComplete}
+              />
             </div>
           ))}
         </div>
