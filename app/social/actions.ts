@@ -314,6 +314,7 @@ export type LeagueDetailMember = {
   avatar_config: import('@/types/supabase').AvatarConfig | null
   xp_earned: number
   missions_completed: number
+  friendshipStatus: 'friend' | 'pending' | 'none'
 }
 
 export type InvitableFriend = {
@@ -382,9 +383,8 @@ export async function getLeagueDetail(leagueId: string): Promise<LeagueDetail | 
       .gte('completed_at', getWeekStartISO()),
     supabase
       .from('friendships')
-      .select('requester_id, addressee_id')
-      .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`)
-      .eq('status', 'accepted'),
+      .select('requester_id, addressee_id, status')
+      .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`),
   ])
 
   const completions = completionsRes.data ?? []
@@ -409,6 +409,17 @@ export async function getLeagueDetail(leagueId: string): Promise<LeagueDetail | 
     }
   }
 
+  const allFriendships = friendshipsRes.data ?? []
+
+  function getMemberFriendshipStatus(uid: string): 'friend' | 'pending' | 'none' {
+    const fs = allFriendships.find(f =>
+      (f.requester_id === uid || f.addressee_id === uid)
+    )
+    if (!fs) return 'none'
+    if ((fs.status as string) === 'accepted') return 'friend'
+    return 'pending'
+  }
+
   const rankedMembers: LeagueDetailMember[] = acceptedMemberIds
     .map(uid => {
       const profile = (profilesRes.data ?? []).find(p => p.id === uid)
@@ -419,6 +430,7 @@ export async function getLeagueDetail(leagueId: string): Promise<LeagueDetail | 
         avatar_config: (profile?.avatar_config ?? null) as import('@/types/supabase').AvatarConfig | null,
         xp_earned: statsMap[uid]?.xp ?? 0,
         missions_completed: statsMap[uid]?.missions ?? 0,
+        friendshipStatus: uid === user.id ? 'friend' : getMemberFriendshipStatus(uid),
       }
     })
     .sort((a, b) => {
@@ -427,9 +439,11 @@ export async function getLeagueDetail(leagueId: string): Promise<LeagueDetail | 
     })
 
   // Friends not already in the league (accepted or pending)
-  const friendIds = (friendshipsRes.data ?? []).map(f =>
-    (f.requester_id as string) === user.id ? (f.addressee_id as string) : (f.requester_id as string)
-  )
+  const friendIds = allFriendships
+    .filter(f => (f.status as string) === 'accepted')
+    .map(f =>
+      (f.requester_id as string) === user.id ? (f.addressee_id as string) : (f.requester_id as string)
+    )
   const invitableFriendIds = friendIds.filter(id => !allMemberUserIds.has(id))
 
   let invitableFriends: InvitableFriend[] = []

@@ -3,10 +3,10 @@
 import { useState, useTransition, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { LogOut, Users, ChevronLeft, UserPlus, Check, X } from 'lucide-react'
+import { LogOut, Users, ChevronLeft, UserPlus, UserCheck, Check, X } from 'lucide-react'
 import { toast } from 'sonner'
 import AvatarDisplay from '@/components/avatar/AvatarDisplay'
-import { leaveLeague, inviteToLeague } from '@/app/social/actions'
+import { leaveLeague, inviteToLeague, sendFriendRequest } from '@/app/social/actions'
 import { LEAGUE_MOTIVATIONAL_MESSAGES, LEAGUE_MAX_MEMBERS } from '@/lib/constants/leagues'
 import type { LeagueDetail, LeagueDetailMember, InvitableFriend } from '@/app/social/actions'
 
@@ -321,7 +321,7 @@ function MembersList({
                 }}
               >
                 <AvatarDisplay config={m.avatar_config} size={28} />
-                <span className="flex-1 text-sm font-medium text-text-primary truncate">
+                <span className="flex-1 text-sm font-medium text-text-primary truncate min-w-0">
                   {m.username ?? 'jugador'}
                   {isMe && (
                     <span className="ml-1.5 text-xs font-normal" style={{ color: 'var(--color-text-muted)' }}>
@@ -339,12 +339,73 @@ function MembersList({
                 >
                   LVL {m.global_level}
                 </span>
+                {!isMe && (
+                  <AddFriendButton
+                    userId={m.userId}
+                    username={m.username}
+                    initialStatus={m.friendshipStatus}
+                  />
+                )}
               </div>
             )
           })}
         </div>
       )}
     </div>
+  )
+}
+
+function AddFriendButton({
+  userId,
+  username,
+  initialStatus,
+}: {
+  userId: string
+  username: string | null
+  initialStatus: 'friend' | 'pending' | 'none'
+}) {
+  const [status, setStatus] = useState<'friend' | 'pending' | 'none'>(initialStatus)
+  const [isPending, startTransition] = useTransition()
+
+  if (status === 'friend') return null
+
+  if (status === 'pending') {
+    return (
+      <button
+        disabled
+        aria-label="Solicitud pendiente"
+        className="flex items-center justify-center w-9 h-9 rounded-component flex-shrink-0"
+        style={{ color: 'var(--color-text-muted)', opacity: 0.5 }}
+      >
+        <UserCheck size={14} aria-hidden />
+      </button>
+    )
+  }
+
+  function handleAdd() {
+    startTransition(async () => {
+      const res = await sendFriendRequest(userId)
+      if ('error' in res) {
+        toast.error(res.error)
+      } else {
+        setStatus('pending')
+      }
+    })
+  }
+
+  return (
+    <button
+      onClick={handleAdd}
+      disabled={isPending}
+      aria-label={`Añadir a ${username ?? 'jugador'} como amigo`}
+      className="flex items-center justify-center w-9 h-9 rounded-component transition-colors flex-shrink-0 disabled:opacity-40"
+      style={{
+        color: 'var(--color-accent)',
+        border: '1px solid color-mix(in srgb, var(--color-accent) 20%, transparent)',
+      }}
+    >
+      <UserPlus size={14} aria-hidden />
+    </button>
   )
 }
 
