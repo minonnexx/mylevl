@@ -2,8 +2,8 @@
 
 import { useState, useTransition, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { Plus, X, Check, Shield, Users, ChevronRight } from 'lucide-react'
+import PageLoader from '@/components/ui/PageLoader'
 import { toast } from 'sonner'
 import AvatarDisplay from '@/components/avatar/AvatarDisplay'
 import { createLeague, respondToLeagueInvite } from '@/app/social/actions'
@@ -106,23 +106,39 @@ export function LeagueSection({ myLeagues, pendingLeagueInvites, friends }: Leag
 }
 
 function LeagueRow({ league }: { league: MyLeague }) {
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
+
+  function handleClick() {
+    startTransition(() => {
+      router.push(`/social/leagues/${league.id}`)
+    })
+  }
+
   return (
-    <Link
-      href={`/social/leagues/${league.id}`}
-      className="flex items-center gap-3 p-3 rounded-component border border-border/40 transition-colors hover:border-border/70 min-h-[44px]"
-      style={{ background: 'var(--color-background)' }}
-    >
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-text-primary truncate">{league.name}</p>
-        <div className="flex items-center gap-1 mt-0.5">
-          <Users size={11} style={{ color: 'var(--color-text-muted)' }} aria-hidden />
-          <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
-            {league.memberCount} {league.memberCount === 1 ? 'miembro' : 'miembros'}
-          </span>
+    <>
+      {isPending && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999 }}>
+          <PageLoader />
         </div>
-      </div>
-      <ChevronRight size={14} style={{ color: 'var(--color-text-muted)', flexShrink: 0 }} aria-hidden />
-    </Link>
+      )}
+      <button
+        onClick={handleClick}
+        className="flex items-center gap-3 p-3 rounded-component border border-border/40 transition-colors hover:border-border/70 min-h-[44px] w-full text-left"
+        style={{ background: 'var(--color-background)' }}
+      >
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-text-primary truncate">{league.name}</p>
+          <div className="flex items-center gap-1 mt-0.5">
+            <Users size={11} style={{ color: 'var(--color-text-muted)' }} aria-hidden />
+            <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+              {league.memberCount} {league.memberCount === 1 ? 'miembro' : 'miembros'}
+            </span>
+          </div>
+        </div>
+        <ChevronRight size={14} style={{ color: 'var(--color-text-muted)', flexShrink: 0 }} aria-hidden />
+      </button>
+    </>
   )
 }
 
