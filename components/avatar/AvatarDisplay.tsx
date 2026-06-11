@@ -49,13 +49,18 @@ export default function AvatarDisplay({ config, size = 80 }: Props) {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const svg = createAvatar(styleEngine as any, { ...options, size } as any).toString()
+  const svgRaw = createAvatar(styleEngine as any, { ...options, size } as any).toString()
+  // Replace fixed pixel dimensions on the <svg> element so it fills the container;
+  // viewBox is preserved for correct scaling.
+  const svg = svgRaw
+    .replace(/(<svg[^>]*)\swidth="[^"]*"/, '$1 width="100%"')
+    .replace(/(<svg[^>]*)\sheight="[^"]*"/, '$1 height="100%"')
 
   return (
-    <div style={{ width: size, height: size, flexShrink: 0 }}>
+    <div style={{ width: size, height: size, flexShrink: 0, overflow: 'hidden' }}>
       <div
         dangerouslySetInnerHTML={{ __html: svg }}
-        style={{ width: '100%', height: '100%' }}
+        style={{ width: '100%', height: '100%', lineHeight: 0, display: 'block' }}
       />
     </div>
   )
