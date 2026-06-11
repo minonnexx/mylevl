@@ -54,7 +54,7 @@ function getDaysLabel(endsAt: string): string {
   return `${days} días restantes`
 }
 
-function makeMedal(m: MilestoneResult): Medal {
+function makeMedal(m: NonNullable<MilestoneResult>): Medal {
   return { id: '', mission_id: '', name: m.medalName, icon: m.medalIcon, rarity: 'epic', unlock_percentage: 0, created_at: '' }
 }
 
