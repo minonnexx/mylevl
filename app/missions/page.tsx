@@ -125,7 +125,8 @@ export default async function MissionsPage() {
     const withToday = completedToday2 && !datesDesc.includes(todayStr)
       ? [todayStr, ...datesDesc]
       : datesDesc
-    return { ...mission, completed_today: completedToday2, streak: computeStreakFromDates(withToday) }
+    const last_completion_date = datesDesc.find(d => d !== todayStr) ?? null
+    return { ...mission, completed_today: completedToday2, streak: computeStreakFromDates(withToday), last_completion_date }
   })
 
   return (

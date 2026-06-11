@@ -1,7 +1,7 @@
 'use client'
 
 import { useActionState, useCallback, useEffect, useRef, useState, useTransition } from 'react'
-import { Flame, Plus, Shield, ShieldCheck, Trash2, X } from 'lucide-react'
+import { AlertTriangle, Flame, Plus, Shield, ShieldCheck, Trash2, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { CLASS_META } from '@/lib/constants/classes'
 import type { AvatarConfig, LifeClass, CustomMission, CustomMissionDifficulty, CustomMissionDuration, Medal } from '@/types/supabase'
@@ -17,7 +17,11 @@ import { LevelUpOverlay } from '@/components/LevelUpOverlay'
 import { MedalUnlockOverlay } from '@/components/ui/MedalUnlockOverlay'
 import { playLevelUp, playMissionComplete, playShieldGained } from '@/lib/sounds'
 
-type CustomMissionWithCompletion = CustomMission & { completed_today: boolean; streak: number }
+type CustomMissionWithCompletion = CustomMission & {
+  completed_today: boolean
+  streak: number
+  last_completion_date: string | null
+}
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -116,6 +120,18 @@ function CustomMissionCard({
   const classMeta = CLASS_META[mission.life_class]
 
   const [result, formAction] = useActionState<MissionActionResult, FormData>(completeCustomMissionAction, null)
+
+  // Client-side warning computations (hour check must happen on client)
+  const _now = new Date()
+  const _yd = new Date(_now); _yd.setUTCDate(_yd.getUTCDate() - 1)
+  const _2d = new Date(_now); _2d.setUTCDate(_2d.getUTCDate() - 2)
+  const yesterdayStr = _yd.toISOString().slice(0, 10)
+  const twoDaysAgoStr = _2d.toISOString().slice(0, 10)
+  const lastDate = mission.last_completion_date
+  // Banner: strict mode reset happened yesterday — only show today (the day after the miss)
+  const showResetBanner = mission.strict_mode && !effectiveDone && lastDate === twoDaysAgoStr
+  // At-risk: streak from yesterday still active, not done today, after 20:00
+  const showAtRisk = mission.strict_mode && !effectiveDone && lastDate === yesterdayStr && _now.getHours() >= 20
 
   useEffect(() => {
     if (!result || result.ts === prevTsRef.current) return
@@ -233,6 +249,29 @@ function CustomMissionCard({
             </div>
           )}
         </div>
+
+        {/* Reset banner — strict mode, failed exactly yesterday */}
+        {showResetBanner && (
+          <div
+            className="flex items-center gap-2 px-3 py-2 rounded-component"
+            style={{
+              background: 'color-mix(in srgb, var(--color-disciplina) 10%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--color-disciplina) 25%, transparent)',
+            }}
+          >
+            <AlertTriangle size={12} style={{ color: 'var(--color-disciplina)', flexShrink: 0 }} aria-hidden />
+            <span className="text-xs" style={{ color: 'var(--color-disciplina)' }}>
+              Racha reiniciada — ¡vuelve a empezar!
+            </span>
+          </div>
+        )}
+
+        {/* At-risk warning — strict mode, streak active from yesterday, after 20:00 */}
+        {showAtRisk && (
+          <span className="text-xs" style={{ color: 'var(--color-disciplina)' }}>
+            ¡Complétala hoy para no perder la racha!
+          </span>
+        )}
 
         {/* XP */}
         <span className="text-xs font-bold tabular-nums" style={{ color: 'var(--color-accent)' }}>

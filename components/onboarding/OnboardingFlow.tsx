@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { Sword, Zap, Shield, User, Dumbbell, BookOpen, Star } from 'lucide-react'
+import { Sword, Swords, Zap, Shield, User, Dumbbell, BookOpen, Star } from 'lucide-react'
 import { completeOnboarding, checkUsernameAvailable } from '@/app/onboarding/actions'
 import { PACK_LIST } from '@/lib/constants/packs'
 import AvatarCreator from '@/components/avatar/AvatarCreator'
@@ -399,6 +399,13 @@ function PackStep({
           'Comenzar aventura'
         )}
       </button>
+
+      <div className="flex items-start gap-2 pt-1">
+        <Swords size={14} style={{ color: 'var(--color-text-muted)', flexShrink: 0, marginTop: '1px' }} aria-hidden />
+        <p className="text-xs leading-snug" style={{ color: 'var(--color-text-muted)' }}>
+          ¿Tienes un hábito específico en mente? Puedes crear tus propias misiones en la pestaña Misiones
+        </p>
+      </div>
     </div>
   )
 }

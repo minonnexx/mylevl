@@ -120,7 +120,8 @@ export default async function DashboardPage() {
     const withToday = completedToday && !datesDesc.includes(todayStr)
       ? [todayStr, ...datesDesc]
       : datesDesc
-    return { ...mission, completed_today: completedToday, streak: computeStreakFromDates(withToday) }
+    const last_completion_date = datesDesc.find(d => d !== todayStr) ?? null
+    return { ...mission, completed_today: completedToday, streak: computeStreakFromDates(withToday), last_completion_date }
   })
 
   let dailyMissionsQuery = supabase
