@@ -58,7 +58,12 @@ export default async function MissionsPage() {
     missionsQuery = missionsQuery.or(`type.neq.daily,pack.eq.${activePack}`)
   }
 
-  let { data: missions } = await missionsQuery
+  const [missionsRes, customMissionsRes, customCompletionsRes] = await Promise.all([
+    missionsQuery,
+    supabase.from('custom_missions').select('*').eq('user_id', user.id).eq('active', true).order('created_at'),
+    supabase.from('custom_mission_completions').select('custom_mission_id').eq('user_id', user.id).gte('completed_at', todayUTC.toISOString()),
+  ])
+  let { data: missions } = missionsRes
 
   // ── Auto-seed if empty (requires SUPABASE_SERVICE_ROLE_KEY) ───────────────
   if (!missions?.length) {
@@ -74,6 +79,15 @@ export default async function MissionsPage() {
 
   // ── Completed today (UTC midnight boundary) ────────────────────────────────
   const completedTodayIds = completedToday.data?.map((c) => c.mission_id as string) ?? []
+
+  // ── Custom missions with completion flag ────────────────────────────────────
+  const completedCustomSet = new Set(
+    (customCompletionsRes.data ?? []).map(c => (c as { custom_mission_id: string }).custom_mission_id)
+  )
+  const customMissions = (customMissionsRes.data ?? []).map(m => {
+    const mission = m as import('@/types/supabase').CustomMission
+    return { ...mission, completed_today: completedCustomSet.has(mission.id) }
+  })
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -104,6 +118,7 @@ export default async function MissionsPage() {
               completedTodayIds={completedTodayIds}
               currentStreak={currentStreak}
               avatarConfig={avatarConfig}
+              customMissions={customMissions}
             />
           </div>
         </main>

@@ -132,3 +132,27 @@ export interface ChallengeCompletion {
   week_start: string
   completed_at: string
 }
+
+export type CustomMissionDifficulty = 'easy' | 'medium' | 'hard'
+export type CustomMissionDuration = '7' | '30' | '90' | 'indefinido'
+
+export interface CustomMission {
+  id: string
+  user_id: string
+  title: string
+  life_class: LifeClass
+  difficulty: CustomMissionDifficulty
+  xp_reward: number
+  duration: CustomMissionDuration
+  starts_at: string
+  ends_at: string | null
+  active: boolean
+  created_at: string
+}
+
+export interface CustomMissionCompletion {
+  id: string
+  user_id: string
+  custom_mission_id: string
+  completed_at: string
+}

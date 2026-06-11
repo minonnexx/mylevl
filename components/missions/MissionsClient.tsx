@@ -13,6 +13,8 @@ import { DailyRecapOverlay } from '@/components/dashboard/DailyRecapOverlay'
 import { AnimatedBar } from '@/components/ui/AnimatedBar'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Filter, ShieldCheck } from 'lucide-react'
+import CustomMissionsSection from '@/components/missions/CustomMissionsSection'
+import type { CustomMission } from '@/types/supabase'
 
 function getTodayKey(): string {
   const d = new Date()
@@ -407,11 +409,13 @@ export default function MissionsClient({
   completedTodayIds,
   currentStreak,
   avatarConfig,
+  customMissions,
 }: {
   missions: Mission[]
   completedTodayIds: string[]
   currentStreak: number
   avatarConfig: AvatarConfig | null
+  customMissions: (CustomMission & { completed_today: boolean })[]
 }) {
   const [filter, setFilter] = useState<FilterValue>('all')
   const [recapData, setRecapData] = useState<DaySummary | null>(null)
@@ -527,6 +531,8 @@ export default function MissionsClient({
           description="Prueba con otro filtro"
         />
       )}
+
+      <CustomMissionsSection customMissions={customMissions} />
 
     </div>
     </>

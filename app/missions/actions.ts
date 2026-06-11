@@ -7,6 +7,7 @@ import { computeLevelUp } from '@/lib/xp'
 import { updateStreak } from '@/lib/streaks'
 import { getDaySummary } from '@/lib/recap'
 import type { DaySummary } from '@/lib/recap'
+import type { LifeClass, CustomMissionDifficulty, CustomMissionDuration } from '@/types/supabase'
 
 export type MissionActionResult = {
   levelUp: boolean
@@ -138,5 +139,80 @@ export async function completeMissionAction(
     }
   } catch {
     return { error: true, levelUp: false, newLevel: 0, xpReward: 0, shieldGranted: false, allMissionsCompleted: false, ts: Date.now() }
+  }
+}
+
+// ─── Custom missions ─────────────────────────────────────────────────────────
+
+export async function createCustomMissionAction(input: {
+  title: string
+  life_class: LifeClass
+  difficulty: CustomMissionDifficulty
+  duration: CustomMissionDuration
+}): Promise<{ error?: string }> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'No autenticado' }
+
+    // Free plan: max 1 active custom mission
+    const { count } = await supabase
+      .from('custom_missions')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('active', true)
+
+    if ((count ?? 0) >= 1) return { error: 'Límite del plan gratuito' }
+
+    const XP_MAP: Record<CustomMissionDifficulty, number> = { easy: 10, medium: 20, hard: 40 }
+    const xp_reward = XP_MAP[input.difficulty]
+
+    const starts_at = new Date().toISOString().split('T')[0]
+    let ends_at: string | null = null
+    if (input.duration !== 'indefinido') {
+      const end = new Date()
+      end.setDate(end.getDate() + parseInt(input.duration))
+      ends_at = end.toISOString().split('T')[0]
+    }
+
+    const { error } = await supabase.from('custom_missions').insert({
+      user_id: user.id,
+      title: input.title.trim().slice(0, 50),
+      life_class: input.life_class,
+      difficulty: input.difficulty,
+      xp_reward,
+      duration: input.duration,
+      starts_at,
+      ends_at,
+      active: true,
+    })
+
+    if (error) return { error: 'No se pudo crear la misión' }
+
+    revalidatePath('/missions')
+    return {}
+  } catch {
+    return { error: 'Error al crear la misión' }
+  }
+}
+
+export async function deleteCustomMissionAction(id: string): Promise<{ error?: string }> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'No autenticado' }
+
+    const { error } = await supabase
+      .from('custom_missions')
+      .update({ active: false })
+      .eq('id', id)
+      .eq('user_id', user.id)
+
+    if (error) return { error: 'No se pudo eliminar la misión' }
+
+    revalidatePath('/missions')
+    return {}
+  } catch {
+    return { error: 'Error al eliminar la misión' }
   }
 }
