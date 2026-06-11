@@ -100,6 +100,7 @@ function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMi
   const isCompleted = completedAt !== null
   const isAuto = mission.verification_type === 'automatic'
   const isManualOrExternal = mission.verification_type === 'manual' || mission.verification_type === 'external'
+  const classMeta = CLASS_META[mission.life_class]
 
   const router = useRouter()
   const [result, formAction] = useActionState<AchievementActionResult, FormData>(completeAchievementAction, null)
@@ -107,7 +108,8 @@ function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMi
   const [levelUpData, setLevelUpData] = useState<{ level: number } | null>(null)
   const [medalUnlockData, setMedalUnlockData] = useState<Medal | null>(null)
   const [selectedMedal, setSelectedMedal] = useState<Medal | null>(null)
-  const [completing, setCompleting] = useState(false)
+  const [optimisticDone, setOptimisticDone] = useState(false)
+  const effectiveDone = isCompleted || optimisticDone
   const [showConfirm, setShowConfirm] = useState(false)
   const [hovered, setHovered] = useState(false)
   const prevTsRef = useRef<number | null>(null)
@@ -118,7 +120,11 @@ function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMi
   useEffect(() => {
     if (!result || result.ts === prevTsRef.current) return
     prevTsRef.current = result.ts
-    if (result.error) { toast.error('No se pudo completar el logro'); return }
+    if (result.error) {
+      setOptimisticDone(false)
+      toast.error('No se pudo completar el logro')
+      return
+    }
     if (result.shieldGranted) playShieldGained()
     if (result.levelUp) setTimeout(() => playLevelUp(), 300)
     toast('Logro completado', { description: `+${result.xpReward} XP`, duration: 2500 })
@@ -139,8 +145,9 @@ function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMi
       e.preventDefault()
       setShowConfirm(true)
     } else {
-      setCompleting(true)
+      setOptimisticDone(true)
       setShowXp(true)
+      playMissionComplete()
       if (xpTimerRef.current) clearTimeout(xpTimerRef.current)
       xpTimerRef.current = setTimeout(() => setShowXp(false), 650)
     }
@@ -149,7 +156,7 @@ function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMi
   function handleConfirm() {
     setShowConfirm(false)
     if (!avatarConfirmationShown) markAvatarConfirmationShown()
-    setCompleting(true)
+    setOptimisticDone(true)
     setShowXp(true)
     playMissionComplete()
     confirmedRef.current = true
@@ -163,7 +170,7 @@ function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMi
     window.location.href = `/achievements/${mission.id}`
   }
 
-  const borderColor = hovered
+  const sideBorderColor = hovered
     ? 'color-mix(in srgb, var(--color-text-muted) 40%, transparent)'
     : 'color-mix(in srgb, var(--color-border) 60%, transparent)'
 
@@ -189,10 +196,11 @@ function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMi
         />
       )}
       <article
-        className="bg-surface rounded-card border p-4 flex flex-col gap-3 cursor-pointer h-full relative"
+        className="bg-surface rounded-card rounded-l-none border border-l-0 p-4 flex flex-col gap-3 cursor-pointer h-full relative"
         style={{
-          borderColor,
-          opacity: isCompleted ? 0.4 : 1,
+          borderColor: sideBorderColor,
+          borderLeft: `3px solid ${classMeta.borderColor}`,
+          opacity: effectiveDone ? 0.4 : 1,
           transition: 'opacity 300ms ease, border-color 150ms ease',
         }}
         aria-label={mission.title}
@@ -202,15 +210,9 @@ function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMi
         tabIndex={0}
         onKeyDown={(e) => { if (e.key === 'Enter') window.location.href = `/achievements/${mission.id}` }}
       >
-        <div className="flex items-start justify-between gap-2">
-          <button
-            type="button"
-            onClick={isCompleted && medal ? (e) => { e.stopPropagation(); setSelectedMedal(medal) } : undefined}
-            style={{ cursor: isCompleted && medal ? 'pointer' : 'default', background: 'none', border: 'none', padding: 0 }}
-            aria-label={isCompleted && medal ? `Ver detalle de medalla: ${medal.name}` : undefined}
-          >
-            <HexMedal locked={!isCompleted} icon={medal?.icon} rarity={medal?.rarity} size={40} />
-          </button>
+        {/* Top row: class badge + rarity/diff badge */}
+        <div className="flex items-center justify-between gap-2">
+          <ClassBadge lifeClass={mission.life_class} />
           {medal ? (
             <span className="text-[10px] font-semibold" style={{ color: RARITY_META[medal.rarity].color }}>
               {RARITY_META[medal.rarity].label}
@@ -220,19 +222,28 @@ function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMi
           )}
         </div>
 
+        {/* Medal */}
+        <button
+          type="button"
+          onClick={effectiveDone && medal ? (e) => { e.stopPropagation(); setSelectedMedal(medal) } : undefined}
+          style={{ cursor: effectiveDone && medal ? 'pointer' : 'default', background: 'none', border: 'none', padding: 0, alignSelf: 'flex-start' }}
+          aria-label={effectiveDone && medal ? `Ver detalle de medalla: ${medal.name}` : undefined}
+        >
+          <HexMedal locked={!effectiveDone} icon={medal?.icon} rarity={medal?.rarity} size={40} />
+        </button>
+
         <p className="text-sm font-semibold text-text-primary leading-snug">{mission.title}</p>
 
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-xs font-bold tabular-nums" style={{ color: 'var(--color-accent)' }}>
-            +{mission.xp_reward} XP
-          </span>
-          <ClassBadge lifeClass={mission.life_class} />
-        </div>
+        <span className="text-xs font-bold tabular-nums" style={{ color: 'var(--color-accent)' }}>
+          +{mission.xp_reward} XP
+        </span>
 
-        {isCompleted ? (
+        {effectiveDone ? (
           <div className="flex items-center gap-1.5">
             <IconCheck />
-            <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{formatDate(completedAt)}</span>
+            <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+              {completedAt ? formatDate(completedAt) : 'Completado'}
+            </span>
           </div>
         ) : isAuto ? (
           <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
@@ -297,15 +308,20 @@ function BossCard({ mission, completedAt, currentStreak, medal }: {
   const [result, formAction] = useActionState<AchievementActionResult, FormData>(completeAchievementAction, null)
   const [showXp, setShowXp] = useState(false)
   const [levelUpData, setLevelUpData] = useState<{ level: number } | null>(null)
-  const [completing, setCompleting] = useState(false)
+  const [optimisticDone, setOptimisticDone] = useState(false)
+  const effectiveDone = completedThisWeek || optimisticDone
   const prevTsRef = useRef<number | null>(null)
   const xpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     if (!result || result.ts === prevTsRef.current) return
     prevTsRef.current = result.ts
-    if (result.error) { toast.error('No se pudo completar el jefe'); return }
-    playMissionComplete()
+    if (result.error) {
+      setOptimisticDone(false)
+      toast.error('No se pudo completar el jefe')
+      return
+    }
+    // Sound already played on click
     if (result.shieldGranted) playShieldGained()
     if (result.levelUp) setTimeout(() => playLevelUp(), 300)
     toast('Jefe derrotado', { description: `+${result.xpReward} XP`, duration: 2500 })
@@ -316,8 +332,9 @@ function BossCard({ mission, completedAt, currentStreak, medal }: {
   useEffect(() => () => { if (xpTimerRef.current) clearTimeout(xpTimerRef.current) }, [])
 
   function handleSubmit() {
-    setCompleting(true)
+    setOptimisticDone(true)
     setShowXp(true)
+    playMissionComplete()
     if (xpTimerRef.current) clearTimeout(xpTimerRef.current)
     xpTimerRef.current = setTimeout(() => setShowXp(false), 650)
   }
@@ -328,12 +345,13 @@ function BossCard({ mission, completedAt, currentStreak, medal }: {
     <>
       {levelUpData && <LevelUpOverlay level={levelUpData.level} onClose={() => setLevelUpData(null)} />}
       <article
-        className={`rounded-card overflow-hidden border bg-surface ${isActive ? 'boss-border-pulse' : ''}`}
+        className={`rounded-card rounded-l-none overflow-hidden border border-l-0 bg-surface ${isActive && !effectiveDone ? 'boss-border-pulse' : ''}`}
         style={{
-          borderColor: isActive
+          borderColor: isActive && !effectiveDone
             ? 'var(--color-accent)'
             : 'color-mix(in srgb, var(--color-border) 60%, transparent)',
-          opacity: completedThisWeek ? 0.4 : isLocked ? 0.55 : 1,
+          borderLeft: `3px solid ${classMeta.borderColor}`,
+          opacity: effectiveDone ? 0.4 : isLocked ? 0.55 : 1,
         }}
         aria-label={mission.title}
       >
@@ -368,10 +386,10 @@ function BossCard({ mission, completedAt, currentStreak, medal }: {
           </div>
 
           <div className="pt-1 border-t border-border/40">
-            {completedThisWeek ? (
+            {effectiveDone ? (
               <div className="flex items-center gap-2 text-sm text-text-muted">
                 <IconCheck />
-                Completada — {formatDate(completedAt!)}
+                {completedAt ? `Completada — ${formatDate(completedAt)}` : 'Completada'}
               </div>
             ) : isLocked ? (
               <div className="flex flex-col gap-2">

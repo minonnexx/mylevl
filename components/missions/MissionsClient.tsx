@@ -88,7 +88,8 @@ function CompactMissionCard({
   const [result, formAction] = useActionState<MissionActionResult, FormData>(completeMissionAction, null)
   const [showXp, setShowXp] = useState(false)
   const [levelUpData, setLevelUpData] = useState<{ level: number } | null>(null)
-  const [completing, setCompleting] = useState(false)
+  const [optimisticDone, setOptimisticDone] = useState(false)
+  const effectiveDone = isCompleted || optimisticDone
   const prevTsRef = useRef<number | null>(null)
   const xpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pendingRecapRef = useRef<DaySummary | null>(null)
@@ -98,11 +99,12 @@ function CompactMissionCard({
     prevTsRef.current = result.ts
 
     if (result.error) {
+      setOptimisticDone(false)
       toast.error('No se pudo completar la misión', { description: 'Inténtalo de nuevo' })
       return
     }
 
-    playMissionComplete()
+    // Sound already played on click — only handle secondary effects here
     if (result.shieldGranted) playShieldGained()
     if (result.levelUp) setTimeout(() => playLevelUp(), 300)
     if (result.allMissionsCompleted) setTimeout(() => playDayComplete(), 400)
@@ -124,7 +126,6 @@ function CompactMissionCard({
         sessionStorage.setItem(key, '1')
         const summary = result.daySummary
         if (result.levelUp) {
-          // Diferir hasta que cierre el level-up overlay
           pendingRecapRef.current = summary
         } else {
           onAllCompleted?.(summary)
@@ -138,8 +139,9 @@ function CompactMissionCard({
   }, [])
 
   function handleSubmit() {
-    setCompleting(true)
+    setOptimisticDone(true)
     setShowXp(true)
+    playMissionComplete()
     if (xpTimerRef.current) clearTimeout(xpTimerRef.current)
     xpTimerRef.current = setTimeout(() => setShowXp(false), 650)
   }
@@ -162,7 +164,7 @@ function CompactMissionCard({
         className="bg-surface rounded-card rounded-l-none border border-l-0 border-border/60 p-4 flex flex-col gap-3 h-full"
         style={{
           borderLeft: `3px solid ${classMeta.borderColor}`,
-          opacity: isCompleted ? 0.4 : 1,
+          opacity: effectiveDone ? 0.4 : 1,
           transition: 'opacity 300ms ease',
         }}
         aria-label={mission.title}
@@ -182,7 +184,7 @@ function CompactMissionCard({
         </span>
 
         {/* Action */}
-        {isCompleted ? (
+        {effectiveDone ? (
           <div className="flex items-center gap-1.5">
             <IconCheck />
             <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Completada hoy</span>
