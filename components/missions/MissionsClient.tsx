@@ -92,11 +92,17 @@ function CompactMissionCard({
   const effectiveDone = isCompleted || optimisticDone
   const prevTsRef = useRef<number | null>(null)
   const xpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const loadingToastRef = useRef<string | number | null>(null)
   const pendingRecapRef = useRef<DaySummary | null>(null)
 
   useEffect(() => {
     if (!result || result.ts === prevTsRef.current) return
     prevTsRef.current = result.ts
+
+    if (loadingToastRef.current !== null) {
+      toast.dismiss(loadingToastRef.current)
+      loadingToastRef.current = null
+    }
 
     if (result.error) {
       setOptimisticDone(false)
@@ -135,13 +141,17 @@ function CompactMissionCard({
   }, [result, onAllCompleted])
 
   useEffect(() => {
-    return () => { if (xpTimerRef.current) clearTimeout(xpTimerRef.current) }
+    return () => {
+      if (xpTimerRef.current) clearTimeout(xpTimerRef.current)
+      if (loadingToastRef.current !== null) toast.dismiss(loadingToastRef.current)
+    }
   }, [])
 
   function handleSubmit() {
     setOptimisticDone(true)
     setShowXp(true)
     playMissionComplete()
+    loadingToastRef.current = toast.loading('Calculando recompensa...')
     if (xpTimerRef.current) clearTimeout(xpTimerRef.current)
     xpTimerRef.current = setTimeout(() => setShowXp(false), 650)
   }

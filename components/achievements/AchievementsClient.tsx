@@ -114,12 +114,19 @@ function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMi
   const [hovered, setHovered] = useState(false)
   const prevTsRef = useRef<number | null>(null)
   const xpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const loadingToastRef = useRef<string | number | null>(null)
   const formRef = useRef<HTMLFormElement>(null)
   const confirmedRef = useRef(false)
 
   useEffect(() => {
     if (!result || result.ts === prevTsRef.current) return
     prevTsRef.current = result.ts
+
+    if (loadingToastRef.current !== null) {
+      toast.dismiss(loadingToastRef.current)
+      loadingToastRef.current = null
+    }
+
     if (result.error) {
       setOptimisticDone(false)
       toast.error('No se pudo completar el logro')
@@ -134,7 +141,10 @@ function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMi
     router.refresh()
   }, [result, router, medal])
 
-  useEffect(() => () => { if (xpTimerRef.current) clearTimeout(xpTimerRef.current) }, [])
+  useEffect(() => () => {
+    if (xpTimerRef.current) clearTimeout(xpTimerRef.current)
+    if (loadingToastRef.current !== null) toast.dismiss(loadingToastRef.current)
+  }, [])
 
   function handleSubmit(e: React.FormEvent) {
     if (confirmedRef.current) {
@@ -148,6 +158,7 @@ function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMi
       setOptimisticDone(true)
       setShowXp(true)
       playMissionComplete()
+      loadingToastRef.current = toast.loading('Calculando recompensa...')
       if (xpTimerRef.current) clearTimeout(xpTimerRef.current)
       xpTimerRef.current = setTimeout(() => setShowXp(false), 650)
     }
@@ -159,6 +170,7 @@ function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMi
     setOptimisticDone(true)
     setShowXp(true)
     playMissionComplete()
+    loadingToastRef.current = toast.loading('Calculando recompensa...')
     confirmedRef.current = true
     if (xpTimerRef.current) clearTimeout(xpTimerRef.current)
     xpTimerRef.current = setTimeout(() => setShowXp(false), 650)
@@ -312,10 +324,17 @@ function BossCard({ mission, completedAt, currentStreak, medal }: {
   const effectiveDone = completedThisWeek || optimisticDone
   const prevTsRef = useRef<number | null>(null)
   const xpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const loadingToastRef = useRef<string | number | null>(null)
 
   useEffect(() => {
     if (!result || result.ts === prevTsRef.current) return
     prevTsRef.current = result.ts
+
+    if (loadingToastRef.current !== null) {
+      toast.dismiss(loadingToastRef.current)
+      loadingToastRef.current = null
+    }
+
     if (result.error) {
       setOptimisticDone(false)
       toast.error('No se pudo completar el jefe')
@@ -329,12 +348,16 @@ function BossCard({ mission, completedAt, currentStreak, medal }: {
     if (result.levelUp) setTimeout(() => setLevelUpData({ level: result.newLevel }), 800)
   }, [result])
 
-  useEffect(() => () => { if (xpTimerRef.current) clearTimeout(xpTimerRef.current) }, [])
+  useEffect(() => () => {
+    if (xpTimerRef.current) clearTimeout(xpTimerRef.current)
+    if (loadingToastRef.current !== null) toast.dismiss(loadingToastRef.current)
+  }, [])
 
   function handleSubmit() {
     setOptimisticDone(true)
     setShowXp(true)
     playMissionComplete()
+    loadingToastRef.current = toast.loading('Calculando recompensa...')
     if (xpTimerRef.current) clearTimeout(xpTimerRef.current)
     xpTimerRef.current = setTimeout(() => setShowXp(false), 650)
   }
