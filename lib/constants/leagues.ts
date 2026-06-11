@@ -13,9 +13,10 @@ export const LEAGUE_PRESET_NAMES = [
 
 export type LeaguePresetName = (typeof LEAGUE_PRESET_NAMES)[number]
 
-export const LEAGUE_MOTIVATIONAL_MESSAGES: Record<'top1' | 'top3' | 'mid' | 'last', string> = {
+export const LEAGUE_MOTIVATIONAL_MESSAGES: Record<'top1' | 'top2' | 'top3' | 'mid' | 'last', string> = {
   top1: '¿Quién dijo que los elegidos descansan? Tú lideras. No pares.',
-  top3: 'Top 3. Los débiles ya se rindieron. Tú no eres débil.',
+  top2: 'Segundo. Tan cerca que huele a victoria. Un empujón más.',
+  top3: 'Podio. Pero el hambre de los terceros no tiene límite.',
   mid: 'En tierra de nadie. O subes o te come la mediocridad.',
   last: 'Último puesto. Perfecto. Ahora no tienes nada que perder.',
 }

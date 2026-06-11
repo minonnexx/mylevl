@@ -24,7 +24,7 @@ function getRankColor(rank: number): string {
 function getMotivationalKey(
   members: LeagueDetailMember[],
   currentUserId: string,
-): keyof typeof LEAGUE_MOTIVATIONAL_MESSAGES {
+): 'top1' | 'top2' | 'top3' | 'mid' | 'last' {
   const me = members.find(m => m.userId === currentUserId)
   if (!me) return 'mid'
 
@@ -41,7 +41,8 @@ function getMotivationalKey(
   )
 
   if (rank === 1) return 'top1'
-  if (rank <= 3) return 'top3'
+  if (rank === 2) return 'top2'
+  if (rank === 3) return 'top3'
   if (isLast) return 'last'
   return 'mid'
 }
