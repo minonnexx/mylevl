@@ -1,11 +1,19 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState, useTransition } from 'react'
-import { Plus, Trash2, X } from 'lucide-react'
+import { useActionState, useCallback, useEffect, useRef, useState, useTransition } from 'react'
+import { Plus, ShieldCheck, Trash2, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { CLASS_META } from '@/lib/constants/classes'
-import type { LifeClass, CustomMission, CustomMissionDifficulty, CustomMissionDuration } from '@/types/supabase'
-import { createCustomMissionAction, deleteCustomMissionAction } from '@/app/missions/actions'
+import type { AvatarConfig, LifeClass, CustomMission, CustomMissionDifficulty, CustomMissionDuration } from '@/types/supabase'
+import {
+  createCustomMissionAction,
+  deleteCustomMissionAction,
+  completeCustomMissionAction,
+  type MissionActionResult,
+} from '@/app/missions/actions'
+import { CompleteButton } from '@/components/dashboard/CompleteButton'
+import { LevelUpOverlay } from '@/components/LevelUpOverlay'
+import { playLevelUp, playMissionComplete, playShieldGained } from '@/lib/sounds'
 
 type CustomMissionWithCompletion = CustomMission & { completed_today: boolean }
 
@@ -32,6 +40,26 @@ const DURATION_LABELS: { value: CustomMissionDuration; label: string }[] = [
   { value: 'indefinido', label: 'Indefinido' },
 ]
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function getDaysLabel(endsAt: string): string {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const end = new Date(endsAt + 'T00:00:00')
+  const days = Math.max(0, Math.ceil((end.getTime() - today.getTime()) / 86_400_000))
+  if (days === 0) return 'Último día'
+  if (days === 1) return '1 día restante'
+  return `${days} días restantes`
+}
+
+function IconCheck() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="w-3.5 h-3.5 flex-shrink-0" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden style={{ color: 'var(--color-fisico)' }}>
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  )
+}
+
 // ─── Badge helpers ────────────────────────────────────────────────────────────
 
 function ClassBadge({ lifeClass }: { lifeClass: LifeClass }) {
@@ -57,79 +85,181 @@ function CustomMissionCard({
   mission,
   onDelete,
   isDeleting,
+  isProcessing,
+  onProcessingChange,
+  avatarConfig,
 }: {
   mission: CustomMissionWithCompletion
   onDelete: (id: string) => void
   isDeleting: boolean
+  isProcessing?: boolean
+  onProcessingChange?: (v: boolean) => void
+  avatarConfig: AvatarConfig | null
 }) {
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [optimisticDone, setOptimisticDone] = useState(false)
+  const [showXp, setShowXp] = useState(false)
+  const [levelUpData, setLevelUpData] = useState<{ level: number } | null>(null)
+  const effectiveDone = mission.completed_today || optimisticDone
+  const prevTsRef = useRef<number | null>(null)
+  const xpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const loadingToastRef = useRef<string | number | null>(null)
   const classMeta = CLASS_META[mission.life_class]
 
+  const [result, formAction] = useActionState<MissionActionResult, FormData>(completeCustomMissionAction, null)
+
+  useEffect(() => {
+    if (!result || result.ts === prevTsRef.current) return
+    prevTsRef.current = result.ts
+
+    if (loadingToastRef.current !== null) {
+      toast.dismiss(loadingToastRef.current)
+      loadingToastRef.current = null
+    }
+    onProcessingChange?.(false)
+
+    if (result.error) {
+      setOptimisticDone(false)
+      toast.error('No se pudo completar la misión', { description: 'Inténtalo de nuevo' })
+      return
+    }
+
+    if (result.shieldGranted) playShieldGained()
+    if (result.levelUp) setTimeout(() => playLevelUp(), 300)
+
+    toast('Misión completada', { description: `+${result.xpReward} XP`, duration: 2500 })
+    if (result.shieldGranted) {
+      toast('Escudo ganado', {
+        description: 'Racha de 7 días completada',
+        icon: <ShieldCheck size={16} />,
+        duration: 4000,
+      })
+    }
+
+    if (result.levelUp) setTimeout(() => setLevelUpData({ level: result.newLevel }), 800)
+  }, [result, onProcessingChange])
+
+  useEffect(() => {
+    return () => {
+      if (xpTimerRef.current) clearTimeout(xpTimerRef.current)
+      if (loadingToastRef.current !== null) toast.dismiss(loadingToastRef.current)
+    }
+  }, [])
+
+  function handleSubmit() {
+    setOptimisticDone(true)
+    setShowXp(true)
+    playMissionComplete()
+    onProcessingChange?.(true)
+    loadingToastRef.current = toast.loading('Calculando recompensa...')
+    if (xpTimerRef.current) clearTimeout(xpTimerRef.current)
+    xpTimerRef.current = setTimeout(() => setShowXp(false), 650)
+  }
+
   return (
-    <article
-      className="bg-surface rounded-card rounded-l-none border border-l-0 border-border/60 p-4 flex flex-col gap-3 h-full"
-      style={{ borderLeft: `3px solid ${classMeta.borderColor}` }}
-      aria-label={mission.title}
-    >
-      {/* Top row */}
-      <div className="flex items-center justify-between gap-2">
-        <ClassBadge lifeClass={mission.life_class} />
-        <DiffBadge difficulty={mission.difficulty} />
-      </div>
-
-      {/* Title */}
-      <p className="text-sm font-semibold text-text-primary leading-snug flex-1">{mission.title}</p>
-
-      {/* XP */}
-      <span className="text-xs font-bold tabular-nums" style={{ color: 'var(--color-accent)' }}>
-        +{mission.xp_reward} XP
-      </span>
-
-      {/* Ends at */}
-      {mission.ends_at && (
-        <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
-          Hasta{' '}
-          {new Date(mission.ends_at + 'T00:00:00').toLocaleDateString('es-ES', {
-            day: 'numeric',
-            month: 'short',
-          })}
-        </span>
+    <div className="h-full">
+      {levelUpData && (
+        <LevelUpOverlay
+          level={levelUpData.level}
+          avatarConfig={avatarConfig}
+          onClose={() => setLevelUpData(null)}
+        />
       )}
-
-      {/* Delete */}
-      {confirmDelete ? (
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => { onDelete(mission.id); setConfirmDelete(false) }}
-            disabled={isDeleting}
-            className="flex-1 h-9 text-xs font-semibold rounded-component disabled:opacity-40"
-            style={{ background: 'var(--color-error)', color: 'white' }}
-          >
-            {isDeleting ? 'Eliminando...' : 'Confirmar'}
-          </button>
-          <button
-            type="button"
-            onClick={() => setConfirmDelete(false)}
-            className="flex-1 h-9 text-xs rounded-component border border-border/60"
-            style={{ color: 'var(--color-text-muted)' }}
-          >
-            Cancelar
-          </button>
+      <article
+        className="bg-surface rounded-card rounded-l-none border border-l-0 border-border/60 p-4 flex flex-col gap-3 h-full"
+        style={{
+          borderLeft: `3px solid ${classMeta.borderColor}`,
+          opacity: effectiveDone ? 0.4 : 1,
+          transition: 'opacity 300ms ease',
+        }}
+        aria-label={mission.title}
+      >
+        {/* Top row */}
+        <div className="flex items-center justify-between gap-2">
+          <ClassBadge lifeClass={mission.life_class} />
+          <DiffBadge difficulty={mission.difficulty} />
         </div>
-      ) : (
-        <button
-          type="button"
-          onClick={() => setConfirmDelete(true)}
-          className="flex items-center gap-1.5 h-9 px-3 w-full text-xs rounded-component border border-border/60 hover:border-error/40 transition-colors"
-          style={{ color: 'var(--color-text-muted)' }}
-          aria-label={`Eliminar misión ${mission.title}`}
-        >
-          <Trash2 size={12} aria-hidden />
-          Eliminar
-        </button>
-      )}
-    </article>
+
+        {/* Title */}
+        <p className="text-sm font-semibold text-text-primary leading-snug flex-1">{mission.title}</p>
+
+        {/* XP */}
+        <span className="text-xs font-bold tabular-nums" style={{ color: 'var(--color-accent)' }}>
+          +{mission.xp_reward} XP
+        </span>
+
+        {/* Days remaining */}
+        {mission.ends_at && !effectiveDone && (
+          <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+            {getDaysLabel(mission.ends_at)}
+          </span>
+        )}
+
+        {/* Complete or done */}
+        {effectiveDone ? (
+          <div className="flex items-center gap-1.5">
+            <IconCheck />
+            <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Completada hoy</span>
+          </div>
+        ) : (
+          <>
+            <form action={formAction} onSubmit={handleSubmit}>
+              <input type="hidden" name="customMissionId" value={mission.id} />
+              <input type="hidden" name="xpReward"        value={mission.xp_reward} />
+              <input type="hidden" name="lifeClass"       value={mission.life_class} />
+              <input type="hidden" name="difficulty"      value={mission.difficulty} />
+              <div className="relative">
+                <CompleteButton label="Completar" disabled={isProcessing || isDeleting} />
+                {showXp && (
+                  <span
+                    className="absolute left-1/2 bottom-full mb-1 text-sm font-bold text-accent pointer-events-none whitespace-nowrap"
+                    style={{ animation: 'xp-float 650ms ease forwards' }}
+                    aria-hidden
+                  >
+                    +{mission.xp_reward} XP
+                  </span>
+                )}
+              </div>
+            </form>
+
+            {/* Delete */}
+            {confirmDelete ? (
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => { onDelete(mission.id); setConfirmDelete(false) }}
+                  disabled={isDeleting || isProcessing}
+                  className="flex-1 h-11 text-xs font-semibold rounded-component disabled:opacity-40"
+                  style={{ background: 'var(--color-error)', color: 'white' }}
+                >
+                  {isDeleting ? 'Eliminando...' : 'Confirmar'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmDelete(false)}
+                  className="flex-1 h-11 text-xs rounded-component border border-border/60"
+                  style={{ color: 'var(--color-text-muted)' }}
+                >
+                  Cancelar
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(true)}
+                disabled={isProcessing}
+                className="flex items-center gap-1.5 h-11 px-3 w-full text-xs rounded-component border border-border/60 hover:border-error/40 transition-colors disabled:opacity-40"
+                style={{ color: 'var(--color-text-muted)' }}
+                aria-label={`Eliminar misión ${mission.title}`}
+              >
+                <Trash2 size={12} aria-hidden />
+                Eliminar
+              </button>
+            )}
+          </>
+        )}
+      </article>
+    </div>
   )
 }
 
@@ -352,16 +482,19 @@ function CreateMissionModal({ onClose }: { onClose: () => void }) {
 
 export default function CustomMissionsSection({
   customMissions,
+  avatarConfig,
 }: {
   customMissions: CustomMissionWithCompletion[]
+  avatarConfig: AvatarConfig | null
 }) {
   const [modalOpen, setModalOpen] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [isProcessing, setIsProcessing] = useState(false)
   const [, startDeleteTransition] = useTransition()
 
   const hasReachedLimit = customMissions.length >= 1
-
   const handleClose = useCallback(() => setModalOpen(false), [])
+  const handleProcessingChange = useCallback((v: boolean) => setIsProcessing(v), [])
 
   function handleDelete(id: string) {
     setDeletingId(id)
@@ -444,6 +577,9 @@ export default function CustomMissionsSection({
                     mission={mission}
                     onDelete={handleDelete}
                     isDeleting={deletingId === mission.id}
+                    isProcessing={isProcessing}
+                    onProcessingChange={handleProcessingChange}
+                    avatarConfig={avatarConfig}
                   />
                 </div>
               )

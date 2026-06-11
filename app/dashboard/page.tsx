@@ -13,6 +13,8 @@ import { AppHeader } from '@/components/ui/AppHeader'
 import AvatarDisplay from '@/components/avatar/AvatarDisplay'
 import { WeeklyChallengeCard } from '@/components/dashboard/WeeklyChallengeCard'
 import { getCurrentWeekStart, getOrCreateWeeklyChallenge, getWeeklyChallengeProgress } from '@/lib/challenges'
+import { CustomMissionsDashboardSection } from '@/components/dashboard/CustomMissionsDashboardSection'
+import type { CustomMission } from '@/types/supabase'
 
 function StatRow({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: number; sub: string }) {
   return (
@@ -41,10 +43,12 @@ export default async function DashboardPage() {
 
   const weekStart = getCurrentWeekStart()
 
-  const [profileRes, completedRes, completedTodayRes] = await Promise.all([
+  const [profileRes, completedRes, completedTodayRes, customMissionsRes, customCompletionsRes] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', user.id).single(),
     supabase.from('completed_missions').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
     supabase.from('completed_missions').select('mission_id').eq('user_id', user.id).gte('completed_at', todayUTC.toISOString()),
+    supabase.from('custom_missions').select('*').eq('user_id', user.id).eq('active', true).order('created_at'),
+    supabase.from('custom_mission_completions').select('custom_mission_id').eq('user_id', user.id).gte('completed_at', todayUTC.toISOString()),
   ])
 
   if (profileRes.data && !profileRes.data.onboarding_completed && !profileRes.data.username) {
@@ -72,6 +76,14 @@ export default async function DashboardPage() {
     avatar_config: null,
     created_at: new Date().toISOString(),
   }
+
+  const completedCustomSet = new Set(
+    (customCompletionsRes.data ?? []).map(c => (c as { custom_mission_id: string }).custom_mission_id)
+  )
+  const customMissions = (customMissionsRes.data ?? []).map(m => {
+    const mission = m as CustomMission
+    return { ...mission, completed_today: completedCustomSet.has(mission.id) }
+  })
 
   let dailyMissionsQuery = supabase
     .from('missions')
@@ -198,6 +210,14 @@ export default async function DashboardPage() {
                   <MissionAreaWrapper
                     missions={pendingDaily}
                     showShieldNotification={showShieldNotification}
+                    avatarConfig={profile.avatar_config}
+                  />
+                )}
+
+                {/* Custom missions — only shown if the user has at least one active */}
+                {customMissions.length > 0 && (
+                  <CustomMissionsDashboardSection
+                    customMissions={customMissions}
                     avatarConfig={profile.avatar_config}
                   />
                 )}

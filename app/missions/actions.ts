@@ -8,6 +8,7 @@ import { updateStreak } from '@/lib/streaks'
 import { getDaySummary } from '@/lib/recap'
 import type { DaySummary } from '@/lib/recap'
 import type { LifeClass, CustomMissionDifficulty, CustomMissionDuration } from '@/types/supabase'
+import { checkAutoAchievements } from '@/lib/achievements'
 
 export type MissionActionResult = {
   levelUp: boolean
@@ -135,6 +136,118 @@ export async function completeMissionAction(
       shieldGranted,
       allMissionsCompleted,
       daySummary: allMissionsCompleted ? summary : undefined,
+      ts: Date.now(),
+    }
+  } catch {
+    return { error: true, levelUp: false, newLevel: 0, xpReward: 0, shieldGranted: false, allMissionsCompleted: false, ts: Date.now() }
+  }
+}
+
+// ─── Complete custom mission ──────────────────────────────────────────────────
+
+export async function completeCustomMissionAction(
+  _prev: MissionActionResult,
+  formData: FormData,
+): Promise<MissionActionResult> {
+  const customMissionId = formData.get('customMissionId') as string
+  const xpReward        = Number(formData.get('xpReward'))
+  const lifeClass       = formData.get('lifeClass') as string
+  const difficulty      = formData.get('difficulty') as string
+
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) redirect('/auth')
+
+    // Idempotency — one completion per custom mission per UTC day
+    const todayStart = new Date()
+    todayStart.setUTCHours(0, 0, 0, 0)
+    const { data: existing } = await supabase
+      .from('custom_mission_completions')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('custom_mission_id', customMissionId)
+      .gte('completed_at', todayStart.toISOString())
+      .maybeSingle()
+    if (existing) return null
+
+    await supabase.from('custom_mission_completions').insert({
+      user_id: user.id,
+      custom_mission_id: customMissionId,
+    })
+    const { shieldGranted } = await updateStreak(supabase, user.id)
+
+    const [cpRes, profileRes] = await Promise.all([
+      supabase
+        .from('class_progress')
+        .select('points')
+        .eq('user_id', user.id)
+        .eq('life_class', lifeClass)
+        .maybeSingle(),
+      supabase
+        .from('profiles')
+        .select('current_xp, global_level')
+        .eq('id', user.id)
+        .single(),
+    ])
+
+    const difficultyPoints: Record<string, number> = { easy: 1, medium: 2, hard: 5 }
+    const classPoints = difficultyPoints[difficulty] ?? 1
+    const newPoints   = ((cpRes.data as { points: number } | null)?.points ?? 0) + classPoints
+    const oldProfile  = profileRes.data as { current_xp: number; global_level: number } | null
+    const newGlobal   = computeLevelUp(
+      oldProfile?.global_level ?? 1,
+      oldProfile?.current_xp   ?? 0,
+      xpReward,
+    )
+    const didLevelUp = newGlobal.level > (oldProfile?.global_level ?? 1)
+
+    await Promise.all([
+      supabase
+        .from('class_progress')
+        .upsert(
+          { user_id: user.id, life_class: lifeClass, points: newPoints },
+          { onConflict: 'user_id,life_class' },
+        ),
+      supabase
+        .from('profiles')
+        .update({
+          current_xp:       newGlobal.current_xp,
+          global_level:     newGlobal.level,
+          xp_to_next_level: newGlobal.xp_to_next_level,
+        })
+        .eq('id', user.id),
+    ])
+
+    revalidatePath('/missions')
+    revalidatePath('/dashboard')
+    revalidatePath('/recap')
+
+    try {
+      await supabase.from('social_feed').insert({
+        user_id: user.id,
+        event_type: 'mission_completed',
+        metadata: { life_class: lifeClass, xp_reward: xpReward },
+      })
+    } catch {}
+    if (didLevelUp) {
+      try {
+        await supabase.from('social_feed').insert({
+          user_id: user.id,
+          event_type: 'level_up',
+          metadata: { new_level: newGlobal.level },
+        })
+      } catch {}
+    }
+
+    try { await checkAutoAchievements(supabase, user.id) } catch {}
+
+    return {
+      levelUp: didLevelUp,
+      newLevel: newGlobal.level,
+      xpReward,
+      shieldGranted,
+      allMissionsCompleted: false,
       ts: Date.now(),
     }
   } catch {

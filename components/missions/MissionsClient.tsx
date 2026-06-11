@@ -532,7 +532,7 @@ export default function MissionsClient({
         />
       )}
 
-      <CustomMissionsSection customMissions={customMissions} />
+      <CustomMissionsSection customMissions={customMissions} avatarConfig={avatarConfig} />
 
     </div>
     </>
