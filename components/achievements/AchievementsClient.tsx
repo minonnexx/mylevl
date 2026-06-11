@@ -192,7 +192,7 @@ function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMi
         className="bg-surface rounded-card border p-4 flex flex-col gap-3 cursor-pointer h-full relative"
         style={{
           borderColor,
-          opacity: isCompleted || completing ? 1 : 0.5,
+          opacity: isCompleted ? 0.4 : 1,
           transition: 'opacity 300ms ease, border-color 150ms ease',
         }}
         aria-label={mission.title}
@@ -333,7 +333,7 @@ function BossCard({ mission, completedAt, currentStreak, medal }: {
           borderColor: isActive
             ? 'var(--color-accent)'
             : 'color-mix(in srgb, var(--color-border) 60%, transparent)',
-          opacity: isLocked ? 0.55 : 1,
+          opacity: completedThisWeek ? 0.4 : isLocked ? 0.55 : 1,
         }}
         aria-label={mission.title}
       >

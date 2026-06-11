@@ -45,6 +45,15 @@ const FILTER_PILLS: { value: FilterValue; label: string }[] = [
   { value: 'hard',       label: 'Difícil'    },
 ]
 
+function ClassBadge({ lifeClass }: { lifeClass: keyof typeof CLASS_META }) {
+  const m = CLASS_META[lifeClass]
+  return (
+    <span className={`inline-flex text-xs font-semibold px-2.5 py-1 rounded-pill ${m.badgeClasses}`}>
+      {m.label}
+    </span>
+  )
+}
+
 function DiffBadge({ difficulty }: { difficulty: MissionDifficulty }) {
   const m = DIFF_META[difficulty]
   if (!m) return null
@@ -150,20 +159,17 @@ function CompactMissionCard({
         />
       )}
       <article
-        className="bg-surface rounded-card border border-border/60 p-4 flex flex-col gap-3 h-full"
+        className="bg-surface rounded-card rounded-l-none border border-l-0 border-border/60 p-4 flex flex-col gap-3 h-full"
         style={{
-          opacity: isCompleted || completing ? 1 : 0.5,
+          borderLeft: `3px solid ${classMeta.borderColor}`,
+          opacity: isCompleted ? 0.4 : 1,
           transition: 'opacity 300ms ease',
         }}
         aria-label={mission.title}
       >
-        {/* Top row: class dot + diff badge */}
+        {/* Top row: class badge + diff badge */}
         <div className="flex items-center justify-between gap-2">
-          <span
-            className="w-2 h-2 rounded-full flex-shrink-0"
-            style={{ backgroundColor: classMeta.color }}
-            aria-hidden
-          />
+          <ClassBadge lifeClass={mission.life_class} />
           <DiffBadge difficulty={mission.difficulty} />
         </div>
 
@@ -224,7 +230,7 @@ function BossMissionCard({
   return (
     <article
       className="rounded-card overflow-hidden border border-border/60 relative bg-surface"
-      style={{ opacity: isCompleted ? 0.5 : 1 }}
+      style={{ opacity: isCompleted ? 0.4 : 1 }}
       aria-label={mission.title}
     >
       <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ backgroundColor: classMeta.color }} aria-hidden />
