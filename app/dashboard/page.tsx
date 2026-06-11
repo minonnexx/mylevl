@@ -173,6 +173,7 @@ export default async function DashboardPage() {
                   <MissionAreaWrapper
                     missions={pendingDaily}
                     showShieldNotification={showShieldNotification}
+                    avatarConfig={profile.avatar_config}
                   />
                 )}
 

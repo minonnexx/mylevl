@@ -3,7 +3,7 @@
 import { useActionState, useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { ShieldCheck } from 'lucide-react'
-import type { Mission } from '@/types/supabase'
+import type { AvatarConfig, Mission } from '@/types/supabase'
 import type { DaySummary } from '@/lib/recap'
 import { FeaturedMissionCard } from './FeaturedMissionCard'
 import { LevelUpOverlay } from '@/components/LevelUpOverlay'
@@ -21,9 +21,11 @@ function getTodayKey(): string {
 export function MissionAreaWrapper({
   missions,
   showShieldNotification,
+  avatarConfig,
 }: {
   missions: Mission[]
   showShieldNotification: boolean
+  avatarConfig: AvatarConfig | null
 }) {
   const [result, formAction] = useActionState<MissionActionResult, FormData>(completeMission, null)
   const [levelUpData, setLevelUpData] = useState<{ level: number } | null>(null)
@@ -124,12 +126,14 @@ export function MissionAreaWrapper({
       {levelUpData && (
         <LevelUpOverlay
           level={levelUpData.level}
+          avatarConfig={avatarConfig}
           onClose={handleLevelUpClose}
         />
       )}
       {recapData && (
         <DailyRecapOverlay
           daySummary={recapData}
+          avatarConfig={avatarConfig}
           onClose={handleRecapClose}
         />
       )}

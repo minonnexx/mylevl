@@ -195,7 +195,7 @@ function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMi
           onClose={() => setMedalUnlockData(null)}
         />
       )}
-      {!medalUnlockData && levelUpData && <LevelUpOverlay level={levelUpData.level} onClose={() => setLevelUpData(null)} />}
+      {!medalUnlockData && levelUpData && <LevelUpOverlay level={levelUpData.level} avatarConfig={avatarConfig} onClose={() => setLevelUpData(null)} />}
       {selectedMedal && <MedalDetailModal medal={selectedMedal} onClose={() => setSelectedMedal(null)} />}
       {showConfirm && (
         <AvatarConfirmModal
@@ -304,11 +304,12 @@ function bossThreshold(title: string): number {
 }
 
 // ─── Boss card — full width, prominent ────────────────────────────────────────
-function BossCard({ mission, completedAt, currentStreak, medal }: {
+function BossCard({ mission, completedAt, currentStreak, medal, avatarConfig }: {
   mission: Mission
   completedAt: string | null
   currentStreak: number
   medal: Medal | null
+  avatarConfig: AvatarConfig | null
 }) {
   const classMeta = CLASS_META[mission.life_class]
   const threshold = bossThreshold(mission.title)
@@ -366,7 +367,7 @@ function BossCard({ mission, completedAt, currentStreak, medal }: {
 
   return (
     <>
-      {levelUpData && <LevelUpOverlay level={levelUpData.level} onClose={() => setLevelUpData(null)} />}
+      {levelUpData && <LevelUpOverlay level={levelUpData.level} avatarConfig={avatarConfig} onClose={() => setLevelUpData(null)} />}
       <article
         className={`rounded-card rounded-l-none overflow-hidden border border-l-0 bg-surface ${isActive && !effectiveDone ? 'boss-border-pulse' : ''}`}
         style={{
@@ -594,6 +595,7 @@ export default function AchievementsClient({
                 completedAt={completedMap[m.id] ?? null}
                 currentStreak={currentStreak}
                 medal={medalsMap[m.id] ?? null}
+                avatarConfig={avatarConfig}
               />
             ))}
           </div>

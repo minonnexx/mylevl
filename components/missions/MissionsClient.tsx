@@ -1,7 +1,7 @@
 'use client'
 
 import { useActionState, useCallback, useEffect, useRef, useState } from 'react'
-import type { Mission, MissionDifficulty, MissionType } from '@/types/supabase'
+import type { AvatarConfig, Mission, MissionDifficulty, MissionType } from '@/types/supabase'
 import { CLASS_META } from '@/lib/constants/classes'
 import { completeMissionAction, type MissionActionResult } from '@/app/missions/actions'
 import type { DaySummary } from '@/lib/recap'
@@ -78,11 +78,13 @@ function CompactMissionCard({
   isCompleted,
   onAllCompleted,
   wrapperClass,
+  avatarConfig,
 }: {
   mission: Mission
   isCompleted: boolean
   onAllCompleted?: (summary: DaySummary) => void
   wrapperClass?: string
+  avatarConfig: AvatarConfig | null
 }) {
   const classMeta = CLASS_META[mission.life_class]
   const [result, formAction] = useActionState<MissionActionResult, FormData>(completeMissionAction, null)
@@ -161,6 +163,7 @@ function CompactMissionCard({
       {levelUpData && (
         <LevelUpOverlay
           level={levelUpData.level}
+          avatarConfig={avatarConfig}
           onClose={() => {
             setLevelUpData(null)
             if (pendingRecapRef.current) {
@@ -295,6 +298,7 @@ function MissionSection({
   isBoss,
   currentStreak,
   onAllCompleted,
+  avatarConfig,
 }: {
   title: string
   missions: Mission[]
@@ -302,6 +306,7 @@ function MissionSection({
   isBoss: boolean
   currentStreak: number
   onAllCompleted?: (summary: DaySummary) => void
+  avatarConfig: AvatarConfig | null
 }) {
   if (missions.length === 0) return null
 
@@ -351,6 +356,7 @@ function MissionSection({
                 isCompleted={completedIds.has(m.id)}
                 onAllCompleted={onAllCompleted}
                 wrapperClass={wrapperClass}
+                avatarConfig={avatarConfig}
               />
             )
           })}
@@ -387,10 +393,12 @@ export default function MissionsClient({
   missions,
   completedTodayIds,
   currentStreak,
+  avatarConfig,
 }: {
   missions: Mission[]
   completedTodayIds: string[]
   currentStreak: number
+  avatarConfig: AvatarConfig | null
 }) {
   const [filter, setFilter] = useState<FilterValue>('all')
   const [recapData, setRecapData] = useState<DaySummary | null>(null)
@@ -430,6 +438,7 @@ export default function MissionsClient({
     {recapData && (
       <DailyRecapOverlay
         daySummary={recapData}
+        avatarConfig={avatarConfig}
         onClose={handleRecapClose}
       />
     )}
@@ -489,6 +498,7 @@ export default function MissionsClient({
                 isBoss={sectionMeta.isBoss}
                 currentStreak={currentStreak}
                 onAllCompleted={handleAllCompleted}
+                avatarConfig={avatarConfig}
               />
             )
           })}

@@ -1,16 +1,24 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 'motion/react'
 import Link from 'next/link'
 import { Flame, ShieldCheck, Swords, Trophy } from 'lucide-react'
 import { CLASS_META } from '@/lib/constants/classes'
+import { AvatarSpeechBubble } from '@/components/ui/AvatarSpeechBubble'
 import type { DaySummary, MissionSummaryItem } from '@/lib/recap'
-import type { LifeClass } from '@/types/supabase'
+import type { AvatarConfig, LifeClass } from '@/types/supabase'
+
+const AVATAR_MESSAGES = [
+  'Otro día que no se puede quitarte. Sigue así.',
+  'La racha no es suerte — es una decisión que tomaste hoy.',
+  'Cada misión completada es un ladrillo. Estás construyendo algo real.',
+]
 
 interface Props {
   daySummary: DaySummary
+  avatarConfig: AvatarConfig | null
   onClose: () => void
 }
 
@@ -53,8 +61,9 @@ function MissionRow({ item }: { item: MissionSummaryItem }) {
   )
 }
 
-export function DailyRecapOverlay({ daySummary, onClose }: Props) {
+export function DailyRecapOverlay({ daySummary, avatarConfig, onClose }: Props) {
   const shouldReduceMotion = useReducedMotion()
+  const [avatarMessage] = useState(() => AVATAR_MESSAGES[Math.floor(Math.random() * AVATAR_MESSAGES.length)])
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
@@ -179,6 +188,22 @@ export function DailyRecapOverlay({ daySummary, onClose }: Props) {
           </button>
         </div>
       </motion.div>
+
+      <div
+        style={{
+          position: 'absolute',
+          bottom: '16px',
+          left: '16px',
+          maxWidth: 'min(300px, calc(100vw - 32px))',
+        }}
+        onClick={e => e.stopPropagation()}
+      >
+        <AvatarSpeechBubble
+          message={avatarMessage}
+          avatarConfig={avatarConfig}
+          size={48}
+        />
+      </div>
     </div>
   )
 

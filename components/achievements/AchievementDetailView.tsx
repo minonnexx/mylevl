@@ -135,7 +135,7 @@ export default function AchievementDetailView({
           onClose={() => setMedalUnlockData(null)}
         />
       )}
-      {!medalUnlockData && levelUpData && <LevelUpOverlay level={levelUpData.level} onClose={() => setLevelUpData(null)} />}
+      {!medalUnlockData && levelUpData && <LevelUpOverlay level={levelUpData.level} avatarConfig={avatarConfig} onClose={() => setLevelUpData(null)} />}
       {showConfirm && (
         <AvatarConfirmModal
           username={username}

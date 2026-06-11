@@ -103,6 +103,7 @@ export default async function MissionsPage() {
               missions={missions ?? []}
               completedTodayIds={completedTodayIds}
               currentStreak={currentStreak}
+              avatarConfig={avatarConfig}
             />
           </div>
         </main>

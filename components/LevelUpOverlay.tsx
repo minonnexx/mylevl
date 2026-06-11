@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { LevelUpParticles } from '@/components/ui/LevelUpParticles'
+import { AvatarSpeechBubble } from '@/components/ui/AvatarSpeechBubble'
+import type { AvatarConfig } from '@/types/supabase'
 
 const PHRASES = [
   'La constancia es la única ventaja injusta.',
@@ -12,18 +14,32 @@ const PHRASES = [
   'No hay atajos. Solo hay el trabajo.',
 ]
 
+const AVATAR_MESSAGES = [
+  'Otro nivel. Esto no es suerte — es disciplina acumulada.',
+  'Mira lo lejos que has llegado. Y esto es solo el principio.',
+  'Cada día que entrenas, tu yo futuro te da las gracias.',
+]
+
 interface Props {
   level: number
+  avatarConfig: AvatarConfig | null
   onClose: () => void
 }
 
-export function LevelUpOverlay({ level, onClose }: Props) {
+export function LevelUpOverlay({ level, avatarConfig, onClose }: Props) {
   const [phrase] = useState(() => PHRASES[Math.floor(Math.random() * PHRASES.length)])
+  const [avatarMessage] = useState(() => AVATAR_MESSAGES[Math.floor(Math.random() * AVATAR_MESSAGES.length)])
   const [visible, setVisible] = useState(false)
+  const [showSpeech, setShowSpeech] = useState(false)
 
   useEffect(() => {
     const id = requestAnimationFrame(() => setVisible(true))
     return () => cancelAnimationFrame(id)
+  }, [])
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowSpeech(true), 600)
+    return () => clearTimeout(timer)
   }, [])
 
   useEffect(() => {
@@ -69,6 +85,24 @@ export function LevelUpOverlay({ level, onClose }: Props) {
           Continuar
         </button>
       </div>
+
+      {showSpeech && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '16px',
+            left: '16px',
+            maxWidth: 'min(300px, calc(100vw - 32px))',
+          }}
+          onClick={e => e.stopPropagation()}
+        >
+          <AvatarSpeechBubble
+            message={avatarMessage}
+            avatarConfig={avatarConfig}
+            size={48}
+          />
+        </div>
+      )}
     </div>
     </>
   )
