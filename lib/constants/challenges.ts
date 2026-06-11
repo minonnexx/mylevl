@@ -16,7 +16,7 @@ export const CHALLENGE_POOL: ChallengeDefinition[] = [
   {
     key: 'fisico_5',
     title: 'Guerrero de la semana',
-    description: 'Completa 5 misiones físicas esta semana',
+    description: 'Completa 5 misiones o logros físicos esta semana',
     type: 'count',
     life_class: 'fisico',
     target: 5,
@@ -47,7 +47,7 @@ export const CHALLENGE_POOL: ChallengeDefinition[] = [
   {
     key: 'mental_5',
     title: 'Mente de acero',
-    description: 'Completa 5 misiones mentales esta semana',
+    description: 'Completa 5 misiones o logros mentales esta semana',
     type: 'count',
     life_class: 'mental',
     target: 5,

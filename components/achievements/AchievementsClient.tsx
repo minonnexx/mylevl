@@ -388,7 +388,7 @@ function BossCard({ mission, completedAt, currentStreak, medal, avatarConfig, is
             ? 'var(--color-accent)'
             : 'color-mix(in srgb, var(--color-border) 60%, transparent)',
           borderLeft: `3px solid ${classMeta.borderColor}`,
-          opacity: effectiveDone ? 0.4 : isLocked ? 0.55 : 1,
+          opacity: effectiveDone ? 0.4 : 1,
         }}
         aria-label={mission.title}
       >

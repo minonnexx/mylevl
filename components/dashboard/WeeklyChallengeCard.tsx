@@ -103,7 +103,7 @@ export function WeeklyChallengeCard({ challenge, weekStart, progress, isComplete
           style={{
             borderLeft: '3px solid var(--color-accent)',
             borderColor: 'color-mix(in srgb, var(--color-border) 60%, transparent)',
-            opacity: effectiveDone ? 0.5 : 1,
+            opacity: effectiveDone ? 0.4 : 1,
             transition: 'opacity 300ms ease',
           }}
         >

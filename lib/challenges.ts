@@ -72,6 +72,7 @@ export async function getWeeklyChallengeProgress(
       .select('id', { count: 'exact', head: true })
       .in('id', missionIds)
       .eq('life_class', challenge.life_class)
+      .in('type', ['daily', 'achievement'])
     return count ?? 0
   }
 
