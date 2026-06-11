@@ -147,6 +147,7 @@ export interface CustomMission {
   starts_at: string
   ends_at: string | null
   active: boolean
+  strict_mode: boolean
   created_at: string
 }
 
@@ -155,4 +156,12 @@ export interface CustomMissionCompletion {
   user_id: string
   custom_mission_id: string
   completed_at: string
+}
+
+export interface CustomMissionMilestone {
+  id: string
+  user_id: string
+  custom_mission_id: string
+  milestone_days: number
+  achieved_at: string
 }
