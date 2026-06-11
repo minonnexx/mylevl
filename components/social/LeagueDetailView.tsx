@@ -21,10 +21,28 @@ function getRankColor(rank: number): string {
   return RANK_COLORS[rank as keyof typeof RANK_COLORS] ?? 'var(--color-text-muted)'
 }
 
-function getMotivationalKey(rank: number, total: number): keyof typeof LEAGUE_MOTIVATIONAL_MESSAGES {
+function getMotivationalKey(
+  members: LeagueDetailMember[],
+  currentUserId: string,
+): keyof typeof LEAGUE_MOTIVATIONAL_MESSAGES {
+  const me = members.find(m => m.userId === currentUserId)
+  if (!me) return 'mid'
+
+  // Competition rank: 1 + number of members with strictly better score
+  const rank = 1 + members.filter(m =>
+    m.xp_earned > me.xp_earned ||
+    (m.xp_earned === me.xp_earned && m.missions_completed > me.missions_completed)
+  ).length
+
+  // Last: no member has a strictly worse score (and there are other members)
+  const isLast = members.length > 1 && !members.some(m =>
+    m.xp_earned < me.xp_earned ||
+    (m.xp_earned === me.xp_earned && m.missions_completed < me.missions_completed)
+  )
+
   if (rank === 1) return 'top1'
   if (rank <= 3) return 'top3'
-  if (rank === total) return 'last'
+  if (isLast) return 'last'
   return 'mid'
 }
 
@@ -34,8 +52,7 @@ interface LeagueDetailViewProps {
 
 export function LeagueDetailView({ league }: LeagueDetailViewProps) {
   const { members, currentUserId, totalMembersCount, invitableFriends } = league
-  const myRank = members.findIndex(m => m.userId === currentUserId) + 1
-  const motivationalKey = getMotivationalKey(myRank, members.length)
+  const motivationalKey = getMotivationalKey(members, currentUserId)
   const top3 = members.slice(0, 3)
   const rest = members.slice(3)
   const isFull = totalMembersCount >= LEAGUE_MAX_MEMBERS
