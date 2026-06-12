@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Settings } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { SettingsDrawer, type SettingsProfile } from './SettingsDrawer'
 import AvatarDisplay from '@/components/avatar/AvatarDisplay'
 
@@ -26,11 +27,15 @@ export function AppHeader({ username, globalLevel, profile }: AppHeaderProps) {
           borderBottom: '1px solid var(--color-border)',
         }}
       >
-        <div className="flex items-center gap-2.5">
-          <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 text-accent" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-            <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
-          </svg>
-          <span className="font-semibold text-text-primary tracking-tight">MyLevl</span>
+        <div className="flex items-center">
+          <Image
+            src="/logo.svg"
+            alt="MyLevl"
+            width={36}
+            height={36}
+            className="rounded-component"
+            priority
+          />
         </div>
 
         <div className="flex items-center gap-3">

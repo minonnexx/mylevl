@@ -21,6 +21,10 @@ export const metadata: Metadata = {
   title: "MyLevl",
   description: "Sube de nivel en la vida real",
   manifest: "/manifest.json",
+  icons: {
+    icon: '/favicon.png',
+    apple: '/logo-192.png',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -36,7 +40,7 @@ export default function RootLayout({
   return (
     <html lang="es" className={`${inter.variable} h-full antialiased`}>
       <head>
-        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+        <link rel="apple-touch-icon" href="/logo-192.png" />
       </head>
       <body className="min-h-full flex flex-col">
         <SplashScreen />

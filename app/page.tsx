@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { motion, useInView } from 'motion/react'
 import {
   Dumbbell,
@@ -47,26 +48,6 @@ function FadeSection({
     >
       {children}
     </motion.div>
-  )
-}
-
-// ── Logo mark ────────────────────────────────────────────────────
-function LogoMark({ size = 32 }: { size?: number }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      width={size}
-      height={size}
-      className="text-accent"
-      stroke="currentColor"
-      strokeWidth={1.6}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
-    </svg>
   )
 }
 
@@ -176,9 +157,15 @@ export default function LandingPage() {
 
       {/* ── Nav ── */}
       <nav className="relative z-10 flex items-center justify-between px-6 py-5 max-w-5xl mx-auto">
-        <div className="flex items-center gap-2">
-          <LogoMark size={22} />
-          <span className="font-semibold text-base text-text-primary tracking-tight">MyLevl</span>
+        <div className="flex items-center">
+          <Image
+            src="/logo.svg"
+            alt="MyLevl"
+            width={40}
+            height={40}
+            className="rounded-component"
+            priority
+          />
         </div>
         <div className="flex items-center gap-3">
           <Link
@@ -193,6 +180,17 @@ export default function LandingPage() {
       {/* ── 1. Hero ── */}
       <section className="relative z-10 flex flex-col items-center text-center px-6 pt-20 pb-28 max-w-4xl mx-auto">
         <FadeSection>
+          <Image
+            src="/logo.svg"
+            alt="MyLevl"
+            width={96}
+            height={96}
+            className="rounded-card mb-8"
+            priority
+          />
+        </FadeSection>
+
+        <FadeSection delay={0.03}>
           <div
             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-pill text-xs font-medium text-accent mb-8"
             style={{ background: 'rgba(127,119,221,0.1)', border: '1px solid rgba(127,119,221,0.2)' }}
