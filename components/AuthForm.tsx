@@ -1,6 +1,7 @@
 'use client'
 
 import { useActionState, useState } from 'react'
+import { Eye, EyeOff, AlertCircle } from 'lucide-react'
 import { authenticate, type AuthState } from '@/app/auth/actions'
 
 const initialState: AuthState = { error: '' }
@@ -13,12 +14,46 @@ const inputClass =
 
 function FieldLabel({ htmlFor, children }: { htmlFor: string; children: React.ReactNode }) {
   return (
-    <label
-      htmlFor={htmlFor}
-      className="text-xs font-medium text-text-secondary tracking-wide"
-    >
+    <label htmlFor={htmlFor} className="text-xs font-medium text-text-secondary tracking-wide">
       {children}
     </label>
+  )
+}
+
+function PasswordInput({
+  id,
+  name,
+  autoComplete,
+  placeholder = '••••••••',
+}: {
+  id: string
+  name: string
+  autoComplete: string
+  placeholder?: string
+}) {
+  const [visible, setVisible] = useState(false)
+
+  return (
+    <div className="relative">
+      <input
+        id={id}
+        name={name}
+        type={visible ? 'text' : 'password'}
+        placeholder={placeholder}
+        required
+        autoComplete={autoComplete}
+        className={inputClass + ' pr-12'}
+      />
+      <button
+        type="button"
+        onClick={() => setVisible((v) => !v)}
+        aria-label={visible ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+        className="absolute right-0 top-0 h-full w-12 flex items-center justify-center text-text-muted hover:text-text-primary transition-colors"
+        style={{ minHeight: '44px' }}
+      >
+        {visible ? <EyeOff size={16} /> : <Eye size={16} />}
+      </button>
+    </div>
   )
 }
 
@@ -46,36 +81,34 @@ export default function AuthForm() {
 
       <div className="flex flex-col gap-1.5">
         <FieldLabel htmlFor="password">Contraseña</FieldLabel>
-        <input
+        <PasswordInput
           id="password"
           name="password"
-          type="password"
-          placeholder="••••••••"
-          required
           autoComplete={isLogin ? 'current-password' : 'new-password'}
-          className={inputClass}
         />
       </div>
+
+      {!isLogin && (
+        <div className="flex flex-col gap-1.5">
+          <FieldLabel htmlFor="invite_code">Código de acceso</FieldLabel>
+          <input
+            id="invite_code"
+            name="invite_code"
+            type="text"
+            placeholder="Tu código de invitación"
+            required
+            autoComplete="off"
+            className={inputClass}
+          />
+        </div>
+      )}
 
       {state.error && (
         <div
           role="alert"
           className="flex items-start gap-3 text-sm text-error bg-error/8 border border-error/20 rounded-component px-4 py-3"
         >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            className="w-4 h-4 mt-0.5 flex-shrink-0"
-            stroke="currentColor"
-            strokeWidth={2}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden
-          >
-            <circle cx="12" cy="12" r="10" />
-            <line x1="12" y1="8" x2="12" y2="12" />
-            <line x1="12" y1="16" x2="12.01" y2="16" />
-          </svg>
+          <AlertCircle size={16} className="mt-0.5 flex-shrink-0" aria-hidden />
           {state.error}
         </div>
       )}
