@@ -67,12 +67,14 @@ export default function AuthForm() {
       <input type="hidden" name="mode" value={mode} />
 
       <div className="flex flex-col gap-1.5">
-        <FieldLabel htmlFor="email">Email</FieldLabel>
+        <FieldLabel htmlFor="email">
+          {isLogin ? 'Email o nombre de héroe' : 'Email'}
+        </FieldLabel>
         <input
           id="email"
           name="email"
-          type="email"
-          placeholder="tu@email.com"
+          type={isLogin ? 'text' : 'email'}
+          placeholder={isLogin ? 'tu@email.com o nombre_héroe' : 'tu@email.com'}
           required
           autoComplete="email"
           className={inputClass}
