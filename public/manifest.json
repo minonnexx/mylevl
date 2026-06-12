@@ -1,6 +1,6 @@
 {
-  "name": "mylevl",
-  "short_name": "mylevl",
+  "name": "MyLevl",
+  "short_name": "MyLevl",
   "description": "Sube de nivel en la vida real",
   "start_url": "/dashboard",
   "display": "standalone",

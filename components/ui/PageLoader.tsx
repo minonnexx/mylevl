@@ -24,7 +24,7 @@ export default function PageLoader() {
           lineHeight: 1,
         }}
       >
-        mylevl
+        MyLevl
       </span>
       <div
         style={{

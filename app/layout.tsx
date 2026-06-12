@@ -18,13 +18,13 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "mylevl",
+  title: "MyLevl",
   description: "Sube de nivel en la vida real",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "mylevl",
+    title: "MyLevl",
   },
 };
 

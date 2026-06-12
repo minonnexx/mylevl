@@ -38,7 +38,7 @@ export default function AuthPage() {
         <div className="text-center mb-8">
           <LogoMark />
           <h1 className="text-2xl font-semibold text-text-primary tracking-tight">
-            Mylevl
+            MyLevl
           </h1>
           <p className="mt-2 text-sm text-text-muted leading-relaxed">
             Sube de nivel en la vida real

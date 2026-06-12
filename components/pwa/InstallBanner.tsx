@@ -88,7 +88,7 @@ export default function InstallBanner() {
           <Share size={18} className="shrink-0 mt-0.5 text-[var(--color-accent)]" />
           <p className="text-sm text-[var(--color-text-primary)] flex-1">
             Pulsa <strong>Compartir</strong> en Safari y luego{' '}
-            <strong>Añadir a inicio</strong> para instalar mylevl.
+            <strong>Añadir a inicio</strong> para instalar MyLevl.
           </p>
           <button
             onClick={handleDismiss}
@@ -101,7 +101,7 @@ export default function InstallBanner() {
       ) : (
         <div className="flex items-center gap-3">
           <p className="text-sm text-[var(--color-text-primary)] flex-1">
-            Añade mylevl a tu pantalla de inicio
+            Añade MyLevl a tu pantalla de inicio
           </p>
           <button
             onClick={handleInstall}

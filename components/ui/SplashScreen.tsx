@@ -56,7 +56,7 @@ export default function SplashScreen() {
             transition={{ delay: 0.3, duration: 0.4 }}
             style={{ fontSize: '1.5rem', fontWeight: 600, color: 'var(--color-accent)' }}
           >
-            mylevl
+            MyLevl
           </motion.p>
           <motion.p
             initial={{ opacity: 0 }}
