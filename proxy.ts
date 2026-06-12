@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-const PROTECTED = ['/dashboard', '/missions', '/profile']
+const PROTECTED = ['/dashboard', '/missions', '/profile', '/achievements', '/social', '/recap', '/onboarding', '/avatar', '/u/']
 const AUTH_ONLY  = ['/auth']
 
 export async function proxy(request: NextRequest) {
@@ -27,12 +27,19 @@ export async function proxy(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   const { pathname } = request.nextUrl
 
-  if (!user && PROTECTED.some((p) => pathname.startsWith(p))) {
-    return NextResponse.redirect(new URL('/auth', request.url))
+  // Authenticated user on root → dashboard
+  if (user && pathname === '/') {
+    return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
+  // Authenticated user on auth page → dashboard
   if (user && AUTH_ONLY.some((p) => pathname.startsWith(p))) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
+  }
+
+  // Unauthenticated user on protected route → auth
+  if (!user && PROTECTED.some((p) => pathname.startsWith(p))) {
+    return NextResponse.redirect(new URL('/auth', request.url))
   }
 
   return response
