@@ -29,7 +29,7 @@ export function AppHeader({ username, globalLevel, profile }: AppHeaderProps) {
       >
         <div className="flex items-center">
           <Image
-            src="/logo.svg"
+            src="/isotipo.png"
             alt="MyLevl"
             width={36}
             height={36}

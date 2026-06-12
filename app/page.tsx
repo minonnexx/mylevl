@@ -159,7 +159,7 @@ export default function LandingPage() {
       <nav className="relative z-10 flex items-center justify-between px-6 py-5 max-w-5xl mx-auto">
         <div className="flex items-center">
           <Image
-            src="/logo.svg"
+            src="/isotipo.png"
             alt="MyLevl"
             width={40}
             height={40}
@@ -181,7 +181,7 @@ export default function LandingPage() {
       <section className="relative z-10 flex flex-col items-center text-center px-6 pt-20 pb-28 max-w-4xl mx-auto">
         <FadeSection>
           <Image
-            src="/logo.svg"
+            src="/logo-512.png"
             alt="MyLevl"
             width={96}
             height={96}
