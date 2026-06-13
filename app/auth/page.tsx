@@ -21,8 +21,7 @@ export default function AuthPage() {
           <img
             src="/logo2.png"
             alt="MyLevl"
-            style={{ display: 'block', height: 88, width: 88, margin: '0 auto 20px' }}
-            className="rounded-card"
+            className="block rounded-card mx-auto mb-5 h-28 md:h-40 w-auto"
           />
           <p className="mt-2 text-sm text-text-muted leading-relaxed">
             Sube de nivel en la vida real

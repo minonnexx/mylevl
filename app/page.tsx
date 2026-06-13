@@ -156,13 +156,12 @@ export default function LandingPage() {
 
       {/* ── Nav ── */}
       <nav className="relative z-10 flex items-center justify-between px-6 py-5 max-w-5xl mx-auto">
-        <div className="flex items-center">
+        <div style={{ height: 32, overflow: 'hidden' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/isotipo.svg"
+            src="/logo2.png"
             alt="MyLevl"
-            height={38}
-            style={{ width: 'auto', height: 38 }}
+            style={{ display: 'block', height: 55, width: 55 }}
           />
         </div>
         <div className="flex items-center gap-3">
@@ -182,8 +181,7 @@ export default function LandingPage() {
           <img
             src="/logo2.png"
             alt="MyLevl"
-            style={{ display: 'block', height: 120, width: 120 }}
-            className="rounded-card mb-8 mx-auto"
+            className="block rounded-card mb-8 mx-auto h-28 md:h-40 w-auto"
           />
         </FadeSection>
 

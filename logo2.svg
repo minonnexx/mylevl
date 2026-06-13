@@ -2,15 +2,15 @@
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 20010904//EN"
  "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
 <svg version="1.0" xmlns="http://www.w3.org/2000/svg"
- viewBox="265 240 520 320" width="520" height="320"
+ width="1024.000000pt" height="1024.000000pt" viewBox="0 0 1024.000000 1024.000000"
  preserveAspectRatio="xMidYMid meet">
 
 <g transform="translate(0.000000,1024.000000) scale(0.100000,-0.100000)"
-fill="#FFFFFF" stroke="none">
+fill="#000000" stroke="none">
 <path d="M3300 7748 c41 -45 50 -53 50 -45 0 2 -21 23 -47 47 l-48 45 45 -47z"/>
 <path d="M3215 6410 c0 -751 1 -1058 2 -682 2 375 2 989 0 1365 -1 375 -2 68
 -2 -683z"/>
-<path fill="#7F77DD" d="M6012 7467 l-272 -272 0 -1353 0 -1352 965 0 c531 0 965 2 965 5 0 2
+<path d="M6012 7467 l-272 -272 0 -1353 0 -1352 965 0 c531 0 965 2 965 5 0 2
 -80 105 -178 227 -98 123 -187 235 -196 251 l-18 27 -489 0 -489 0 0 1370 c0
 754 -3 1370 -8 1370 -4 0 -130 -123 -280 -273z"/>
 <path d="M3500 7555 c52 -52 97 -95 100 -95 2 0 -38 43 -90 95 -52 52 -97 95
