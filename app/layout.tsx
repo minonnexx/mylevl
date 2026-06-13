@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   description: "Sube de nivel en la vida real",
   manifest: "/manifest.json",
   icons: {
-    icon: '/favicon.png',
+    icon: '/logo-512.png',
     apple: '/logo-192.png',
   },
   appleWebApp: {

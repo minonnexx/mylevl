@@ -20,7 +20,7 @@ export default function PageLoader() {
       <img
         src="/logo-text.png"
         alt="MyLevl"
-        style={{ display: 'block', height: 40, width: 'auto' }}
+        style={{ display: 'block', height: 32, width: 'auto' }}
       />
       <div
         style={{
