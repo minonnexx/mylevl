@@ -2,7 +2,6 @@
 
 import { useRef, useState } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { motion, useInView } from 'motion/react'
 import {
   Dumbbell,
@@ -158,13 +157,12 @@ export default function LandingPage() {
       {/* ── Nav ── */}
       <nav className="relative z-10 flex items-center justify-between px-6 py-5 max-w-5xl mx-auto">
         <div className="flex items-center">
-          <Image
-            src="/isotipo.png"
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/isotipo.svg"
             alt="MyLevl"
-            width={40}
-            height={40}
-            className="rounded-component"
-            priority
+            height={38}
+            style={{ width: 'auto', height: 38 }}
           />
         </div>
         <div className="flex items-center gap-3">
@@ -180,13 +178,13 @@ export default function LandingPage() {
       {/* ── 1. Hero ── */}
       <section className="relative z-10 flex flex-col items-center text-center px-6 pt-20 pb-28 max-w-4xl mx-auto">
         <FadeSection>
-          <Image
-            src="/logo-512.png"
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo.svg"
             alt="MyLevl"
-            width={96}
-            height={96}
-            className="rounded-card mb-8"
-            priority
+            height={130}
+            style={{ width: 'auto', height: 130 }}
+            className="mb-8"
           />
         </FadeSection>
 

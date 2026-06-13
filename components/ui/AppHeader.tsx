@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { Settings } from 'lucide-react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { SettingsDrawer, type SettingsProfile } from './SettingsDrawer'
 import AvatarDisplay from '@/components/avatar/AvatarDisplay'
 
@@ -28,13 +27,12 @@ export function AppHeader({ username, globalLevel, profile }: AppHeaderProps) {
         }}
       >
         <div className="flex items-center">
-          <Image
-            src="/isotipo.png"
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/isotipo.svg"
             alt="MyLevl"
-            width={36}
-            height={36}
-            className="rounded-component"
-            priority
+            height={34}
+            style={{ width: 'auto', height: 34 }}
           />
         </div>
 
