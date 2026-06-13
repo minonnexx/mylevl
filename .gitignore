@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Logo source files (raw, not for deployment)
+logo.png
+logo.svg
+logo2.png
+logo2.svg
