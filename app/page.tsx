@@ -180,11 +180,10 @@ export default function LandingPage() {
         <FadeSection>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/logo.svg"
+            src="/logo-512.png"
             alt="MyLevl"
-            height={130}
-            style={{ width: 'auto', height: 130 }}
-            className="mb-8"
+            style={{ display: 'block', height: 120, width: 120 }}
+            className="rounded-card mb-8 mx-auto"
           />
         </FadeSection>
 

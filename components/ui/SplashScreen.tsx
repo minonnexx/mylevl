@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { Shield } from 'lucide-react'
 
 export default function SplashScreen() {
   const [show, setShow] = useState(true)
@@ -48,16 +47,13 @@ export default function SplashScreen() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
           >
-            <Shield size={64} color="var(--color-accent)" strokeWidth={1.5} />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo-512.png"
+              alt="MyLevl"
+              style={{ display: 'block', height: 170, width: 170, borderRadius: 'var(--radius-card)' }}
+            />
           </motion.div>
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3, duration: 0.4 }}
-            style={{ fontSize: '1.5rem', fontWeight: 600, color: 'var(--color-accent)' }}
-          >
-            MyLevl
-          </motion.p>
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

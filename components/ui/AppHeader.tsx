@@ -26,13 +26,12 @@ export function AppHeader({ username, globalLevel, profile }: AppHeaderProps) {
           borderBottom: '1px solid var(--color-border)',
         }}
       >
-        <div className="flex items-center">
+        <div style={{ height: 32, overflow: 'hidden' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/isotipo.svg"
+            src="/logo-512.png"
             alt="MyLevl"
-            height={34}
-            style={{ width: 'auto', height: 34 }}
+            style={{ display: 'block', height: 55, width: 55 }}
           />
         </div>
 
