@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { Sword, Swords, Zap, Shield, User, Dumbbell, BookOpen, Star } from 'lucide-react'
+import { Sword, Swords, Zap, Shield, User, Dumbbell, BookOpen, Star, ChevronLeft } from 'lucide-react'
+import { toast } from 'sonner'
 import { completeOnboarding, checkUsernameAvailable } from '@/app/onboarding/actions'
 import { PACK_LIST } from '@/lib/constants/packs'
 import AvatarCreator from '@/components/avatar/AvatarCreator'
@@ -61,9 +62,17 @@ const DIALOGUE = [
 
 const sleep = (ms: number) => new Promise<void>(res => setTimeout(res, ms))
 
-function UsernameStep({ onNext }: { onNext: (username: string, dateOfBirth: string) => void }) {
-  const [username, setUsername] = useState('')
-  const [dateOfBirth, setDateOfBirth] = useState('')
+function UsernameStep({
+  initialUsername,
+  initialDateOfBirth,
+  onNext,
+}: {
+  initialUsername: string
+  initialDateOfBirth: string
+  onNext: (username: string, dateOfBirth: string) => void
+}) {
+  const [username, setUsername] = useState(initialUsername)
+  const [dateOfBirth, setDateOfBirth] = useState(initialDateOfBirth)
   const [usernameError, setUsernameError] = useState('')
   const [dobError, setDobError] = useState('')
   const [isChecking, setIsChecking] = useState(false)
@@ -310,18 +319,30 @@ function PackStep({
   username,
   dateOfBirth,
   avatarConfig,
+  initialPack,
+  onPackChange,
 }: {
   username: string
   dateOfBirth: string
   avatarConfig: AvatarConfig | null
+  initialPack: PackId | null
+  onPackChange: (pack: PackId) => void
 }) {
-  const [selected, setSelected] = useState<PackId | null>(null)
+  const [selected, setSelected] = useState<PackId | null>(initialPack)
   const [isPending, startTransition] = useTransition()
+
+  const handleSelect = (pack: PackId) => {
+    setSelected(pack)
+    onPackChange(pack)
+  }
 
   const handleConfirm = () => {
     if (!selected) return
     startTransition(async () => {
-      await completeOnboarding(username, dateOfBirth, selected, avatarConfig)
+      const result = await completeOnboarding(username, dateOfBirth, selected, avatarConfig)
+      if (result?.error) {
+        toast.error(result.error)
+      }
     })
   }
 
@@ -340,7 +361,7 @@ function PackStep({
           return (
             <button
               key={pack.id}
-              onClick={() => setSelected(pack.id)}
+              onClick={() => handleSelect(pack.id)}
               className="flex flex-col gap-3 p-4 rounded-card text-left transition-all duration-150"
               style={{
                 background: 'var(--color-surface)',
@@ -412,10 +433,15 @@ function PackStep({
 
 export function OnboardingFlow() {
   const [step, setStep] = useState(0)
-  const [userData, setUserData] = useState<{ username: string; dateOfBirth: string } | null>(null)
-  const [avatarConfig, setAvatarConfig] = useState<AvatarConfig | null>(null)
+  const [onboardingData, setOnboardingData] = useState({
+    username: '',
+    dateOfBirth: '',
+    avatarConfig: null as AvatarConfig | null,
+    activePack: null as PackId | null,
+  })
 
   const goNext = () => setStep(s => s + 1)
+  const goBack = () => setStep(s => s - 1)
   const skipToUsername = () => setStep(3)
 
   const touchStartX = useRef(0)
@@ -431,14 +457,37 @@ export function OnboardingFlow() {
     else if (dx > 50 && step > 0) setStep(s => s - 1)
   }
 
+  const BackButton = () => (
+    <button
+      onClick={goBack}
+      aria-label="Volver"
+      style={{
+        position: 'absolute',
+        top: '24px',
+        left: '24px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minWidth: '44px',
+        minHeight: '44px',
+        color: 'var(--color-text-muted)',
+        background: 'none',
+        border: 'none',
+        cursor: 'pointer',
+        padding: 0,
+      }}
+    >
+      <ChevronLeft size={22} />
+    </button>
+  )
+
   // Step 5: immersive character intro — full screen, no dots, no nav
   if (step === 5) {
     return (
-      <div
-        className="min-h-screen bg-background flex flex-col items-center justify-center px-6"
-      >
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 relative">
+        <BackButton />
         <CharacterIntroStep
-          avatarConfig={avatarConfig}
+          avatarConfig={onboardingData.avatarConfig}
           onNext={() => setStep(6)}
         />
       </div>
@@ -446,8 +495,6 @@ export function OnboardingFlow() {
   }
 
   // Steps 0-4 and 6: standard layout with progress indicator
-  // Dots: 5 total representing the 5 non-immersive phases
-  // 0→intro(0-2), 1→username(3), 2→avatar(4), 3→pack(6) + 1 extra = map step to dot
   const dotStep =
     step <= 2 ? 0 :
     step === 3 ? 1 :
@@ -461,6 +508,8 @@ export function OnboardingFlow() {
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
+      {step > 0 && <BackButton />}
+
       {step < 3 && (
         <button
           onClick={skipToUsername}
@@ -506,8 +555,10 @@ export function OnboardingFlow() {
                 })()
               ) : step === 3 ? (
                 <UsernameStep
+                  initialUsername={onboardingData.username}
+                  initialDateOfBirth={onboardingData.dateOfBirth}
                   onNext={(username, dateOfBirth) => {
-                    setUserData({ username, dateOfBirth })
+                    setOnboardingData(prev => ({ ...prev, username, dateOfBirth }))
                     setStep(4)
                   }}
                 />
@@ -522,17 +573,22 @@ export function OnboardingFlow() {
                     </p>
                   </div>
                   <AvatarCreator
+                    initialConfig={onboardingData.avatarConfig}
                     onComplete={cfg => {
-                      setAvatarConfig(cfg)
+                      setOnboardingData(prev => ({ ...prev, avatarConfig: cfg }))
                       setStep(5)
                     }}
                   />
                 </div>
               ) : (
                 <PackStep
-                  username={userData?.username ?? ''}
-                  dateOfBirth={userData?.dateOfBirth ?? ''}
-                  avatarConfig={avatarConfig}
+                  username={onboardingData.username}
+                  dateOfBirth={onboardingData.dateOfBirth}
+                  avatarConfig={onboardingData.avatarConfig}
+                  initialPack={onboardingData.activePack}
+                  onPackChange={pack =>
+                    setOnboardingData(prev => ({ ...prev, activePack: pack }))
+                  }
                 />
               )}
             </motion.div>
