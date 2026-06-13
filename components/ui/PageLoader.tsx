@@ -19,7 +19,7 @@ export default function PageLoader() {
       <div style={{ height: 30, overflow: 'hidden', width: 160 }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/logo-512.png"
+          src="/logo2.png"
           alt="MyLevl"
           style={{ display: 'block', height: 160, width: 160, marginTop: -112 }}
         />

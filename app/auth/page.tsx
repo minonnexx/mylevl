@@ -1,24 +1,5 @@
 import AuthForm from '@/components/AuthForm'
 
-function LogoMark() {
-  return (
-    <div className="mx-auto mb-5 w-14 h-14 rounded-card bg-accent/10 border border-accent/25 flex items-center justify-center">
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        className="w-7 h-7 text-accent"
-        stroke="currentColor"
-        strokeWidth={1.6}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden
-      >
-        <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
-      </svg>
-    </div>
-  )
-}
-
 export default function AuthPage() {
   return (
     <main className="min-h-screen bg-background flex items-center justify-center px-4">
@@ -36,10 +17,13 @@ export default function AuthPage() {
 
       <div className="w-full max-w-sm relative">
         <div className="text-center mb-8">
-          <LogoMark />
-          <h1 className="text-2xl font-semibold text-text-primary tracking-tight">
-            MyLevl
-          </h1>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo2.png"
+            alt="MyLevl"
+            style={{ display: 'block', height: 88, width: 88, margin: '0 auto 20px' }}
+            className="rounded-card"
+          />
           <p className="mt-2 text-sm text-text-muted leading-relaxed">
             Sube de nivel en la vida real
           </p>

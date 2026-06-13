@@ -49,7 +49,7 @@ export default function SplashScreen() {
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/logo-512.png"
+              src="/logo2.png"
               alt="MyLevl"
               style={{ display: 'block', height: 170, width: 170, borderRadius: 'var(--radius-card)' }}
             />

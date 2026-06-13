@@ -29,7 +29,7 @@ export function AppHeader({ username, globalLevel, profile }: AppHeaderProps) {
         <div style={{ height: 32, overflow: 'hidden' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/logo-512.png"
+            src="/logo2.png"
             alt="MyLevl"
             style={{ display: 'block', height: 55, width: 55 }}
           />
