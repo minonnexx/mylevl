@@ -16,16 +16,12 @@ export default function PageLoader() {
         backgroundColor: 'var(--color-background)',
       }}
     >
-      <span
-        style={{
-          color: 'var(--color-text-primary)',
-          fontSize: '1.25rem',
-          fontWeight: 600,
-          lineHeight: 1,
-        }}
-      >
-        mylevl
-      </span>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/logo-text.png"
+        alt="MyLevl"
+        style={{ display: 'block', height: 40, width: 'auto' }}
+      />
       <div
         style={{
           width: '80px',

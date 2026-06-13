@@ -181,7 +181,7 @@ export default function LandingPage() {
           <img
             src="/logo2.png"
             alt="MyLevl"
-            className="block rounded-card mb-8 mx-auto h-28 md:h-40 w-auto"
+            className="block rounded-card mb-4 mx-auto h-48 md:h-56 w-auto"
           />
         </FadeSection>
 
