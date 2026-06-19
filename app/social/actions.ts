@@ -195,14 +195,16 @@ export async function createLeague(name: string, invitedUserIds: string[]) {
 
   if (leagueError) return { error: leagueError.message }
 
-  const members = [
-    { league_id: league.id, user_id: user.id, status: 'accepted' },
-    ...invitedUserIds.map(uid => ({ league_id: league.id, user_id: uid, status: 'pending' })),
-  ]
+  const { error: creatorError } = await supabase
+    .from('league_members')
+    .insert({ league_id: league.id, user_id: user.id, status: 'accepted' })
 
+  if (creatorError) return { error: creatorError.message }
+
+  const invites = invitedUserIds.map(uid => ({ league_id: league.id, user_id: uid, status: 'pending' }))
   const { error: membersError } = await supabase
     .from('league_members')
-    .insert(members)
+    .insert(invites)
 
   if (membersError) return { error: membersError.message }
 
