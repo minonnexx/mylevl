@@ -27,6 +27,19 @@ export async function proxy(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   const { pathname } = request.nextUrl
 
+  // Authenticated user: check onboarding before any other redirect
+  if (user && !pathname.startsWith('/onboarding') && !pathname.startsWith('/api/')) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('onboarding_completed')
+      .eq('id', user.id)
+      .single()
+
+    if (!profile || !profile.onboarding_completed) {
+      return NextResponse.redirect(new URL('/onboarding', request.url))
+    }
+  }
+
   // Authenticated user on root → dashboard
   if (user && pathname === '/') {
     return NextResponse.redirect(new URL('/dashboard', request.url))
