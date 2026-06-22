@@ -27,8 +27,8 @@ export async function proxy(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   const { pathname } = request.nextUrl
 
-  // Authenticated user: check onboarding before any other redirect
-  if (user && !pathname.startsWith('/onboarding') && !pathname.startsWith('/api/')) {
+  // Authenticated user on protected route: check onboarding
+  if (user && PROTECTED.some(p => pathname.startsWith(p)) && !pathname.startsWith('/onboarding')) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('onboarding_completed')
