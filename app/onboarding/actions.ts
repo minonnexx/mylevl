@@ -52,7 +52,8 @@ export async function completeOnboarding(
 
   await supabase
     .from('profiles')
-    .update({
+    .upsert({
+      id: user.id,
       username,
       onboarding_completed: true,
       date_of_birth: dateOfBirth,
@@ -60,7 +61,6 @@ export async function completeOnboarding(
       active_pack: activePack,
       avatar_config: avatarConfig,
     })
-    .eq('id', user.id)
 
   redirect('/dashboard')
 }
