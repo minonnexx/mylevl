@@ -37,7 +37,7 @@ export function AppHeader({ username, globalLevel, profile }: AppHeaderProps) {
 
         <div className="flex items-center gap-3">
           {globalLevel != null && (
-            <span className="text-xs font-bold text-accent bg-accent/12 border border-accent/20 px-3 py-1 rounded-pill tabular-nums">
+            <span className="text-xs font-black text-accent bg-accent/12 border border-accent/30 px-3 py-1 rounded-pill tabular-nums tracking-wide">
               LVL {globalLevel}
             </span>
           )}

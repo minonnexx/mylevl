@@ -5,15 +5,14 @@ import type { Mission, Profile } from '@/types/supabase'
 import Sidebar from '@/components/dashboard/Sidebar'
 import BottomNav from '@/components/dashboard/BottomNav'
 import { MissionAreaWrapper } from '@/components/dashboard/MissionAreaWrapper'
-import { XpBar } from '@/components/dashboard/XpBar'
-import { ShieldIndicator } from '@/components/ui/ShieldIndicator'
+import { PlayerCard } from '@/components/dashboard/PlayerCard'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { Sword, Flame } from 'lucide-react'
+import { Sword } from 'lucide-react'
 import { AppHeader } from '@/components/ui/AppHeader'
-import AvatarDisplay from '@/components/avatar/AvatarDisplay'
 import { WeeklyChallengeCard } from '@/components/dashboard/WeeklyChallengeCard'
 import { getCurrentWeekStart, getOrCreateWeeklyChallenge, getWeeklyChallengeProgress } from '@/lib/challenges'
 import { CustomMissionsDashboardSection } from '@/components/dashboard/CustomMissionsDashboardSection'
+import { SectionHeader } from '@/components/ui/SectionHeader'
 import type { CustomMission } from '@/types/supabase'
 
 function StatRow({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: number; sub: string }) {
@@ -43,7 +42,7 @@ export default async function DashboardPage() {
 
   const weekStart = getCurrentWeekStart()
 
-  const [profileRes, completedRes, completedTodayRes, customMissionsRes, customCompletionsRes] = await Promise.all([
+  const [profileRes, completedRes, completedTodayRes, customMissionsRes, customCompletionsRes, classProgressRes] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', user.id).single(),
     supabase.from('completed_missions').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
     supabase.from('completed_missions').select('mission_id').eq('user_id', user.id).gte('completed_at', todayUTC.toISOString()),
@@ -52,6 +51,7 @@ export default async function DashboardPage() {
       .select('custom_mission_id, completed_at')
       .eq('user_id', user.id)
       .order('completed_at', { ascending: false }),
+    supabase.from('class_progress').select('life_class, points').eq('user_id', user.id),
   ])
 
   if (profileRes.data && !profileRes.data.onboarding_completed && !profileRes.data.username) {
@@ -139,6 +139,7 @@ export default async function DashboardPage() {
   const showShieldNotification = !!profile.shield_used_at && !profile.shield_notification_shown
 
   const completedCount = completedRes.count ?? 0
+  const classStats = (classProgressRes.data ?? []) as { life_class: 'fisico' | 'mental' | 'disciplina'; points: number }[]
   const completedTodayIds = new Set((completedTodayRes.data ?? []).map(c => c.mission_id as string))
 
   const dailyMissions = (dailyMissionsRes.data as Mission[] | null) ?? []
@@ -200,20 +201,20 @@ export default async function DashboardPage() {
               {/* ── LEFT: Daily mission queue ───────────────────────────── */}
               <div className="flex flex-col gap-5">
 
-                {/* Section header with progress */}
-                <div className="border-b border-border/40 pb-2 flex items-center justify-between">
-                  <h2 className="text-[11px] font-medium text-text-muted uppercase tracking-wider">
-                    Misiones diarias
-                  </h2>
-                  {dailyMissions.length > 0 && (
-                    <span className="text-xs text-text-muted tabular-nums">
-                      <span className="text-text-primary font-semibold">
-                        {dailyMissions.length - pendingDaily.length}
+                <SectionHeader
+                  title="Misiones diarias"
+                  accentColor="var(--color-accent)"
+                  right={
+                    dailyMissions.length > 0 ? (
+                      <span className="text-xs text-text-muted tabular-nums">
+                        <span className="text-text-primary font-semibold">
+                          {dailyMissions.length - pendingDaily.length}
+                        </span>
+                        /{dailyMissions.length} completadas
                       </span>
-                      /{dailyMissions.length} completadas
-                    </span>
-                  )}
-                </div>
+                    ) : undefined
+                  }
+                />
 
                 {/* All daily done → banner */}
                 {allDailyDone && (
@@ -280,71 +281,20 @@ export default async function DashboardPage() {
               {/* ── RIGHT: Player + Stats ───────────────────────────────── */}
               <div className="flex flex-col gap-4">
 
-                {/* Player card */}
-                <div className="bg-surface rounded-card p-6 border border-border/60 flex flex-col gap-5">
-                  <div className="flex items-center gap-4">
-                    <Link
-                      href={`/u/${profile.username}`}
-                      aria-label={`Ver perfil público de ${profile.username ?? 'jugador'}`}
-                      className="flex-shrink-0 transition-opacity hover:opacity-75"
-                    >
-                      {profile.avatar_config ? (
-                        <AvatarDisplay config={profile.avatar_config} size={64} />
-                      ) : (
-                        <div
-                          className="w-16 h-16 rounded-full flex items-center justify-center"
-                          style={{
-                            background: 'var(--color-surface)',
-                            border: '1px solid color-mix(in srgb, var(--color-accent) 30%, transparent)',
-                          }}
-                        >
-                          <span className="text-accent font-bold text-base leading-none select-none">
-                            {(profile.username ?? 'JU').slice(0, 2).toUpperCase()}
-                          </span>
-                        </div>
-                      )}
-                    </Link>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-text-primary truncate">{profile.username ?? 'Jugador'}</p>
-                      <p className="text-xs text-text-muted mt-0.5">Nivel {profile.global_level} · Jugador</p>
-                    </div>
-                    <ShieldIndicator
-                      shieldCount={profile.shield_count}
-                      streakProgress={profile.current_streak % 7}
-                      size="sm"
-                    />
-                  </div>
-                  <XpBar current={profile.current_xp} total={profile.xp_to_next_level} />
-                </div>
+                <PlayerCard
+                  username={profile.username}
+                  globalLevel={profile.global_level}
+                  currentXp={profile.current_xp}
+                  xpToNextLevel={profile.xp_to_next_level}
+                  currentStreak={profile.current_streak}
+                  shieldCount={profile.shield_count}
+                  avatarConfig={profile.avatar_config}
+                  classStats={classStats}
+                />
 
-                {/* Streak empty state — shown when user has no active streak */}
-                {profile.current_streak === 0 && (
-                  <div className="bg-surface rounded-card border border-border/60">
-                    <EmptyState
-                      icon={<Flame size={40} strokeWidth={1.5} aria-hidden />}
-                      title="Empieza tu racha hoy"
-                      description="Completa una misión cada día para mantenerla"
-                    />
-                  </div>
-                )}
-
-                {/* Stats card — p-6 standardized */}
+                {/* Stats card */}
                 <div className="bg-surface rounded-card p-6 border border-border/60">
-                  <div className="border-b border-border/40 pb-2 mb-4">
-                    <h2 className="text-[11px] font-medium text-text-muted uppercase tracking-wider">
-                      Estadísticas
-                    </h2>
-                  </div>
-                  <StatRow
-                    label="Racha actual"
-                    value={profile.current_streak}
-                    sub={profile.current_streak === 1 ? 'día' : 'días'}
-                    icon={
-                      <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                        <path d="M12 2C6 2 2 7 2 12c0 2.8 1.2 5.3 3.1 7 .5-2.6 1.9-5 4.9-6-1.2 2-1 4.5.5 6.3C11 20 11.5 20.7 12 21c.5-.3 1-.7 1.5-1.7 1.5-1.8 1.7-4.3.5-6.3 3 1 4.4 3.4 4.9 6C20.8 17.3 22 14.8 22 12c0-5-4-10-10-10z" />
-                      </svg>
-                    }
-                  />
+                  <SectionHeader title="Estadísticas" className="mb-4" />
                   <StatRow
                     label="Misiones completadas"
                     value={completedCount}

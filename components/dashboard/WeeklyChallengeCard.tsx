@@ -115,7 +115,7 @@ export function WeeklyChallengeCard({ challenge, weekStart, progress, isComplete
               </p>
             </div>
             <div className="flex-shrink-0 text-right">
-              <p className="text-lg font-bold tabular-nums" style={{ color: 'var(--color-accent)' }}>
+              <p className="text-lg font-black tabular-nums" style={{ color: 'var(--color-accent)' }}>
                 +{challenge.xp_reward}
               </p>
               <p className="text-[11px] font-medium" style={{ color: 'var(--color-text-muted)' }}>XP</p>

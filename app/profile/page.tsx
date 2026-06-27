@@ -261,7 +261,7 @@ function StatsGrid({ profile, completedCount, totalXp }: {
               <span className="text-text-muted">{icon}</span>
             </div>
             <div>
-              <p className="text-2xl md:text-3xl font-bold text-text-primary tabular-nums leading-none">{value}</p>
+              <p className="text-2xl md:text-3xl font-black text-text-primary tabular-nums leading-none">{value}</p>
               <p className="text-xs text-text-muted mt-1.5">{sub}</p>
             </div>
           </div>
@@ -310,7 +310,7 @@ function RecentAchievements({ recent }: { recent: RecentItem[] }) {
                   {mission.title}
                 </p>
                 <ClassBadge lifeClass={lc} />
-                <span className="text-sm font-bold text-accent tabular-nums flex-shrink-0 text-right">
+                <span className="text-sm font-black text-accent tabular-nums flex-shrink-0 text-right">
                   +{mission.xp_reward} XP
                 </span>
                 <span className="hidden md:block text-xs text-text-muted flex-shrink-0 w-28 text-right">
@@ -402,7 +402,7 @@ function ClassBalance({ classProgress }: { classProgress: ClassProgress[] }) {
               </div>
 
               <div>
-                <p className="text-2xl font-bold text-text-primary tabular-nums leading-none">
+                <p className="text-2xl font-black text-text-primary tabular-nums leading-none">
                   {cp.points.toLocaleString()}
                 </p>
                 <p className="text-xs text-text-muted mt-1">{title}</p>

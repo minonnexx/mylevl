@@ -1,6 +1,7 @@
 'use client'
 
 import { useActionState, useCallback, useEffect, useRef, useState } from 'react'
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react'
 import type { AvatarConfig, Mission, MissionDifficulty, MissionType } from '@/types/supabase'
 import { CLASS_META } from '@/lib/constants/classes'
 import { completeMissionAction, type MissionActionResult } from '@/app/missions/actions'
@@ -14,6 +15,7 @@ import { AnimatedBar } from '@/components/ui/AnimatedBar'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Filter, ShieldCheck } from 'lucide-react'
 import CustomMissionsSection from '@/components/missions/CustomMissionsSection'
+import { SectionHeader } from '@/components/ui/SectionHeader'
 import type { CustomMission } from '@/types/supabase'
 
 function getTodayKey(): string {
@@ -93,10 +95,13 @@ function CompactMissionCard({
   onProcessingChange?: (v: boolean) => void
 }) {
   const classMeta = CLASS_META[mission.life_class]
+  const reduced = useReducedMotion()
   const [result, formAction] = useActionState<MissionActionResult, FormData>(completeMissionAction, null)
   const [showXp, setShowXp] = useState(false)
   const [levelUpData, setLevelUpData] = useState<{ level: number } | null>(null)
   const [optimisticDone, setOptimisticDone] = useState(false)
+  const [showFill, setShowFill] = useState(false)
+  const [visuallyFaded, setVisuallyFaded] = useState(isCompleted)
   const effectiveDone = isCompleted || optimisticDone
   const prevTsRef = useRef<number | null>(null)
   const xpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -116,6 +121,8 @@ function CompactMissionCard({
 
     if (result.error) {
       setOptimisticDone(false)
+      setShowFill(false)
+      setVisuallyFaded(false)
       toast.error('No se pudo completar la misión', { description: 'Inténtalo de nuevo' })
       return
     }
@@ -160,12 +167,26 @@ function CompactMissionCard({
   function handleSubmit() {
     setOptimisticDone(true)
     setShowXp(true)
+    if (!reduced) setShowFill(true)
+    else setVisuallyFaded(true)
     playMissionComplete()
     onProcessingChange?.(true)
     loadingToastRef.current = toast.loading('Calculando recompensa...')
     if (xpTimerRef.current) clearTimeout(xpTimerRef.current)
     xpTimerRef.current = setTimeout(() => setShowXp(false), 650)
   }
+
+  // Border left width + opacity + glow by difficulty
+  const isHard = mission.difficulty === 'hard'
+  const isEasy = mission.difficulty === 'easy'
+  const borderLeftStyle = isHard
+    ? {
+        borderLeft: `4px solid ${classMeta.borderColor}`,
+        boxShadow: `inset 6px 0 14px color-mix(in srgb, ${classMeta.borderColor} 22%, transparent)`,
+      }
+    : isEasy
+    ? { borderLeft: `3px solid color-mix(in srgb, ${classMeta.borderColor} 60%, transparent)` }
+    : { borderLeft: `3px solid ${classMeta.borderColor}` }
 
   return (
     <div className={wrapperClass}>
@@ -182,56 +203,81 @@ function CompactMissionCard({
           }}
         />
       )}
-      <article
-        className="bg-surface rounded-card rounded-l-none border border-l-0 border-border/60 p-4 flex flex-col gap-3 h-full"
-        style={{
-          borderLeft: `3px solid ${classMeta.borderColor}`,
-          opacity: effectiveDone ? 0.4 : 1,
-          transition: 'opacity 300ms ease',
-        }}
-        aria-label={mission.title}
+      <motion.div
+        whileHover={effectiveDone || reduced ? {} : { y: -2 }}
+        transition={{ duration: 0.2, ease: 'easeOut' }}
+        className="h-full"
       >
-        {/* Top row: class badge + diff badge */}
-        <div className="flex items-center justify-between gap-2">
-          <ClassBadge lifeClass={mission.life_class} />
-          <DiffBadge difficulty={mission.difficulty} />
-        </div>
+        <article
+          className="bg-surface rounded-card rounded-l-none border border-l-0 border-border/60 p-4 flex flex-col gap-3 h-full relative overflow-hidden"
+          style={{
+            ...borderLeftStyle,
+            opacity: visuallyFaded ? 0.4 : 1,
+            transition: 'opacity 300ms ease',
+          }}
+          aria-label={mission.title}
+        >
+          {/* Fill sweep animation on complete */}
+          <AnimatePresence>
+            {showFill && (
+              <motion.div
+                aria-hidden
+                className="absolute inset-0 pointer-events-none z-10"
+                style={{ backgroundColor: classMeta.color }}
+                initial={{ x: '-100%', opacity: 0.2 }}
+                animate={{ x: '100%', opacity: 0 }}
+                exit={{}}
+                transition={{ duration: 0.45, ease: 'easeOut' }}
+                onAnimationComplete={() => {
+                  setShowFill(false)
+                  setVisuallyFaded(true)
+                }}
+              />
+            )}
+          </AnimatePresence>
 
-        {/* Title */}
-        <p className="text-sm font-semibold text-text-primary leading-snug flex-1">{mission.title}</p>
-
-        {/* XP */}
-        <span className="text-xs font-bold tabular-nums" style={{ color: 'var(--color-accent)' }}>
-          +{mission.xp_reward} XP
-        </span>
-
-        {/* Action */}
-        {effectiveDone ? (
-          <div className="flex items-center gap-1.5">
-            <IconCheck />
-            <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Completada hoy</span>
+          {/* Top row: class badge + diff badge */}
+          <div className="flex items-center justify-between gap-2">
+            <ClassBadge lifeClass={mission.life_class} />
+            <DiffBadge difficulty={mission.difficulty} />
           </div>
-        ) : (
-          <form action={formAction} onSubmit={handleSubmit}>
-            <input type="hidden" name="missionId"  value={mission.id} />
-            <input type="hidden" name="xpReward"   value={mission.xp_reward} />
-            <input type="hidden" name="lifeClass"  value={mission.life_class} />
-            <input type="hidden" name="difficulty" value={mission.difficulty} />
-            <div className="relative">
-              <CompleteButton label="Completar" disabled={isProcessing} />
-              {showXp && (
-                <span
-                  className="absolute left-1/2 bottom-full mb-1 text-sm font-bold text-accent pointer-events-none whitespace-nowrap"
-                  style={{ animation: 'xp-float 650ms ease forwards' }}
-                  aria-hidden
-                >
-                  +{mission.xp_reward} XP
-                </span>
-              )}
+
+          {/* Title */}
+          <p className="text-sm font-semibold text-text-primary leading-snug flex-1">{mission.title}</p>
+
+          {/* XP */}
+          <span className="text-xs font-black tabular-nums" style={{ color: 'var(--color-accent)' }}>
+            +{mission.xp_reward} XP
+          </span>
+
+          {/* Action */}
+          {effectiveDone ? (
+            <div className="flex items-center gap-1.5">
+              <IconCheck />
+              <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Completada hoy</span>
             </div>
-          </form>
-        )}
-      </article>
+          ) : (
+            <form action={formAction} onSubmit={handleSubmit}>
+              <input type="hidden" name="missionId"  value={mission.id} />
+              <input type="hidden" name="xpReward"   value={mission.xp_reward} />
+              <input type="hidden" name="lifeClass"  value={mission.life_class} />
+              <input type="hidden" name="difficulty" value={mission.difficulty} />
+              <div className="relative">
+                <CompleteButton label="Completar" disabled={isProcessing} />
+                {showXp && (
+                  <span
+                    className="absolute left-1/2 bottom-full mb-1 text-sm font-bold text-accent pointer-events-none whitespace-nowrap"
+                    style={{ animation: 'xp-float 650ms ease forwards' }}
+                    aria-hidden
+                  >
+                    +{mission.xp_reward} XP
+                  </span>
+                )}
+              </div>
+            </form>
+          )}
+        </article>
+      </motion.div>
     </div>
   )
 }
@@ -331,19 +377,19 @@ function MissionSection({
     return (a.sort_order ?? 999) - (b.sort_order ?? 999)
   })
 
+  const sectionId = `section-${title.replace(/\s+/g, '-')}`
   return (
-    <section aria-labelledby={`section-${title}`} className="flex flex-col gap-4">
-      <div className="border-b border-border/40 pb-2 flex items-center justify-between">
-        <h2
-          id={`section-${title}`}
-          className="text-[11px] font-medium text-text-muted uppercase tracking-wider"
-        >
-          {title}
-        </h2>
-        <span className="text-xs text-text-muted tabular-nums">
-          {completedCount}/{missions.length}
-        </span>
-      </div>
+    <section aria-labelledby={sectionId} className="flex flex-col gap-4">
+      <SectionHeader
+        id={sectionId}
+        title={title}
+        accentColor="var(--color-accent)"
+        right={
+          <span className="text-xs text-text-muted tabular-nums">
+            {completedCount}/{missions.length}
+          </span>
+        }
+      />
 
       {isBoss ? (
         <div className="flex flex-col gap-3">

@@ -68,11 +68,12 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   )
 }
 
-function StatCard({ label, value, sub, icon }: {
+function StatCard({ label, value, sub, icon, valueColor }: {
   label: string
   value: string | number
   sub: string
   icon: React.ReactNode
+  valueColor?: string
 }) {
   return (
     <div className="bg-surface rounded-card p-6 border border-border/60 flex flex-col gap-3">
@@ -81,7 +82,12 @@ function StatCard({ label, value, sub, icon }: {
         <span className="text-text-muted">{icon}</span>
       </div>
       <div>
-        <p className="text-3xl font-bold text-text-primary tabular-nums leading-none">{value}</p>
+        <p
+          className="text-3xl font-black tabular-nums leading-none"
+          style={{ color: valueColor ?? 'var(--color-text-primary)' }}
+        >
+          {value}
+        </p>
         <p className="text-xs text-text-muted mt-1.5">{sub}</p>
       </div>
     </div>
@@ -104,7 +110,7 @@ function MissionRow({ item }: { item: MissionSummaryItem }) {
       <span className="text-xs font-medium text-text-muted flex-shrink-0">
         {DIFF_LABEL[item.difficulty] ?? item.difficulty}
       </span>
-      <span className="text-sm font-bold tabular-nums flex-shrink-0" style={{ color: 'var(--color-accent)' }}>
+      <span className="text-sm font-black tabular-nums flex-shrink-0" style={{ color: 'var(--color-accent)' }}>
         +{item.xp_reward} XP
       </span>
     </div>
@@ -220,8 +226,9 @@ function DailyView({ daySummary, profile }: { daySummary: DaySummary; profile: P
             label="Racha actual"
             value={profile.current_streak}
             sub={profile.current_streak === 1 ? 'día consecutivo' : 'días consecutivos'}
+            valueColor={profile.current_streak > 0 ? 'var(--color-disciplina)' : 'var(--color-text-primary)'}
             icon={
-              <Flame size={16} aria-hidden />
+              <Flame size={16} aria-hidden style={{ color: profile.current_streak > 0 ? 'var(--color-disciplina)' : undefined }} />
             }
           />
           <StatCard
@@ -365,8 +372,14 @@ function WeeklyView({ weekData }: { weekData: WeekData }) {
         <SectionTitle>Racha al cierre</SectionTitle>
         <div className="bg-surface rounded-card border border-border/60 p-6 flex items-center gap-3">
           <Flame size={18} style={{ color: 'var(--color-disciplina)' }} aria-hidden />
-          <span className="text-base font-semibold text-text-primary">
-            {weekData.currentStreak} {weekData.currentStreak === 1 ? 'día' : 'días'} de racha
+          <span
+            className="text-2xl font-black tabular-nums"
+            style={{ color: weekData.currentStreak > 0 ? 'var(--color-disciplina)' : 'var(--color-text-primary)' }}
+          >
+            {weekData.currentStreak}
+          </span>
+          <span className="text-sm text-text-muted">
+            {weekData.currentStreak === 1 ? 'día' : 'días'} de racha
           </span>
         </div>
       </section>
@@ -486,8 +499,14 @@ function MonthlyView({ monthData }: { monthData: MonthData }) {
         <SectionTitle>Mejor racha del mes</SectionTitle>
         <div className="bg-surface rounded-card border border-border/60 p-6 flex items-center gap-3">
           <Flame size={18} style={{ color: 'var(--color-disciplina)' }} aria-hidden />
-          <span className="text-base font-semibold text-text-primary">
-            {monthData.bestStreak} {monthData.bestStreak === 1 ? 'día' : 'días'} consecutivos
+          <span
+            className="text-2xl font-black tabular-nums"
+            style={{ color: monthData.bestStreak > 0 ? 'var(--color-disciplina)' : 'var(--color-text-primary)' }}
+          >
+            {monthData.bestStreak}
+          </span>
+          <span className="text-sm text-text-muted">
+            {monthData.bestStreak === 1 ? 'día' : 'días'} consecutivos
           </span>
         </div>
       </section>

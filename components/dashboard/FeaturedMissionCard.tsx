@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { motion, AnimatePresence } from 'motion/react'
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react'
 import { Check } from 'lucide-react'
 import type { Mission } from '@/types/supabase'
 import { CLASS_META } from '@/lib/constants/classes'
@@ -28,13 +28,16 @@ export function FeaturedMissionCard({
   isProcessing?: boolean
 }) {
   const meta = CLASS_META[mission.life_class]
+  const reduced = useReducedMotion()
   const [showXp, setShowXp] = useState(false)
   const [completing, setCompleting] = useState(false)
+  const [showFill, setShowFill] = useState(false)
   const xpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     setCompleting(false)
     setShowXp(false)
+    setShowFill(false)
     if (xpTimerRef.current) clearTimeout(xpTimerRef.current)
   }, [mission.id])
 
@@ -46,23 +49,57 @@ export function FeaturedMissionCard({
     if (navigator.vibrate) navigator.vibrate(40)
     setCompleting(true)
     setShowXp(true)
+    setShowFill(true)
     onOptimisticComplete(mission.id)
     if (xpTimerRef.current) clearTimeout(xpTimerRef.current)
     xpTimerRef.current = setTimeout(() => setShowXp(false), 650)
   }
 
+  const isHard = mission.difficulty === 'hard'
+
   return (
-    <div
+    <motion.div
+      animate={{ opacity: completing ? 0.5 : 1, scale: completing ? 0.988 : 1 }}
+      whileHover={completing || reduced ? {} : { y: -2 }}
+      transition={{ duration: 0.2, ease: 'easeOut' }}
       className="rounded-card p-6 border border-border/60 flex flex-col gap-5 relative overflow-hidden bg-surface"
-      style={{
-        transition: 'opacity 300ms ease, transform 300ms ease',
-        opacity: completing ? 0.45 : 1,
-        transform: completing ? 'scale(0.985)' : 'scale(1)',
-      }}
+      style={
+        isHard && !completing
+          ? { boxShadow: `0 0 0 1px color-mix(in srgb, ${meta.borderColor} 20%, transparent), 0 4px 24px color-mix(in srgb, ${meta.borderColor} 12%, transparent)` }
+          : undefined
+      }
     >
+      {/* Top accent stripe */}
       <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ backgroundColor: meta.color }} aria-hidden />
 
-      <div className="flex items-start justify-between gap-4">
+      {/* Hard difficulty: left glow gradient */}
+      {isHard && (
+        <div
+          aria-hidden
+          className="absolute left-0 top-0 bottom-0 w-16 pointer-events-none"
+          style={{
+            background: `linear-gradient(to right, color-mix(in srgb, ${meta.borderColor} 18%, transparent), transparent)`,
+          }}
+        />
+      )}
+
+      {/* Fill sweep animation on complete */}
+      <AnimatePresence>
+        {showFill && !reduced && (
+          <motion.div
+            aria-hidden
+            className="absolute inset-0 pointer-events-none"
+            style={{ backgroundColor: meta.color }}
+            initial={{ x: '-100%', opacity: 0.25 }}
+            animate={{ x: '100%', opacity: 0 }}
+            exit={{}}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
+            onAnimationComplete={() => setShowFill(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      <div className="flex items-start justify-between gap-4 relative">
         <div className="flex flex-col gap-2 flex-1 min-w-0">
           <ClassBadge lifeClass={mission.life_class} />
           <h3 className="font-semibold text-text-primary text-lg leading-snug">
@@ -73,12 +110,12 @@ export function FeaturedMissionCard({
           )}
         </div>
         <div className="flex-shrink-0 text-right">
-          <span className="text-2xl font-bold text-accent tabular-nums">+{mission.xp_reward}</span>
-          <p className="text-xs text-text-muted font-medium">XP</p>
+          <span className="text-3xl font-black text-accent tabular-nums">+{mission.xp_reward}</span>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-text-muted mt-0.5">XP</p>
         </div>
       </div>
 
-      <form action={formAction} onSubmit={handleSubmit} className="flex items-center gap-3">
+      <form action={formAction} onSubmit={handleSubmit} className="flex items-center gap-3 relative">
         <input type="hidden" name="missionId"  value={mission.id} />
         <input type="hidden" name="xpReward"   value={mission.xp_reward} />
         <input type="hidden" name="lifeClass"  value={mission.life_class} />
@@ -116,6 +153,6 @@ export function FeaturedMissionCard({
 
         <span className="text-xs text-text-muted">Verificación manual</span>
       </form>
-    </div>
+    </motion.div>
   )
 }

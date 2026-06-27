@@ -70,7 +70,7 @@ export function FeedItem({ event }: { event: FeedEventItem }) {
       <p className="text-sm text-text-primary leading-relaxed">
         <Link href={`/u/${username}`} className="font-semibold hover:underline" style={{ color: 'inherit' }}>{username}</Link>
         {' subió al nivel '}
-        <span className="font-bold" style={{ color: 'var(--color-accent)' }}>
+        <span className="font-black tabular-nums" style={{ color: 'var(--color-accent)' }}>
           {metadata.new_level}
         </span>
       </p>
@@ -83,7 +83,7 @@ export function FeedItem({ event }: { event: FeedEventItem }) {
       <p className="text-sm text-text-primary leading-relaxed">
         <Link href={`/u/${username}`} className="font-semibold hover:underline" style={{ color: 'inherit' }}>{username}</Link>
         {' alcanzó una racha de '}
-        <span className="font-bold">{metadata.streak_days}</span>
+        <span className="font-black tabular-nums" style={{ color: 'var(--color-disciplina)' }}>{metadata.streak_days}</span>
         {' días'}
       </p>
     )

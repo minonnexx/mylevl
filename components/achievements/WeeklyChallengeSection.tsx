@@ -141,7 +141,7 @@ function WeeklyChallengeCard({ challenge, weekStart, progress, isCompleted, comp
             </div>
 
             <div className="flex-shrink-0 text-right">
-              <p className="text-3xl font-bold tabular-nums" style={{ color: 'var(--color-accent)' }}>
+              <p className="text-3xl font-black tabular-nums" style={{ color: 'var(--color-accent)' }}>
                 +{challenge.xp_reward}
               </p>
               <p className="text-xs font-medium mt-0.5" style={{ color: 'var(--color-text-muted)' }}>XP</p>

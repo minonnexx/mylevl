@@ -14,9 +14,11 @@ export function CompleteButton({ label = 'Completar misión', disabled: external
       className="
         bg-accent text-white font-semibold px-4 py-2.5 rounded-component whitespace-nowrap
         inline-flex items-center justify-center gap-2
-        transition-all duration-150
-        hover:opacity-90 active:scale-[0.98] active:opacity-80
-        disabled:opacity-40 disabled:cursor-not-allowed
+        border border-accent/40
+        transition-all duration-150 ease-out
+        hover:shadow-[0_0_16px_rgba(127,119,221,0.35)]
+        active:scale-[0.96] active:shadow-[0_0_22px_rgba(127,119,221,0.50)]
+        disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none
       "
     >
       {pending ? (

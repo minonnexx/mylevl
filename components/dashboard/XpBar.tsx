@@ -23,17 +23,27 @@ export function XpBar({ current, total }: { current: number; total: number }) {
   const value = total > 0 ? current / total : 0
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex justify-between text-xs text-text-muted">
-        <span className="font-medium uppercase tracking-wider">XP</span>
-        <span className="tabular-nums">
+    <div className="flex flex-col gap-1.5">
+      <div className="flex justify-between items-baseline">
+        <span className="text-[10px] font-semibold uppercase tracking-widest text-text-muted">XP</span>
+        <span className="text-[10px] tabular-nums text-text-muted">
           <motion.span>{displayCurrent}</motion.span>
           {' / '}
           {total.toLocaleString('es-ES')}
         </span>
       </div>
-      <AnimatedBar value={value} color="var(--color-accent)" height="h-2" />
-      <p className="text-xs text-text-muted">{Math.round(value * 100)}% completado</p>
+      <AnimatedBar
+        value={value}
+        color="var(--color-accent)"
+        height="h-3"
+        showTicks
+        glowColor="rgba(127, 119, 221, 0.30)"
+        aria-label={`XP: ${current} de ${total}`}
+        aria-valuenow={current}
+        aria-valuemin={0}
+        aria-valuemax={total}
+        role="progressbar"
+      />
     </div>
   )
 }
