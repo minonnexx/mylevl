@@ -1,18 +1,24 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Pencil, Trophy, X, Check, Eye, EyeOff } from 'lucide-react'
+import { Pencil, Trophy, X, Check, Eye, EyeOff, Zap } from 'lucide-react'
 import { HexMedal } from '@/components/ui/HexMedal'
 import { MedalDetailModal } from '@/components/ui/MedalDetailModal'
+import { AnimatedBar } from '@/components/ui/AnimatedBar'
 import { updatePublicProfileSettings } from '@/app/profile/actions'
-import { CLASS_META, getClassMilestone } from '@/lib/constants/classes'
+import { CLASS_META, getMilestoneProgress, getClassMilestone } from '@/lib/constants/classes'
 import { FriendshipButton } from '@/components/social/FriendshipButton'
 import type { FriendshipState } from '@/components/social/FriendshipButton'
 import AvatarDisplay from '@/components/avatar/AvatarDisplay'
-import { Flame } from 'lucide-react'
 import type { AvatarConfig, LifeClass, Medal } from '@/types/supabase'
 
 const LIFE_CLASSES: LifeClass[] = ['fisico', 'mental', 'disciplina']
+
+const CLASS_GLOW: Record<LifeClass, string> = {
+  fisico:     'rgba(29,158,117,0.28)',
+  mental:     'rgba(127,119,221,0.28)',
+  disciplina: 'rgba(186,117,23,0.28)',
+}
 
 interface ProfileData {
   username: string
@@ -45,10 +51,22 @@ export function PublicProfileContent({
   const [isPending, startTransition] = useTransition()
   const [saveError, setSaveError] = useState<string | null>(null)
 
-  // Derived: current pinned medals as Medal objects (for display)
   const pinnedMedals = pinnedIds
     .map(id => earnedMedals.find(m => m.id === id))
     .filter((m): m is Medal => Boolean(m))
+
+  // Dominant class for avatar ring
+  const dominantClass = LIFE_CLASSES.reduce<LifeClass | null>((best, lc) => {
+    const pts = classPoints[lc] ?? 0
+    if (pts === 0) return best
+    if (!best) return lc
+    return pts > (classPoints[best] ?? 0) ? lc : best
+  }, null)
+  const showRing = profile.avatar_config?.style === 'adventurer'
+  const ringColor = dominantClass ? CLASS_META[dominantClass].color : 'var(--color-accent)'
+  const glowRgba  = dominantClass ? CLASS_GLOW[dominantClass] : 'rgba(127,119,221,0.25)'
+
+  const isActiveStreak = profile.current_streak > 0
 
   function handleTogglePin(medal: Medal) {
     setPinnedIds(prev => {
@@ -83,97 +101,122 @@ export function PublicProfileContent({
         <MedalDetailModal medal={selectedMedal} onClose={() => setSelectedMedal(null)} />
       )}
 
-      {/* Page title */}
+      {/* Avatar + name header */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-4">
-          <AvatarDisplay
-            config={profile.avatar_config}
-            size={80}
-          />
-          <div>
-            <h1 className="text-2xl font-semibold text-text-primary">
+
+          {/* Avatar with conditional ring */}
+          <div className="relative flex-shrink-0">
+            <AvatarDisplay config={profile.avatar_config} size={80} />
+            {showRing && (
+              <div
+                className="absolute inset-0 rounded-full pointer-events-none"
+                style={{
+                  boxShadow: `inset 0 0 0 2px color-mix(in srgb, ${ringColor} 45%, transparent), 0 0 16px ${glowRgba}`,
+                }}
+                aria-hidden
+              />
+            )}
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <h1 className="text-2xl font-semibold text-text-primary leading-tight">
               {profile.username}
             </h1>
-            <p className="text-sm mt-1" style={{ color: 'var(--color-text-muted)' }}>
-              Perfil público
-            </p>
+            <div className="flex items-center gap-2">
+              <span
+                className="text-[10px] font-black tabular-nums px-2 py-0.5 rounded-pill"
+                style={{
+                  color: 'var(--color-accent)',
+                  background: 'color-mix(in srgb, var(--color-accent) 12%, transparent)',
+                  border: '1px solid color-mix(in srgb, var(--color-accent) 22%, transparent)',
+                }}
+              >
+                LVL {profile.global_level}
+              </span>
+              {isActiveStreak && (
+                <div
+                  className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-pill"
+                  style={{
+                    color: 'var(--color-disciplina)',
+                    background: 'color-mix(in srgb, var(--color-disciplina) 10%, transparent)',
+                    border: '1px solid color-mix(in srgb, var(--color-disciplina) 22%, transparent)',
+                  }}
+                >
+                  <Zap size={10} strokeWidth={2.5} aria-hidden />
+                  <span className="font-black tabular-nums">{profile.current_streak}</span>
+                  <span>días</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
-        {isOwner && !editing && (
-          <button
-            type="button"
-            onClick={() => setEditing(true)}
-            className="flex items-center gap-1.5 h-9 px-4 rounded-component text-sm font-medium transition-colors flex-shrink-0"
-            style={{
-              background: 'color-mix(in srgb, var(--color-accent) 12%, transparent)',
-              color: 'var(--color-accent)',
-              border: '1px solid color-mix(in srgb, var(--color-accent) 20%, transparent)',
-            }}
-          >
-            <Pencil size={13} aria-hidden />
-            Editar perfil
-          </button>
-        )}
-      </div>
 
-      {/* Stats card */}
-      <div
-        className="rounded-card p-6 border border-border/60 flex items-center gap-6"
-        style={{ background: 'var(--color-surface)' }}
-      >
-        <div className="flex flex-col gap-2 flex-1 min-w-0">
-          <span
-            className="self-start text-xs font-bold px-3 py-1 rounded-pill tabular-nums"
-            style={{
-              color: 'var(--color-accent)',
-              background: 'color-mix(in srgb, var(--color-accent) 12%, transparent)',
-              border: '1px solid color-mix(in srgb, var(--color-accent) 20%, transparent)',
-            }}
-          >
-            LVL {profile.global_level}
-          </span>
-          {profile.current_streak > 0 && (
-            <div className="flex items-center gap-1.5 text-sm" style={{ color: 'var(--color-text-muted)' }}>
-              <Flame size={14} aria-hidden />
-              <span>
-                <span className="font-semibold text-text-primary">{profile.current_streak}</span>
-                {' días de racha'}
-              </span>
-            </div>
+        {/* Edit / friendship button */}
+        <div className="flex-shrink-0 flex items-center gap-2">
+          {friendshipState && <FriendshipButton state={friendshipState} />}
+          {isOwner && !editing && (
+            <button
+              type="button"
+              onClick={() => setEditing(true)}
+              className="flex items-center gap-1.5 h-9 px-4 rounded-component text-sm font-medium transition-colors"
+              style={{
+                background: 'color-mix(in srgb, var(--color-accent) 12%, transparent)',
+                color: 'var(--color-accent)',
+                border: '1px solid color-mix(in srgb, var(--color-accent) 20%, transparent)',
+              }}
+            >
+              <Pencil size={13} aria-hidden />
+              Editar perfil
+            </button>
           )}
         </div>
-        {friendshipState && (
-          <div className="flex-shrink-0 ml-auto">
-            <FriendshipButton state={friendshipState} />
-          </div>
-        )}
       </div>
 
-      {/* Class milestones */}
+      {/* Class life section */}
       <div
-        className="rounded-card p-6 border border-border/60"
+        className="rounded-card p-6 border border-border/60 flex flex-col gap-4"
         style={{ background: 'var(--color-surface)' }}
       >
-        <p
-          className="text-[11px] font-medium uppercase tracking-wider mb-4"
-          style={{ color: 'var(--color-text-muted)' }}
-        >
-          Clases de vida
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {LIFE_CLASSES.map(lc => {
-            const meta = CLASS_META[lc]
+        {/* Section header inline */}
+        <div className="flex items-center gap-2.5 pb-2 border-b border-border/40">
+          <div className="h-[2px] w-5 rounded-full flex-shrink-0" style={{ backgroundColor: 'var(--color-accent)' }} aria-hidden />
+          <p className="text-[11px] font-semibold text-text-muted uppercase tracking-widest">
+            Clases de vida
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          {LIFE_CLASSES.map((lc, idx) => {
+            const meta   = CLASS_META[lc]
             const points = classPoints[lc] ?? 0
-            const milestone = getClassMilestone(points)
+            const { title, pct } = getMilestoneProgress(points)
+
             return (
-              <span
-                key={lc}
-                className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-pill ${meta.badgeClasses}`}
-              >
-                {meta.label}
-                <span className="opacity-60">·</span>
-                {milestone}
-              </span>
+              <div key={lc} className="flex flex-col gap-1.5">
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-2 h-2 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: meta.color }}
+                    aria-hidden
+                  />
+                  <span className="text-xs font-semibold text-text-primary">{meta.label}</span>
+                  <span className={`inline-flex text-[10px] font-semibold px-2 py-0.5 rounded-pill ${meta.badgeClasses}`}>
+                    {title}
+                  </span>
+                  <span className="ml-auto text-[10px] tabular-nums text-text-muted flex-shrink-0">
+                    {points} pts
+                  </span>
+                </div>
+                <AnimatedBar
+                  value={pct / 100}
+                  color={meta.color}
+                  glowColor={CLASS_GLOW[lc]}
+                  height="h-1.5"
+                  delay={idx * 0.1}
+                  aria-label={`${meta.label}: ${points} puntos, ${title}`}
+                />
+              </div>
             )
           })}
         </div>
@@ -185,11 +228,10 @@ export function PublicProfileContent({
           className="rounded-card border border-border/60 p-6 flex flex-col gap-5"
           style={{ background: 'var(--color-surface)' }}
         >
-          {/* Edit header */}
           <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <Trophy size={15} strokeWidth={1.75} style={{ color: 'var(--color-text-muted)' }} aria-hidden />
-              <h2 className="text-sm font-semibold text-text-primary">Medallas</h2>
+            <div className="flex items-center gap-2.5">
+              <div className="h-[2px] w-5 rounded-full flex-shrink-0" style={{ backgroundColor: 'var(--color-disciplina)' }} aria-hidden />
+              <h2 className="text-[11px] font-semibold text-text-muted uppercase tracking-widest">Medallas</h2>
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -227,7 +269,6 @@ export function PublicProfileContent({
             <p className="text-xs" style={{ color: 'var(--color-disciplina)' }}>{saveError}</p>
           )}
 
-          {/* Toggle show medals */}
           <div className="flex items-center justify-between gap-3">
             <div className="flex flex-col gap-0.5">
               <span className="text-sm text-text-primary">Mostrar medallas en el perfil</span>
@@ -257,7 +298,6 @@ export function PublicProfileContent({
             </button>
           </div>
 
-          {/* Pinned medals selector */}
           {showMedals && earnedMedals.length > 0 && (
             <div className="flex flex-col gap-3">
               <div className="flex items-center justify-between">
@@ -279,8 +319,8 @@ export function PublicProfileContent({
               </p>
               <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
                 {earnedMedals.map(medal => {
-                  const isPinned = pinnedIds.includes(medal.id)
-                  const isDisabled = !isPinned && pinnedIds.length >= 3
+                  const isPinned    = pinnedIds.includes(medal.id)
+                  const isDisabled  = !isPinned && pinnedIds.length >= 3
                   return (
                     <button
                       key={medal.id}
@@ -335,9 +375,9 @@ export function PublicProfileContent({
           style={{ background: 'var(--color-surface)' }}
         >
           <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <Trophy size={15} strokeWidth={1.75} style={{ color: 'var(--color-text-muted)' }} aria-hidden />
-              <h2 className="text-sm font-semibold text-text-primary">Medallas</h2>
+            <div className="flex items-center gap-2.5">
+              <div className="h-[2px] w-5 rounded-full flex-shrink-0" style={{ backgroundColor: 'var(--color-disciplina)' }} aria-hidden />
+              <h2 className="text-[11px] font-semibold text-text-muted uppercase tracking-widest">Medallas</h2>
             </div>
             {isOwner && !editing && (
               <div className="flex items-center gap-1" style={{ color: 'var(--color-text-muted)' }}>
@@ -353,10 +393,9 @@ export function PublicProfileContent({
             </p>
           ) : (
             <div className="flex flex-col gap-5">
-              {/* Pinned medals */}
               {pinnedMedals.length > 0 && (
                 <div className="flex flex-col gap-3">
-                  <p className="text-[11px] font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
+                  <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-muted)' }}>
                     Destacadas
                   </p>
                   <div className="flex gap-5 flex-wrap">
@@ -383,7 +422,6 @@ export function PublicProfileContent({
                 </div>
               )}
 
-              {/* Full grid */}
               <div className="grid grid-cols-4 sm:grid-cols-6 gap-4">
                 {earnedMedals.map(medal => (
                   <button
@@ -407,7 +445,7 @@ export function PublicProfileContent({
         </div>
       )}
 
-      {/* Medals section — hidden indicator for owner only */}
+      {/* Medals hidden indicator — owner only */}
       {(!isOwner || !editing) && !showMedals && isOwner && (
         <div
           className="rounded-card border border-border/60 p-4 flex items-center gap-3"
