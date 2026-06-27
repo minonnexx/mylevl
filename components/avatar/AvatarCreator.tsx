@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { motion } from 'motion/react'
 import AvatarDisplay from './AvatarDisplay'
 import {
   SKIN_TONES,
@@ -53,6 +54,7 @@ const selectedBtn: React.CSSProperties = {
   border: '2px solid var(--color-accent)',
   backgroundColor: 'var(--color-surface)',
   color: 'var(--color-text-primary)',
+  boxShadow: '0 0 8px rgba(127,119,221,0.25)',
 }
 const defaultBtn: React.CSSProperties = {
   border: '2px solid var(--color-surface)',
@@ -78,6 +80,7 @@ function TraitButton({
         borderRadius: 'var(--radius-component)',
         cursor: 'pointer',
         fontSize: '13px',
+        transition: 'box-shadow 0.15s ease, border-color 0.15s ease',
         ...(active ? selectedBtn : defaultBtn),
       }}
     >
@@ -102,7 +105,19 @@ function StyleStep({ onSelect, initial }: { onSelect: (s: AvatarStyle) => void; 
     backgroundColor: 'var(--color-surface)',
     border: picked === s ? '2px solid var(--color-accent)' : '2px solid transparent',
     cursor: 'pointer',
+    boxShadow: picked === s ? '0 0 16px rgba(127,119,221,0.2)' : 'none',
+    transition: 'box-shadow 0.15s ease, border-color 0.15s ease',
   })
+
+  const styles: AvatarStyle[] = ['pixel-art', 'adventurer']
+  const previews: Record<AvatarStyle, AvatarConfig> = {
+    'pixel-art': PIXEL_ART_PREVIEW,
+    'adventurer': ADVENTURER_PREVIEW,
+  }
+  const labels: Record<AvatarStyle, string> = {
+    'pixel-art': 'Pixel art',
+    'adventurer': 'Ilustrado',
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -113,22 +128,28 @@ function StyleStep({ onSelect, initial }: { onSelect: (s: AvatarStyle) => void; 
       </div>
 
       <div style={{ display: 'flex', gap: '12px' }}>
-        <button style={cardStyle('pixel-art')} onClick={() => setPicked('pixel-art')}>
-          <AvatarDisplay config={PIXEL_ART_PREVIEW} size={80} />
-          <span style={{ fontSize: '14px', fontWeight: 600, color: picked === 'pixel-art' ? 'var(--color-accent)' : 'var(--color-text-primary)' }}>
-            Pixel art
-          </span>
-        </button>
-
-        <button style={cardStyle('adventurer')} onClick={() => setPicked('adventurer')}>
-          <AvatarDisplay config={ADVENTURER_PREVIEW} size={80} />
-          <span style={{ fontSize: '14px', fontWeight: 600, color: picked === 'adventurer' ? 'var(--color-accent)' : 'var(--color-text-primary)' }}>
-            Ilustrado
-          </span>
-        </button>
+        {styles.map((s, i) => (
+          <motion.button
+            key={s}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.1, duration: 0.3, ease: 'easeOut' }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.97 }}
+            style={cardStyle(s)}
+            onClick={() => setPicked(s)}
+          >
+            <AvatarDisplay config={previews[s]} size={80} />
+            <span style={{ fontSize: '14px', fontWeight: 600, color: picked === s ? 'var(--color-accent)' : 'var(--color-text-primary)' }}>
+              {labels[s]}
+            </span>
+          </motion.button>
+        ))}
       </div>
 
-      <button
+      <motion.button
+        whileHover={picked ? { boxShadow: '0 0 16px rgba(127,119,221,0.35)' } : {}}
+        whileTap={picked ? { scale: 0.97 } : {}}
         onClick={() => picked && onSelect(picked)}
         disabled={!picked}
         style={{
@@ -137,15 +158,16 @@ function StyleStep({ onSelect, initial }: { onSelect: (s: AvatarStyle) => void; 
           borderRadius: 'var(--radius-component)',
           backgroundColor: 'var(--color-accent)',
           color: 'var(--color-text-primary)',
-          border: 'none',
+          border: '1.5px solid rgba(127,119,221,0.4)',
           cursor: picked ? 'pointer' : 'not-allowed',
           fontSize: '15px',
           fontWeight: 600,
           opacity: picked ? 1 : 0.4,
+          transition: 'box-shadow 0.15s ease',
         }}
       >
         Continuar
-      </button>
+      </motion.button>
     </div>
   )
 }
@@ -188,12 +210,20 @@ function TraitsStep({
   }
 
   const hairStyles = config.gender === 'male' ? maleHair : femaleHair
+  const avatarKey = `${config.hair}-${config.skin}-${config.hairColor}-${config.eyes}-${config.mouth ?? ''}`
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      {/* Preview */}
+      {/* Preview — re-anima al cambiar rasgos */}
       <div style={{ display: 'flex', justifyContent: 'center' }}>
-        <AvatarDisplay config={config} size={120} />
+        <motion.div
+          key={avatarKey}
+          initial={{ scale: 0.92, opacity: 0.7 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.2, ease: 'easeOut' }}
+        >
+          <AvatarDisplay config={config} size={120} />
+        </motion.div>
       </div>
 
       {/* Género */}
@@ -215,23 +245,30 @@ function TraitsStep({
       <section>
         <p style={{ color: 'var(--color-text-muted)', fontSize: '12px', marginBottom: '8px' }}>Tono de piel</p>
         <div style={{ display: 'flex', gap: '10px' }}>
-          {SKIN_ORDER.map(tone => (
-            <button
-              key={tone}
-              onClick={() => set('skin', tone)}
-              title={tone}
-              style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '50%',
-                backgroundColor: SKIN_TONES[tone],
-                border: config.skin === tone ? '2px solid var(--color-accent)' : '2px solid transparent',
-                cursor: 'pointer',
-                padding: 0,
-                flexShrink: 0,
-              }}
-            />
-          ))}
+          {SKIN_ORDER.map(tone => {
+            const isActive = config.skin === tone
+            return (
+              <button
+                key={tone}
+                onClick={() => set('skin', tone)}
+                title={tone}
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '50%',
+                  backgroundColor: SKIN_TONES[tone],
+                  border: isActive ? '2px solid var(--color-accent)' : '2px solid transparent',
+                  outline: isActive ? '2px solid rgba(127,119,221,0.4)' : '2px solid transparent',
+                  outlineOffset: '2px',
+                  cursor: 'pointer',
+                  padding: 0,
+                  flexShrink: 0,
+                  transform: isActive ? 'scale(1.12)' : 'scale(1)',
+                  transition: 'transform 0.15s ease, border-color 0.15s ease, outline-color 0.15s ease',
+                }}
+              />
+            )
+          })}
         </div>
       </section>
 
@@ -254,23 +291,30 @@ function TraitsStep({
       <section>
         <p style={{ color: 'var(--color-text-muted)', fontSize: '12px', marginBottom: '8px' }}>Color de pelo</p>
         <div style={{ display: 'flex', gap: '10px' }}>
-          {HAIR_COLOR_ORDER.map(color => (
-            <button
-              key={color}
-              onClick={() => set('hairColor', color)}
-              title={color}
-              style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '50%',
-                backgroundColor: HAIR_COLORS[color],
-                border: config.hairColor === color ? '2px solid var(--color-accent)' : '2px solid transparent',
-                cursor: 'pointer',
-                padding: 0,
-                flexShrink: 0,
-              }}
-            />
-          ))}
+          {HAIR_COLOR_ORDER.map(color => {
+            const isActive = config.hairColor === color
+            return (
+              <button
+                key={color}
+                onClick={() => set('hairColor', color)}
+                title={color}
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '50%',
+                  backgroundColor: HAIR_COLORS[color],
+                  border: isActive ? '2px solid var(--color-accent)' : '2px solid transparent',
+                  outline: isActive ? '2px solid rgba(127,119,221,0.4)' : '2px solid transparent',
+                  outlineOffset: '2px',
+                  cursor: 'pointer',
+                  padding: 0,
+                  flexShrink: 0,
+                  transform: isActive ? 'scale(1.12)' : 'scale(1)',
+                  transition: 'transform 0.15s ease, border-color 0.15s ease, outline-color 0.15s ease',
+                }}
+              />
+            )
+          })}
         </div>
       </section>
 
@@ -306,7 +350,9 @@ function TraitsStep({
         </section>
       )}
 
-      <button
+      <motion.button
+        whileHover={{ boxShadow: '0 0 16px rgba(127,119,221,0.35)' }}
+        whileTap={{ scale: 0.97 }}
         onClick={() => onComplete(config)}
         style={{
           width: '100%',
@@ -314,15 +360,16 @@ function TraitsStep({
           borderRadius: 'var(--radius-component)',
           backgroundColor: 'var(--color-accent)',
           color: 'var(--color-text-primary)',
-          border: 'none',
+          border: '1.5px solid rgba(127,119,221,0.4)',
           cursor: 'pointer',
           fontSize: '15px',
           fontWeight: 600,
           marginTop: '8px',
+          transition: 'box-shadow 0.15s ease',
         }}
       >
         Continuar
-      </button>
+      </motion.button>
     </div>
   )
 }
