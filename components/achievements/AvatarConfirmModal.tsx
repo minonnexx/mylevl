@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'motion/react'
 import AvatarDisplay from '@/components/avatar/AvatarDisplay'
+import { useTypewriterSound } from '@/hooks/useTypewriterSound'
 import type { AvatarConfig } from '@/types/supabase'
 
 const CONFIRM_DIALOGUE = (username: string) => [
@@ -83,6 +84,7 @@ function FullConfirmModal({
 }) {
   const [text, setText] = useState('')
   const [done, setDone] = useState(false)
+  const { playTick } = useTypewriterSound()
 
   useEffect(() => {
     let cancelled = false
@@ -102,6 +104,7 @@ function FullConfirmModal({
           if (cancelled) return
           accumulated += segment[c]
           setText(accumulated)
+          playTick()
           await sleep(44)
         }
         if (s < segments.length - 1) await sleep(450)
@@ -111,7 +114,7 @@ function FullConfirmModal({
 
     run()
     return () => { cancelled = true }
-  }, [username])
+  }, [username, playTick])
 
   return (
     <Overlay onClose={onCancel}>

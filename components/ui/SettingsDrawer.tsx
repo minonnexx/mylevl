@@ -2,7 +2,8 @@
 
 import { useState, useTransition, useEffect, useCallback } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { X, Pencil, RefreshCw, LogOut, Globe, Lock, Dumbbell, BookOpen, Shield, Star } from 'lucide-react'
+import { X, Pencil, RefreshCw, LogOut, Globe, Lock, Dumbbell, BookOpen, Shield, Star, Volume2, VolumeX } from 'lucide-react'
+import { setTypewriterSoundEnabled, getTypewriterSoundEnabled } from '@/hooks/useTypewriterSound'
 import AvatarDisplay from '@/components/avatar/AvatarDisplay'
 import type { AvatarConfig } from '@/types/supabase'
 import { useRouter } from 'next/navigation'
@@ -52,6 +53,10 @@ export function SettingsDrawer({ isOpen, onClose, profile }: Props) {
   // ── Feed ────────────────────────────────────────────────────────────────────
   const [isPublic, setIsPublic] = useState(profile.feed_public)
   const [isFeedPending, startFeed] = useTransition()
+
+  // ── Sonido ──────────────────────────────────────────────────────────────────
+  const [soundEnabled, setSoundEnabled] = useState(true)
+  useEffect(() => { setSoundEnabled(getTypewriterSoundEnabled()) }, [])
 
   // Sync when props change (after router.refresh)
   useEffect(() => { setLocalUsername(profile.username) }, [profile.username])
@@ -382,6 +387,56 @@ export function SettingsDrawer({ isOpen, onClose, profile }: Props) {
                       style={{
                         background: 'var(--color-text-primary)',
                         transform: isPublic ? 'translateX(20px)' : 'translateX(0)',
+                      }}
+                    />
+                  </button>
+                </div>
+              </div>
+
+              {/* ── Sonido ─────────────────────────────────────────────────── */}
+              <div className="px-6 py-5" style={{ borderBottom: '1px solid var(--color-border)' }}>
+                <p className="text-[11px] font-medium text-text-muted uppercase tracking-wider mb-4">Sonido</p>
+
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-start gap-2.5 min-w-0">
+                    <div className="mt-0.5 flex-shrink-0">
+                      {soundEnabled
+                        ? <Volume2 size={15} style={{ color: 'var(--color-accent)' }} aria-hidden />
+                        : <VolumeX size={15} style={{ color: 'var(--color-text-muted)' }} aria-hidden />
+                      }
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-text-primary">Sonido del personaje</p>
+                      <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
+                        Efecto de tecleo cuando el avatar habla
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      const next = !soundEnabled
+                      setSoundEnabled(next)
+                      setTypewriterSoundEnabled(next)
+                    }}
+                    role="switch"
+                    aria-checked={soundEnabled}
+                    aria-label="Activar o desactivar sonido del personaje"
+                    className="relative flex-shrink-0 w-11 h-6 rounded-pill overflow-hidden transition-all duration-200"
+                    style={{
+                      background: soundEnabled
+                        ? 'color-mix(in srgb, var(--color-accent) 80%, transparent)'
+                        : 'color-mix(in srgb, var(--color-text-muted) 30%, transparent)',
+                      border: soundEnabled
+                        ? '1px solid color-mix(in srgb, var(--color-accent) 60%, transparent)'
+                        : '1px solid color-mix(in srgb, var(--color-text-muted) 30%, transparent)',
+                    }}
+                  >
+                    <span
+                      className="absolute top-[3px] left-[3px] w-[18px] h-[18px] rounded-full transition-transform duration-200"
+                      style={{
+                        background: 'var(--color-text-primary)',
+                        transform: soundEnabled ? 'translateX(20px)' : 'translateX(0)',
                       }}
                     />
                   </button>

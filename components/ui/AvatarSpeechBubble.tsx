@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import AvatarDisplay from '@/components/avatar/AvatarDisplay'
+import { useTypewriterSound } from '@/hooks/useTypewriterSound'
 import type { AvatarConfig } from '@/types/supabase'
 
 const sleep = (ms: number) => new Promise<void>(res => setTimeout(res, ms))
@@ -15,6 +16,7 @@ interface Props {
 export function AvatarSpeechBubble({ message, avatarConfig, size = 48 }: Props) {
   const [text, setText] = useState('')
   const [done, setDone] = useState(false)
+  const { playTick } = useTypewriterSound()
 
   useEffect(() => {
     let cancelled = false
@@ -29,13 +31,14 @@ export function AvatarSpeechBubble({ message, avatarConfig, size = 48 }: Props) 
           setDone(true)
           return
         }
+        playTick()
         await sleep(44)
       }
     }
 
     run()
     return () => { cancelled = true }
-  }, [message])
+  }, [message, playTick])
 
   return (
     <div style={{ display: 'flex', alignItems: 'flex-end', gap: '12px' }}>
