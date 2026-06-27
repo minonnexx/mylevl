@@ -104,45 +104,93 @@ export function PlayerCard({
 }) {
   const statMap = new Map(classStats.map(s => [s.life_class, s.points]))
 
+  const avatarFallback = (size: number, extraClass = '') => (
+    <div
+      className={`rounded-full flex items-center justify-center ${extraClass}`}
+      style={{
+        width: size,
+        height: size,
+        background: 'var(--color-surface)',
+        border: '1px solid color-mix(in srgb, var(--color-accent) 30%, transparent)',
+      }}
+    >
+      <span className="text-accent font-bold leading-none select-none" style={{ fontSize: size * 0.3 }}>
+        {(username ?? 'JU').slice(0, 2).toUpperCase()}
+      </span>
+    </div>
+  )
+
   return (
     <div className="bg-surface rounded-card p-6 border border-border/60 flex flex-col gap-5">
 
-      {/* Top row: avatar + name + level hex + shield */}
-      <div className="flex items-center gap-4">
+      {/* Top row: avatar + name/class/level + shield */}
+      <div className="flex items-start gap-3 sm:gap-4">
+
+        {/* Avatar — 48px on mobile, 64px on sm+ */}
         <Link
           href={`/u/${username}`}
           aria-label={`Ver perfil público de ${username ?? 'jugador'}`}
           className="flex-shrink-0 transition-opacity hover:opacity-75"
         >
           {avatarConfig ? (
-            <AvatarDisplay config={avatarConfig} size={64} />
+            <>
+              <div className="sm:hidden"><AvatarDisplay config={avatarConfig} size={48} /></div>
+              <div className="hidden sm:block"><AvatarDisplay config={avatarConfig} size={64} /></div>
+            </>
           ) : (
-            <div
-              className="w-16 h-16 rounded-full flex items-center justify-center"
-              style={{
-                background: 'var(--color-surface)',
-                border: '1px solid color-mix(in srgb, var(--color-accent) 30%, transparent)',
-              }}
-            >
-              <span className="text-accent font-bold text-base leading-none select-none">
-                {(username ?? 'JU').slice(0, 2).toUpperCase()}
-              </span>
-            </div>
+            <>
+              <div className="sm:hidden">{avatarFallback(48)}</div>
+              <div className="hidden sm:block">{avatarFallback(64)}</div>
+            </>
           )}
         </Link>
 
-        <div className="flex-1 min-w-0">
-          <p className="font-semibold text-text-primary truncate">{username ?? 'Jugador'}</p>
-          <p className="text-xs text-text-muted mt-0.5">Aventurero</p>
+        {/* Name + class text + level info */}
+        <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+          {/* Name — never truncated, wraps if needed */}
+          <p className="font-semibold text-text-primary leading-snug">
+            {username ?? 'Jugador'}
+          </p>
+
+          {/* Class label + level badge (mobile) / class label only (desktop) */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="text-xs text-text-muted">Aventurero</p>
+
+            {/* Mobile: compact level badge */}
+            <span
+              className="sm:hidden text-[10px] font-black tabular-nums rounded px-1.5 py-0.5 leading-none"
+              style={{
+                color: 'var(--color-accent)',
+                background: 'color-mix(in srgb, var(--color-accent) 10%, transparent)',
+                border: '1px solid color-mix(in srgb, var(--color-accent) 25%, transparent)',
+              }}
+            >
+              LVL {globalLevel}
+            </span>
+          </div>
         </div>
 
-        <LevelHex level={globalLevel} />
+        {/* Desktop only: hex level badge */}
+        <div className="hidden sm:block">
+          <LevelHex level={globalLevel} />
+        </div>
 
-        <ShieldIndicator
-          shieldCount={shieldCount}
-          streakProgress={currentStreak % 7}
-          size="sm"
-        />
+        {/* Shield — vertical (ring only, 48px wide) on mobile; horizontal on sm+ */}
+        <div className="sm:hidden flex-shrink-0">
+          <ShieldIndicator
+            shieldCount={shieldCount}
+            streakProgress={currentStreak % 7}
+            size="sm"
+            vertical
+          />
+        </div>
+        <div className="hidden sm:block flex-shrink-0">
+          <ShieldIndicator
+            shieldCount={shieldCount}
+            streakProgress={currentStreak % 7}
+            size="sm"
+          />
+        </div>
       </div>
 
       {/* XP bar */}
