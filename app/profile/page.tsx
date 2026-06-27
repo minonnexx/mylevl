@@ -7,7 +7,9 @@ import BottomNav from '@/components/dashboard/BottomNav'
 import { ShareButton } from '@/components/profile/ShareButton'
 import { ResetProfileButton } from '@/components/profile/ResetProfileButton'
 import { MedalsGrid } from '@/components/profile/MedalsGrid'
+import { RecentAchievementsAnimated } from '@/components/profile/RecentAchievementsAnimated'
 import { AppHeader } from '@/components/ui/AppHeader'
+import { SectionHeader } from '@/components/ui/SectionHeader'
 import { ClassRadarChart } from '@/components/profile/ClassRadarChart'
 import { ActivityHeatmap } from '@/components/profile/ActivityHeatmap'
 import { AnimatedBar } from '@/components/ui/AnimatedBar'
@@ -16,6 +18,12 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import Link from 'next/link'
 import { Trophy, Calendar, BarChart2, ChevronRight } from 'lucide-react'
 import AvatarDisplay from '@/components/avatar/AvatarDisplay'
+
+const CLASS_GLOW: Record<LifeClass, string> = {
+  fisico:     'rgba(29,158,117,0.28)',
+  mental:     'rgba(127,119,221,0.28)',
+  disciplina: 'rgba(186,117,23,0.28)',
+}
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function formatJoinDate(dateStr: string): string {
@@ -28,82 +36,85 @@ function formatHoursFromBirth(dateOfBirth: string | null): string {
   return hours.toLocaleString('es-ES')
 }
 
-function formatDate(dateStr: string): string {
-  const d = new Date(dateStr)
-  const now = new Date()
-  const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  const missionDay    = new Date(d.getFullYear(), d.getMonth(), d.getDate())
-  const diffDays = Math.round((todayMidnight.getTime() - missionDay.getTime()) / 86400000)
-
-  if (diffDays === 0) return `Hoy · ${d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`
-  if (diffDays === 1) return 'Ayer'
-  return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })
-}
-
-// ─── Section title (shared pattern with separator line) ──────────────────────
-function SectionTitle({ id, children }: { id?: string; children: React.ReactNode }) {
-  return (
-    <div className="border-b border-border/40 pb-2 mb-4">
-      <h2
-        id={id}
-        className="text-[11px] font-medium text-text-muted uppercase tracking-wider"
-      >
-        {children}
-      </h2>
-    </div>
-  )
-}
-
-// ─── ClassBadge (standardized: px-2.5 py-1) ──────────────────────────────────
-function ClassBadge({ lifeClass }: { lifeClass: LifeClass }) {
-  const { label, badgeClasses } = CLASS_META[lifeClass]
-  return (
-    <span className={`inline-flex text-xs font-semibold px-2.5 py-1 rounded-pill ${badgeClasses}`}>
-      {label}
-    </span>
-  )
+function dominantClass(classProgress: ClassProgress[]): LifeClass | null {
+  if (classProgress.length === 0) return null
+  const best = classProgress.reduce((a, b) => b.points > a.points ? b : a)
+  return best.points > 0 ? best.life_class as LifeClass : null
 }
 
 // 1 ── Profile header
-function ProfileHeader({ profile }: { profile: Profile }) {
+function ProfileHeader({ profile, classProgress }: { profile: Profile; classProgress: ClassProgress[] }) {
   const initials = (profile.username ?? 'JU').slice(0, 2).toUpperCase()
+  const dominant = dominantClass(classProgress)
+  const ringColor = dominant ? CLASS_META[dominant].color : 'var(--color-accent)'
+  const glowRgba = dominant ? CLASS_GLOW[dominant] : 'rgba(127,119,221,0.25)'
 
   return (
     <section
       className="bg-surface rounded-card p-6 border border-border/60"
       aria-label="Perfil del jugador"
     >
-      <div className="flex items-center gap-4">
+      <div className="flex items-start gap-3 sm:gap-4">
+
+        {/* Avatar with dominant-class ring */}
         <Link
           href={`/u/${profile.username}`}
           aria-label={`Ver perfil público de ${profile.username ?? 'Jugador'}`}
-          className="flex-shrink-0 transition-opacity hover:opacity-75"
+          className="flex-shrink-0 transition-opacity hover:opacity-80"
         >
-          {profile.avatar_config ? (
-            <AvatarDisplay config={profile.avatar_config} size={80} />
-          ) : (
+          <div className="relative">
+            {profile.avatar_config ? (
+              <AvatarDisplay config={profile.avatar_config} size={80} />
+            ) : (
+              <div
+                className="w-20 h-20 rounded-full flex items-center justify-center"
+                style={{
+                  background: 'var(--color-surface)',
+                  border: '1px solid color-mix(in srgb, var(--color-accent) 30%, transparent)',
+                }}
+              >
+                <span className="text-accent font-bold text-xl leading-none select-none">
+                  {initials}
+                </span>
+              </div>
+            )}
+            {/* Dominant-class ring overlay */}
             <div
-              className="w-20 h-20 rounded-full flex items-center justify-center"
+              className="absolute inset-0 rounded-full pointer-events-none"
               style={{
-                background: 'var(--color-surface)',
-                border: '1px solid color-mix(in srgb, var(--color-accent) 30%, transparent)',
+                boxShadow: `inset 0 0 0 2px color-mix(in srgb, ${ringColor} 45%, transparent), 0 0 16px ${glowRgba}`,
               }}
-            >
-              <span className="text-accent font-bold text-xl leading-none select-none">
-                {initials}
-              </span>
-            </div>
-          )}
+              aria-hidden
+            />
+          </div>
         </Link>
-        <div className="min-w-0 flex-1">
-          <p className="font-semibold text-text-primary truncate">{profile.username ?? 'Jugador'}</p>
-          <p className="text-xs text-text-muted mt-0.5">Nivel {profile.global_level} · Jugador</p>
+
+        {/* Name + level */}
+        <div className="flex-1 min-w-0 flex flex-col gap-1">
+          <p className="font-semibold text-text-primary leading-snug">
+            {profile.username ?? 'Jugador'}
+          </p>
+          <p className="text-xs text-text-muted">
+            Nivel {profile.global_level} · Aventurero
+          </p>
         </div>
-        <ShieldIndicator
-          shieldCount={profile.shield_count}
-          streakProgress={profile.current_streak % 7}
-          size="sm"
-        />
+
+        {/* Shield — vertical (ring only) on mobile, horizontal on sm+ */}
+        <div className="sm:hidden flex-shrink-0">
+          <ShieldIndicator
+            shieldCount={profile.shield_count}
+            streakProgress={profile.current_streak % 7}
+            size="sm"
+            vertical
+          />
+        </div>
+        <div className="hidden sm:block flex-shrink-0">
+          <ShieldIndicator
+            shieldCount={profile.shield_count}
+            streakProgress={profile.current_streak % 7}
+            size="sm"
+          />
+        </div>
       </div>
     </section>
   )
@@ -118,7 +129,7 @@ function ClassProgressCard({ classProgress }: { classProgress: ClassProgress[] }
 
   return (
     <section aria-labelledby="section-clases">
-      <SectionTitle id="section-clases">Clases de vida</SectionTitle>
+      <SectionHeader id="section-clases" title="Clases de vida" className="mb-4" />
 
       <div className="bg-surface rounded-card border border-border/60 overflow-hidden">
         <div className="px-4 md:px-6 pt-5 pb-2">
@@ -130,8 +141,8 @@ function ClassProgressCard({ classProgress }: { classProgress: ClassProgress[] }
         </div>
 
         {classes.map((lc, idx) => {
-          const cp        = getClass(lc)
-          const meta      = CLASS_META[lc]
+          const cp   = getClass(lc)
+          const meta = CLASS_META[lc]
           const { title, pct, nextAt } = getMilestoneProgress(cp.points)
 
           return (
@@ -139,7 +150,6 @@ function ClassProgressCard({ classProgress }: { classProgress: ClassProgress[] }
               key={lc}
               className={`flex flex-col md:flex-row md:items-center gap-2 md:gap-5 px-4 md:px-6 py-4 md:py-5 ${idx < 2 ? 'border-b border-border/40' : ''}`}
             >
-              {/* Top row on mobile: dot + label + badge + pts */}
               <div className="flex items-center gap-3 min-w-0">
                 <div className="flex items-center gap-3 md:w-32 flex-shrink-0">
                   <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: meta.color }} aria-hidden />
@@ -154,12 +164,12 @@ function ClassProgressCard({ classProgress }: { classProgress: ClassProgress[] }
                 </span>
               </div>
 
-              {/* Progress bar — full width on mobile, flex-1 on desktop */}
               <div className="w-full md:flex-1 min-w-0">
                 <AnimatedBar
                   value={pct / 100}
                   color={meta.color}
-                  height="h-2"
+                  glowColor={CLASS_GLOW[lc]}
+                  height="h-2.5"
                   delay={idx * 0.1}
                   role="progressbar"
                   aria-valuenow={cp.points}
@@ -169,7 +179,6 @@ function ClassProgressCard({ classProgress }: { classProgress: ClassProgress[] }
                 />
               </div>
 
-              {/* Points — desktop only (shown inline on mobile above) */}
               <span className="hidden md:inline text-xs text-text-muted tabular-nums flex-shrink-0 w-28 text-right">
                 {cp.points.toLocaleString()} pts
                 {nextAt && <span className="opacity-60"> / {nextAt.toLocaleString()}</span>}
@@ -191,6 +200,7 @@ function StatsGrid({ profile, completedCount, totalXp }: {
   const stats = [
     {
       label: 'XP total ganado', value: totalXp.toLocaleString(), sub: 'puntos de experiencia',
+      color: 'var(--color-accent)',
       icon: (
         <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
           <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
@@ -200,6 +210,7 @@ function StatsGrid({ profile, completedCount, totalXp }: {
     {
       label: 'Racha máxima', value: profile.longest_streak.toString(),
       sub: profile.longest_streak === 1 ? 'día consecutivo' : 'días consecutivos',
+      color: 'var(--color-disciplina)',
       icon: (
         <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
           <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
@@ -209,6 +220,7 @@ function StatsGrid({ profile, completedCount, totalXp }: {
     {
       label: 'Misiones completadas', value: completedCount.toLocaleString(),
       sub: completedCount === 1 ? 'misión completada' : 'misiones completadas',
+      color: 'var(--color-fisico)',
       icon: (
         <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
           <circle cx="12" cy="8" r="6" />
@@ -219,6 +231,7 @@ function StatsGrid({ profile, completedCount, totalXp }: {
     {
       label: 'Días activos', value: profile.total_days_active.toLocaleString(),
       sub: profile.total_days_active === 1 ? 'día en total' : 'días en total',
+      color: 'var(--color-mental)',
       icon: (
         <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
           <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
@@ -231,6 +244,7 @@ function StatsGrid({ profile, completedCount, totalXp }: {
     {
       label: 'Horas en la vida real', value: hoursValue,
       sub: hoursValue === '—' ? 'fecha de nacimiento no registrada' : 'horas jugadas',
+      color: 'var(--color-disciplina)',
       icon: (
         <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
           <circle cx="12" cy="12" r="10" />
@@ -240,6 +254,7 @@ function StatsGrid({ profile, completedCount, totalXp }: {
     },
     {
       label: 'Miembro desde', value: formatJoinDate(profile.created_at), sub: 'fecha de registro',
+      color: 'var(--color-accent)',
       icon: (
         <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
@@ -251,14 +266,21 @@ function StatsGrid({ profile, completedCount, totalXp }: {
 
   return (
     <section aria-labelledby="section-stats">
-      <SectionTitle id="section-stats">Estadísticas</SectionTitle>
+      <SectionHeader id="section-stats" title="Estadísticas" className="mb-4" />
 
       <div className="grid grid-cols-2 gap-3">
-        {stats.map(({ label, value, sub, icon }) => (
-          <div key={label} className="bg-surface rounded-card p-6 border border-border/60 flex flex-col gap-3">
+        {stats.map(({ label, value, sub, icon, color }) => (
+          <div
+            key={label}
+            className="bg-surface rounded-card p-6 border border-border/60 flex flex-col gap-3 transition-all duration-200 hover:shadow-[0_0_18px_rgba(127,119,221,0.10)] hover:border-border/90"
+            style={{
+              borderTopWidth: 2,
+              borderTopColor: `color-mix(in srgb, ${color} 35%, transparent)`,
+            }}
+          >
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-text-muted">{label}</span>
-              <span className="text-text-muted">{icon}</span>
+              <span style={{ color }}>{icon}</span>
             </div>
             <div>
               <p className="text-2xl md:text-3xl font-black text-text-primary tabular-nums leading-none">{value}</p>
@@ -267,12 +289,11 @@ function StatsGrid({ profile, completedCount, totalXp }: {
           </div>
         ))}
       </div>
-
     </section>
   )
 }
 
-// 4 ── Recent achievements
+// 4 ── Recent achievements (wraps client component)
 type RecentItem = {
   completed_at: string
   missions: { title: string; xp_reward: number; life_class: string } | null
@@ -281,46 +302,8 @@ type RecentItem = {
 function RecentAchievements({ recent }: { recent: RecentItem[] }) {
   return (
     <section aria-labelledby="section-recientes">
-      <SectionTitle id="section-recientes">Logros recientes</SectionTitle>
-
-      {recent.length === 0 ? (
-        <div className="bg-surface rounded-card border border-border/60">
-          <EmptyState
-            icon={<Trophy size={40} strokeWidth={1.5} aria-hidden />}
-            title="Aún sin logros"
-            description="Completa misiones para ver tu progreso aquí"
-            action={{ label: 'Ver misiones', href: '/missions' }}
-          />
-        </div>
-      ) : (
-        <div className="bg-surface rounded-card border border-border/60 overflow-hidden">
-          {recent.map((item, idx) => {
-            const mission = item.missions
-            if (!mission) return null
-            const lc   = mission.life_class as LifeClass
-            const meta = CLASS_META[lc] ?? CLASS_META.fisico
-
-            return (
-              <div
-                key={idx}
-                className={`flex items-center gap-4 px-6 py-4 ${idx < recent.length - 1 ? 'border-b border-border/40' : ''}`}
-              >
-                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: meta.color }} aria-hidden />
-                <p className="flex-1 text-sm font-medium text-text-primary truncate min-w-0">
-                  {mission.title}
-                </p>
-                <ClassBadge lifeClass={lc} />
-                <span className="text-sm font-black text-accent tabular-nums flex-shrink-0 text-right">
-                  +{mission.xp_reward} XP
-                </span>
-                <span className="hidden md:block text-xs text-text-muted flex-shrink-0 w-28 text-right">
-                  {formatDate(item.completed_at)}
-                </span>
-              </div>
-            )
-          })}
-        </div>
-      )}
+      <SectionHeader id="section-recientes" title="Logros recientes" accentColor="var(--color-fisico)" className="mb-4" />
+      <RecentAchievementsAnimated recent={recent} />
     </section>
   )
 }
@@ -329,7 +312,7 @@ function RecentAchievements({ recent }: { recent: RecentItem[] }) {
 function MedalsSection({ medals }: { medals: Medal[] }) {
   return (
     <section aria-labelledby="section-medallas">
-      <SectionTitle id="section-medallas">Medallas</SectionTitle>
+      <SectionHeader id="section-medallas" title="Medallas" accentColor="var(--color-disciplina)" className="mb-4" />
 
       {medals.length === 0 ? (
         <div className="bg-surface rounded-card border border-border/60">
@@ -356,14 +339,14 @@ function ClassBalance({ classProgress }: { classProgress: ClassProgress[] }) {
   const getClass = (lc: LifeClass): ClassProgress =>
     classProgress.find(cp => cp.life_class === lc) ?? { id: '', user_id: '', life_class: lc, points: 0 }
 
-  const allPoints  = classes.map(lc => getClass(lc).points)
-  const maxTier    = Math.max(...allPoints.map(getMilestoneTier))
-  const isLagging  = (pts: number) => maxTier >= 2 && getMilestoneTier(pts) <= maxTier - 2
-  const maxPoints  = Math.max(...allPoints)
+  const allPoints = classes.map(lc => getClass(lc).points)
+  const maxTier   = Math.max(...allPoints.map(getMilestoneTier))
+  const isLagging = (pts: number) => maxTier >= 2 && getMilestoneTier(pts) <= maxTier - 2
+  const maxPoints = Math.max(...allPoints)
 
   return (
     <section aria-labelledby="section-equilibrio">
-      <SectionTitle id="section-equilibrio">Equilibrio de clases</SectionTitle>
+      <SectionHeader id="section-equilibrio" title="Equilibrio de clases" className="mb-4" />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {classes.map((lc, idx) => {
@@ -373,13 +356,24 @@ function ClassBalance({ classProgress }: { classProgress: ClassProgress[] }) {
           const isTop   = cp.points === maxPoints && maxPoints >= 100
           const { title, pct } = getMilestoneProgress(cp.points)
 
+          const borderLeftColor = lagging ? 'var(--color-error)' : meta.color
+          const borderColor = lagging
+            ? 'color-mix(in srgb, var(--color-error) 25%, transparent)'
+            : 'color-mix(in srgb, var(--color-border) 60%, transparent)'
+
           return (
             <div
               key={lc}
-              className={`
-                rounded-card p-6 border flex flex-col gap-4 transition-all duration-200
-                ${lagging ? 'bg-error/5 border-error/25' : 'bg-surface border-border/60'}
-              `}
+              className="rounded-card rounded-l-none border border-l-0 p-6 flex flex-col gap-4 transition-all duration-200"
+              style={{
+                background: lagging
+                  ? 'color-mix(in srgb, var(--color-error) 4%, var(--color-surface))'
+                  : 'var(--color-surface)',
+                borderColor,
+                borderLeftWidth: 3,
+                borderLeftStyle: 'solid',
+                borderLeftColor,
+              }}
               aria-label={`Clase ${meta.label}, ${cp.points} puntos${lagging ? ', necesita equilibrio' : ''}`}
             >
               <div className="flex items-center justify-between gap-2">
@@ -411,7 +405,8 @@ function ClassBalance({ classProgress }: { classProgress: ClassProgress[] }) {
               <AnimatedBar
                 value={pct / 100}
                 color={lagging ? 'var(--color-error)' : meta.color}
-                height="h-1.5"
+                glowColor={lagging ? 'rgba(239,68,68,0.25)' : CLASS_GLOW[lc]}
+                height="h-2"
                 delay={idx * 0.1}
               />
 
@@ -506,17 +501,15 @@ export default async function ProfilePage() {
           }}
         />
 
-        {/* ── Content ─────────────────────────────────────────────────── */}
         <main className="flex-1 py-6 px-4 md:py-8 md:px-8 pb-28 md:pb-8">
           <div className="max-w-[1100px] mx-auto flex flex-col gap-8">
 
-            {/* Page title — h1, standardized: text-2xl font-semibold */}
             <div>
               <h1 className="text-2xl font-semibold text-text-primary">Perfil</h1>
               <p className="text-sm text-text-muted mt-0.5">Tu progreso y estadísticas</p>
             </div>
 
-            <ProfileHeader profile={profile} />
+            <ProfileHeader profile={profile} classProgress={classProgress} />
 
             <ShareButton className="w-full" />
 
@@ -549,7 +542,7 @@ export default async function ProfilePage() {
 
             {heatmapData.length === 0 && (
               <section aria-labelledby="section-racha-historica">
-                <SectionTitle id="section-racha-historica">Historial de racha</SectionTitle>
+                <SectionHeader id="section-racha-historica" title="Historial de racha" accentColor="var(--color-disciplina)" className="mb-4" />
                 <div className="bg-surface rounded-card border border-border/60">
                   <EmptyState
                     icon={<Calendar size={40} strokeWidth={1.5} aria-hidden />}
