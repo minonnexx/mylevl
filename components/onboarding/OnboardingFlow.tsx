@@ -8,6 +8,7 @@ import { completeOnboarding, checkUsernameAvailable } from '@/app/onboarding/act
 import { PACK_LIST } from '@/lib/constants/packs'
 import AvatarCreator from '@/components/avatar/AvatarCreator'
 import AvatarDisplay from '@/components/avatar/AvatarDisplay'
+import { useTypewriterSound } from '@/hooks/useTypewriterSound'
 import type { AvatarConfig, PackId } from '@/types/supabase'
 
 const inputClass =
@@ -215,6 +216,7 @@ function CharacterIntroStep({
 }) {
   const [text, setText] = useState('')
   const [done, setDone] = useState(false)
+  const { playTick } = useTypewriterSound()
 
   useEffect(() => {
     let cancelled = false
@@ -233,6 +235,7 @@ function CharacterIntroStep({
           if (cancelled) return
           accumulated += segment[c]
           setText(accumulated)
+          playTick()
           await sleep(44)
         }
         if (s < DIALOGUE.length - 1) {
@@ -244,7 +247,7 @@ function CharacterIntroStep({
 
     run()
     return () => { cancelled = true }
-  }, [])
+  }, [playTick])
 
   return (
     <div
