@@ -62,7 +62,7 @@ export function PublicProfileContent({
     if (!best) return lc
     return pts > (classPoints[best] ?? 0) ? lc : best
   }, null)
-  const showRing = profile.avatar_config?.style === 'adventurer'
+  const ringRadius = profile.avatar_config?.style === 'adventurer' ? '50%' : '4px'
   const ringColor = dominantClass ? CLASS_META[dominantClass].color : 'var(--color-accent)'
   const glowRgba  = dominantClass ? CLASS_GLOW[dominantClass] : 'rgba(127,119,221,0.25)'
 
@@ -108,15 +108,14 @@ export function PublicProfileContent({
           {/* Avatar with conditional ring */}
           <div className="relative flex-shrink-0">
             <AvatarDisplay config={profile.avatar_config} size={80} />
-            {showRing && (
-              <div
-                className="absolute inset-0 rounded-full pointer-events-none"
-                style={{
-                  boxShadow: `inset 0 0 0 2px color-mix(in srgb, ${ringColor} 45%, transparent), 0 0 16px ${glowRgba}`,
-                }}
-                aria-hidden
-              />
-            )}
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                borderRadius: ringRadius,
+                boxShadow: `inset 0 0 0 2px color-mix(in srgb, ${ringColor} 45%, transparent), 0 0 16px ${glowRgba}`,
+              }}
+              aria-hidden
+            />
           </div>
 
           <div className="flex flex-col gap-1">

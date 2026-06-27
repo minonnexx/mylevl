@@ -46,7 +46,7 @@ function dominantClass(classProgress: ClassProgress[]): LifeClass | null {
 function ProfileHeader({ profile, classProgress }: { profile: Profile; classProgress: ClassProgress[] }) {
   const initials = (profile.username ?? 'JU').slice(0, 2).toUpperCase()
   const dominant = dominantClass(classProgress)
-  const showRing = profile.avatar_config?.style === 'adventurer'
+  const ringRadius = profile.avatar_config?.style === 'adventurer' ? '50%' : '4px'
   const ringColor = dominant ? CLASS_META[dominant].color : 'var(--color-accent)'
   const glowRgba = dominant ? CLASS_GLOW[dominant] : 'rgba(127,119,221,0.25)'
 
@@ -79,16 +79,15 @@ function ProfileHeader({ profile, classProgress }: { profile: Profile; classProg
                 </span>
               </div>
             )}
-            {/* Dominant-class ring — adventurer style only */}
-            {showRing && (
-              <div
-                className="absolute inset-0 rounded-full pointer-events-none"
-                style={{
-                  boxShadow: `inset 0 0 0 2px color-mix(in srgb, ${ringColor} 45%, transparent), 0 0 16px ${glowRgba}`,
-                }}
-                aria-hidden
-              />
-            )}
+            {/* Dominant-class ring */}
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                borderRadius: ringRadius,
+                boxShadow: `inset 0 0 0 2px color-mix(in srgb, ${ringColor} 45%, transparent), 0 0 16px ${glowRgba}`,
+              }}
+              aria-hidden
+            />
           </div>
         </Link>
 
