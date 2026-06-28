@@ -9,7 +9,7 @@ import type { AvatarConfig } from '@/types/supabase'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import { changeUsername, changeActivePack } from '@/app/profile/actions'
+import { changeUsername, changeActivePack, getPackChangeLocked } from '@/app/profile/actions'
 import { toggleFeedPublic } from '@/app/social/actions'
 import { PACK_LIST, PACK_META } from '@/lib/constants/packs'
 import type { PackId } from '@/types/supabase'
@@ -49,6 +49,8 @@ export function SettingsDrawer({ isOpen, onClose, profile }: Props) {
   const [localPack, setLocalPack] = useState<PackId | null>(profile.active_pack)
   const [showPacks, setShowPacks] = useState(false)
   const [isPackPending, startPack] = useTransition()
+  const [packLocked, setPackLocked] = useState(false)
+  const [isCheckingLock, setIsCheckingLock] = useState(false)
 
   // ── Feed ────────────────────────────────────────────────────────────────────
   const [isPublic, setIsPublic] = useState(profile.feed_public)
@@ -69,6 +71,7 @@ export function SettingsDrawer({ isOpen, onClose, profile }: Props) {
       setEditing(false)
       setShowPacks(false)
       setUsernameError('')
+      setPackLocked(false)
     }
   }, [isOpen])
 
@@ -111,8 +114,20 @@ export function SettingsDrawer({ isOpen, onClose, profile }: Props) {
     })
   }
 
+  async function handleTogglePacks() {
+    if (showPacks) {
+      setShowPacks(false)
+      return
+    }
+    setIsCheckingLock(true)
+    const locked = await getPackChangeLocked()
+    setPackLocked(locked)
+    setIsCheckingLock(false)
+    setShowPacks(true)
+  }
+
   function handlePackChange(pack: PackId) {
-    if (pack === localPack) { setShowPacks(false); return }
+    if (pack === localPack || packLocked) { setShowPacks(false); return }
     startPack(async () => {
       const result = await changeActivePack(pack)
       if (result?.error) {
@@ -289,14 +304,23 @@ export function SettingsDrawer({ isOpen, onClose, profile }: Props) {
                     </span>
                   </div>
                   <button
-                    onClick={() => setShowPacks(p => !p)}
-                    disabled={isPackPending}
+                    onClick={handleTogglePacks}
+                    disabled={isPackPending || isCheckingLock}
                     className="flex items-center gap-1.5 text-xs text-accent hover:opacity-80 transition-opacity disabled:opacity-40"
                   >
                     <RefreshCw size={12} aria-hidden />
                     Cambiar pack
                   </button>
                 </div>
+
+                {packLocked && !showPacks && (
+                  <div className="flex items-start gap-1.5 mt-2">
+                    <Lock size={12} style={{ color: 'var(--color-text-muted)', flexShrink: 0, marginTop: 1 }} aria-hidden />
+                    <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+                      Has completado misiones hoy. Podrás cambiar de pack mañana.
+                    </p>
+                  </div>
+                )}
 
                 {showPacks && (
                   <div
@@ -306,15 +330,17 @@ export function SettingsDrawer({ isOpen, onClose, profile }: Props) {
                     {PACK_LIST.map((pack, idx) => {
                       const Icon = PACK_ICONS[pack.id]
                       const isActive = localPack === pack.id
+                      const isDisabled = isPackPending || (packLocked && !isActive)
                       return (
                         <button
                           key={pack.id}
                           onClick={() => handlePackChange(pack.id)}
-                          disabled={isPackPending}
-                          className={`flex items-center gap-3 w-full px-4 py-3 text-left transition-colors disabled:opacity-50${!isActive ? ' hover:bg-surface-elevated' : ''}`}
+                          disabled={isDisabled}
+                          className={`flex items-center gap-3 w-full px-4 py-3 text-left transition-colors${!isActive && !packLocked ? ' hover:bg-surface-elevated' : ''}`}
                           style={{
                             borderBottom: idx < PACK_LIST.length - 1 ? '1px solid var(--color-border)' : undefined,
                             background: isActive ? 'color-mix(in srgb, var(--color-accent) 8%, transparent)' : undefined,
+                            opacity: packLocked && !isActive ? 0.4 : 1,
                           }}
                         >
                           <Icon
@@ -339,6 +365,17 @@ export function SettingsDrawer({ isOpen, onClose, profile }: Props) {
                         </button>
                       )
                     })}
+                    {packLocked && (
+                      <div
+                        className="px-4 py-3 flex items-start gap-2"
+                        style={{ borderTop: '1px solid var(--color-border)' }}
+                      >
+                        <Lock size={12} style={{ color: 'var(--color-text-muted)', flexShrink: 0, marginTop: 1 }} aria-hidden />
+                        <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+                          Has completado misiones hoy. Podrás cambiar de pack mañana.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

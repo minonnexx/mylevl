@@ -63,6 +63,30 @@ export async function changeActivePack(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth')
 
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('active_pack')
+    .eq('id', user.id)
+    .single()
+
+  if (profile?.active_pack) {
+    const todayUTC = new Date()
+    todayUTC.setUTCHours(0, 0, 0, 0)
+
+    const { data: completedToday } = await supabase
+      .from('completed_missions')
+      .select('id, missions!inner(type, pack)')
+      .eq('user_id', user.id)
+      .eq('missions.type', 'daily')
+      .eq('missions.pack', profile.active_pack)
+      .gte('completed_at', todayUTC.toISOString())
+      .limit(1)
+
+    if (completedToday && completedToday.length > 0) {
+      return { error: 'Ya completaste misiones con este pack hoy. Podrás cambiarlo mañana.' }
+    }
+  }
+
   const { error } = await supabase
     .from('profiles')
     .update({ active_pack: pack })
@@ -73,6 +97,34 @@ export async function changeActivePack(
   revalidatePath('/profile')
   revalidatePath('/dashboard')
   revalidatePath('/missions')
+}
+
+export async function getPackChangeLocked(): Promise<boolean> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return false
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('active_pack')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile?.active_pack) return false
+
+  const todayUTC = new Date()
+  todayUTC.setUTCHours(0, 0, 0, 0)
+
+  const { data } = await supabase
+    .from('completed_missions')
+    .select('id, missions!inner(type, pack)')
+    .eq('user_id', user.id)
+    .eq('missions.type', 'daily')
+    .eq('missions.pack', profile.active_pack)
+    .gte('completed_at', todayUTC.toISOString())
+    .limit(1)
+
+  return !!(data && data.length > 0)
 }
 
 export async function updatePublicProfileSettings(
