@@ -92,7 +92,7 @@ function RequestRow({ request }: { request: PendingRequest }) {
           {request.username ?? 'jugador'}
         </p>
         <span
-          className="text-xs font-bold px-2 py-0.5 rounded-pill tabular-nums"
+          className="text-xs font-black px-2 py-0.5 rounded-pill tabular-nums"
           style={{
             color: 'var(--color-accent)',
             background: 'color-mix(in srgb, var(--color-accent) 12%, transparent)',

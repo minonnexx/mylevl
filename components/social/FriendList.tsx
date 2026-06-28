@@ -91,7 +91,7 @@ function FriendRow({ friend }: { friend: Friend }) {
         </p>
         <div className="flex items-center gap-3 mt-0.5">
           <span
-            className="text-xs font-bold px-2 py-0.5 rounded-pill tabular-nums"
+            className="text-xs font-black px-2 py-0.5 rounded-pill tabular-nums"
             style={{
               color: 'var(--color-accent)',
               background: 'color-mix(in srgb, var(--color-accent) 12%, transparent)',
@@ -101,7 +101,7 @@ function FriendRow({ friend }: { friend: Friend }) {
             LVL {friend.global_level}
           </span>
           {friend.current_streak > 0 && (
-            <span className="flex items-center gap-1 text-xs" style={{ color: 'var(--color-text-muted)' }}>
+            <span className="flex items-center gap-1 text-xs font-black" style={{ color: 'var(--color-disciplina)' }}>
               <Flame size={11} aria-hidden />
               {friend.current_streak}
             </span>

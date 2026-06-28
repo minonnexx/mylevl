@@ -79,7 +79,7 @@ export function LeagueSection({ myLeagues, pendingLeagueInvites, friends }: Leag
       {/* Mis ligas */}
       {myLeagues.length === 0 && pendingLeagueInvites.length === 0 ? (
         <div className="flex flex-col items-center gap-2 py-6 text-center">
-          <Shield size={32} strokeWidth={1.5} style={{ color: 'var(--color-text-muted)' }} aria-hidden />
+          <Shield size={32} strokeWidth={1.5} style={{ color: 'var(--color-accent)' }} aria-hidden />
           <p className="text-base font-semibold text-text-primary">Aún no perteneces a ninguna liga</p>
           <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
             Crea una liga e invita a tus compañeros a competir
@@ -127,15 +127,18 @@ function LeagueRow({ league }: { league: MyLeague }) {
         className="flex items-center gap-3 p-3 rounded-component border border-border/40 transition-colors hover:border-border/70 min-h-[44px] w-full text-left"
         style={{ background: 'var(--color-background)' }}
       >
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-text-primary truncate">{league.name}</p>
-          <div className="flex items-center gap-1 mt-0.5">
-            <Users size={11} style={{ color: 'var(--color-text-muted)' }} aria-hidden />
-            <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
-              {league.memberCount} {league.memberCount === 1 ? 'miembro' : 'miembros'}
-            </span>
-          </div>
-        </div>
+        <Shield size={16} style={{ color: 'var(--color-accent)', flexShrink: 0 }} aria-hidden />
+        <p className="text-sm font-semibold text-text-primary truncate flex-1 min-w-0">{league.name}</p>
+        <span
+          className="flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-pill flex-shrink-0"
+          style={{
+            color: 'var(--color-text-muted)',
+            background: 'color-mix(in srgb, var(--color-text-muted) 10%, transparent)',
+          }}
+        >
+          <Users size={10} aria-hidden />
+          {league.memberCount}
+        </span>
         <ChevronRight size={14} style={{ color: 'var(--color-text-muted)', flexShrink: 0 }} aria-hidden />
       </button>
     </>
@@ -179,13 +182,19 @@ function LeagueInviteRow({ invite }: { invite: PendingLeagueInvite }) {
         borderColor: 'color-mix(in srgb, var(--color-disciplina) 25%, transparent)',
       }}
     >
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-text-primary truncate">{invite.leagueName}</p>
-        {invite.creatorUsername && (
-          <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
-            Invitado por {invite.creatorUsername}
-          </p>
-        )}
+      <div className="flex items-start gap-2 flex-1 min-w-0">
+        <span
+          className="w-2 h-2 rounded-full animate-pulse flex-shrink-0 mt-1.5"
+          style={{ background: 'var(--color-accent)' }}
+        />
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-text-primary truncate">{invite.leagueName}</p>
+          {invite.creatorUsername && (
+            <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
+              Invitado por {invite.creatorUsername}
+            </p>
+          )}
+        </div>
       </div>
       <div className="flex items-center gap-1.5 flex-shrink-0">
         <button

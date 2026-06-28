@@ -3,7 +3,7 @@
 import { useState, useTransition, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { LogOut, Users, ChevronLeft, UserPlus, UserCheck, Check, X } from 'lucide-react'
+import { LogOut, Users, ChevronLeft, ChevronDown, UserPlus, UserCheck, Check, X, Swords } from 'lucide-react'
 import { toast } from 'sonner'
 import AvatarDisplay from '@/components/avatar/AvatarDisplay'
 import { leaveLeague, inviteToLeague, sendFriendRequest } from '@/app/social/actions'
@@ -106,11 +106,18 @@ export function LeagueDetailView({ league }: LeagueDetailViewProps) {
       {members.length > 1 && (
         <div
           className="rounded-card p-4 border border-border/40"
-          style={{ background: 'var(--color-surface)' }}
+          style={{
+            background: 'color-mix(in srgb, var(--color-accent) 5%, var(--color-surface))',
+            borderLeftColor: 'var(--color-accent)',
+            borderLeftWidth: '3px',
+          }}
         >
-          <p className="text-sm text-center" style={{ color: 'var(--color-text-muted)' }}>
-            {LEAGUE_MOTIVATIONAL_MESSAGES[motivationalKey]}
-          </p>
+          <div className="flex items-start gap-3">
+            <Swords size={18} style={{ color: 'var(--color-accent)', flexShrink: 0, marginTop: 1 }} aria-hidden />
+            <p className="text-sm text-text-primary font-medium italic">
+              {LEAGUE_MOTIVATIONAL_MESSAGES[motivationalKey]}
+            </p>
+          </div>
         </div>
       )}
 
@@ -218,7 +225,7 @@ function PodiumCard({
           : 'color-mix(in srgb, var(--color-text-muted) 15%, transparent)',
       }}
     >
-      <span className="text-xs font-bold tabular-nums" style={{ color }}>
+      <span className="text-xs font-black tabular-nums" style={{ color }}>
         #{rank}
       </span>
       <AvatarDisplay config={member.avatar_config} size={avatarSize} />
@@ -226,7 +233,7 @@ function PodiumCard({
         <p className="text-xs font-semibold text-text-primary truncate w-full text-center">
           {member.username ?? 'jugador'}
         </p>
-        <p className="text-xs tabular-nums font-bold" style={{ color }}>
+        <p className="text-xs tabular-nums font-black" style={{ color: 'var(--color-accent)' }}>
           {member.xp_earned} XP
         </p>
         <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
@@ -259,7 +266,7 @@ function RankRow({
       }}
     >
       <span
-        className="text-xs font-bold tabular-nums w-5 text-center flex-shrink-0"
+        className="text-xs font-black tabular-nums w-5 text-center flex-shrink-0"
         style={{ color: 'var(--color-text-muted)' }}
       >
         {rank}
@@ -274,7 +281,7 @@ function RankRow({
         )}
       </span>
       <div className="flex flex-col items-end flex-shrink-0">
-        <span className="text-xs font-bold tabular-nums text-text-primary">
+        <span className="text-xs font-black tabular-nums" style={{ color: 'var(--color-accent)' }}>
           {member.xp_earned} XP
         </span>
         <span className="text-xs tabular-nums" style={{ color: 'var(--color-text-muted)' }}>
@@ -310,17 +317,16 @@ function MembersList({
             Miembros ({members.length})
           </span>
         </div>
-        <span
-          className="text-xs font-medium"
+        <ChevronDown
+          size={16}
           style={{
             color: 'var(--color-text-muted)',
-            display: 'inline-block',
             transform: collapsed ? 'rotate(0deg)' : 'rotate(180deg)',
             transition: 'transform 150ms',
+            flexShrink: 0,
           }}
-        >
-          ▾
-        </span>
+          aria-hidden
+        />
       </button>
 
       {!collapsed && (
@@ -348,7 +354,7 @@ function MembersList({
                   )}
                 </span>
                 <span
-                  className="text-xs font-bold px-2 py-0.5 rounded-pill tabular-nums flex-shrink-0"
+                  className="text-xs font-black px-2 py-0.5 rounded-pill tabular-nums flex-shrink-0"
                   style={{
                     color: 'var(--color-accent)',
                     background: 'color-mix(in srgb, var(--color-accent) 12%, transparent)',
