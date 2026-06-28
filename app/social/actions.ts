@@ -170,7 +170,7 @@ export async function getFeed() {
 
   const { data } = await supabase
     .from('social_feed')
-    .select('id, user_id, event_type, metadata, created_at, profiles(username, global_level)')
+    .select('id, user_id, event_type, metadata, created_at, profiles(username, global_level, avatar_config)')
     .in('user_id', friendIds)
     .order('created_at', { ascending: false })
     .limit(50)

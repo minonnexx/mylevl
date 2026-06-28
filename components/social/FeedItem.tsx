@@ -3,9 +3,10 @@
 import Link from 'next/link'
 import { CheckCircle, TrendingUp, Flame } from 'lucide-react'
 import { CLASS_META } from '@/lib/constants/classes'
-import type { LifeClass } from '@/types/supabase'
+import AvatarDisplay from '@/components/avatar/AvatarDisplay'
+import type { LifeClass, AvatarConfig } from '@/types/supabase'
 
-type ProfileData = { username: string | null; global_level: number }
+type ProfileData = { username: string | null; global_level: number; avatar_config: AvatarConfig | null }
 
 export type FeedEventItem = {
   id: string
@@ -19,7 +20,6 @@ export type FeedEventItem = {
     streak_days?: number
   }
   created_at: string
-  // Supabase may return array or object depending on query form
   profiles: ProfileData | ProfileData[] | null
 }
 
@@ -39,6 +39,7 @@ function formatRelative(dateStr: string): string {
 export function FeedItem({ event }: { event: FeedEventItem }) {
   const profileData = Array.isArray(event.profiles) ? event.profiles[0] : event.profiles
   const username = profileData?.username ?? 'jugador'
+  const avatarConfig = profileData?.avatar_config ?? null
   const { event_type, metadata, created_at } = event
 
   let icon: React.ReactNode
@@ -48,15 +49,17 @@ export function FeedItem({ event }: { event: FeedEventItem }) {
     const lc = metadata.life_class
     const meta = lc && LIFE_CLASSES.has(lc) ? CLASS_META[lc as LifeClass] : null
     icon = (
-      <CheckCircle size={18} strokeWidth={2} style={{ color: 'var(--color-accent)' }} aria-hidden />
+      <CheckCircle size={14} strokeWidth={2} style={{ color: 'var(--color-fisico)' }} aria-hidden />
     )
     content = (
-      <p className="text-sm text-text-primary leading-relaxed">
-        <Link href={`/u/${username}`} className="font-semibold hover:underline" style={{ color: 'inherit' }}>{username}</Link>
+      <p className="text-sm font-medium leading-relaxed" style={{ color: 'var(--color-text-muted)' }}>
+        <Link href={`/u/${username}`} className="font-semibold text-text-primary hover:underline">
+          {username}
+        </Link>
         {' completó '}
-        <span className="font-medium">{metadata.mission_title ?? 'una misión'}</span>
+        <span>{metadata.mission_title ?? 'una misión'}</span>
         {meta && (
-          <span className={`inline-flex text-xs font-semibold px-2.5 py-1 rounded-pill ml-2 align-middle ${meta.badgeClasses}`}>
+          <span className={`inline-flex text-xs font-semibold px-2.5 py-1 rounded-pill ml-1.5 align-middle ${meta.badgeClasses}`}>
             {meta.label}
           </span>
         )}
@@ -64,26 +67,38 @@ export function FeedItem({ event }: { event: FeedEventItem }) {
     )
   } else if (event_type === 'level_up') {
     icon = (
-      <TrendingUp size={18} strokeWidth={2} style={{ color: 'var(--color-accent)' }} aria-hidden />
+      <TrendingUp size={16} strokeWidth={2} style={{ color: 'var(--color-accent)' }} aria-hidden />
     )
     content = (
-      <p className="text-sm text-text-primary leading-relaxed">
-        <Link href={`/u/${username}`} className="font-semibold hover:underline" style={{ color: 'inherit' }}>{username}</Link>
-        {' subió al nivel '}
-        <span className="font-black tabular-nums" style={{ color: 'var(--color-accent)' }}>
-          {metadata.new_level}
+      <p className="text-sm font-black text-text-primary leading-relaxed">
+        <Link href={`/u/${username}`} className="hover:underline">
+          {username}
+        </Link>
+        {' subió al '}
+        <span
+          className="inline-flex items-center text-xs font-black px-2.5 py-1 rounded-pill ml-1 align-middle"
+          style={{
+            color: 'var(--color-accent)',
+            background: 'color-mix(in srgb, var(--color-accent) 15%, transparent)',
+          }}
+        >
+          NIVEL {metadata.new_level}
         </span>
       </p>
     )
   } else {
     icon = (
-      <Flame size={18} strokeWidth={2} style={{ color: 'var(--color-disciplina)' }} aria-hidden />
+      <Flame size={14} strokeWidth={2} style={{ color: 'var(--color-disciplina)' }} aria-hidden />
     )
     content = (
       <p className="text-sm text-text-primary leading-relaxed">
-        <Link href={`/u/${username}`} className="font-semibold hover:underline" style={{ color: 'inherit' }}>{username}</Link>
+        <Link href={`/u/${username}`} className="font-semibold hover:underline" style={{ color: 'inherit' }}>
+          {username}
+        </Link>
         {' alcanzó una racha de '}
-        <span className="font-black tabular-nums" style={{ color: 'var(--color-disciplina)' }}>{metadata.streak_days}</span>
+        <span className="font-black tabular-nums" style={{ color: 'var(--color-disciplina)' }}>
+          {metadata.streak_days}
+        </span>
         {' días'}
       </p>
     )
@@ -91,13 +106,22 @@ export function FeedItem({ event }: { event: FeedEventItem }) {
 
   return (
     <div
-      className="rounded-card p-6 border border-border/60 flex items-start gap-4"
+      className="rounded-card p-4 border border-border/60 flex items-start gap-3"
       style={{ background: 'var(--color-surface)' }}
     >
-      <div className="flex-shrink-0 mt-0.5">{icon}</div>
+      <Link
+        href={`/u/${username}`}
+        aria-label={`Ver perfil de ${username}`}
+        className="flex-shrink-0 transition-opacity hover:opacity-75"
+      >
+        <AvatarDisplay config={avatarConfig} size={36} />
+      </Link>
       <div className="flex-1 min-w-0">
-        {content}
-        <p className="text-xs mt-2" style={{ color: 'var(--color-text-muted)' }}>
+        <div className="flex items-start gap-1.5">
+          <span className="mt-0.5 flex-shrink-0">{icon}</span>
+          <div className="flex-1 min-w-0">{content}</div>
+        </div>
+        <p className="text-xs mt-1.5" style={{ color: 'var(--color-text-muted)' }}>
           {formatRelative(created_at)}
         </p>
       </div>

@@ -4,6 +4,7 @@ import { useState, useTransition, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { LogOut, Users, ChevronLeft, ChevronDown, UserPlus, UserCheck, Check, X, Swords } from 'lucide-react'
+import { motion } from 'motion/react'
 import { toast } from 'sonner'
 import AvatarDisplay from '@/components/avatar/AvatarDisplay'
 import { leaveLeague, inviteToLeague, sendFriendRequest } from '@/app/social/actions'
@@ -154,6 +155,7 @@ export function LeagueDetailView({ league }: LeagueDetailViewProps) {
                   isFirst={isFirst}
                   isMe={isMe}
                   color={color}
+                  animDelay={idx * 0.08}
                 />
               )
             })}
@@ -205,42 +207,55 @@ function PodiumCard({
   isFirst,
   isMe,
   color,
+  animDelay,
 }: {
   member: LeagueDetailMember
   rank: number
   isFirst: boolean
   isMe: boolean
   color: string
+  animDelay: number
 }) {
-  const avatarSize = isFirst ? 44 : 36
+  const avatarSize = isFirst ? 52 : 40
+  const paddingTop = isFirst ? 0 : rank === 2 ? 24 : 40
+
   return (
-    <div
-      className={`flex-1 max-w-[110px] flex flex-col items-center gap-2 p-3 rounded-card border transition-colors ${isFirst ? 'pb-4' : ''}`}
-      style={{
-        background: isMe
-          ? 'color-mix(in srgb, var(--color-accent) 8%, var(--color-background))'
-          : 'var(--color-background)',
-        borderColor: isMe
-          ? 'color-mix(in srgb, var(--color-accent) 25%, transparent)'
-          : 'color-mix(in srgb, var(--color-text-muted) 15%, transparent)',
-      }}
+    <motion.div
+      className="flex-1 max-w-[110px]"
+      style={{ paddingTop }}
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.32, ease: 'easeOut', delay: animDelay }}
     >
-      <span className="text-xs font-black tabular-nums" style={{ color }}>
-        #{rank}
-      </span>
-      <AvatarDisplay config={member.avatar_config} size={avatarSize} />
-      <div className="flex flex-col items-center gap-0.5 w-full min-w-0">
-        <p className="text-xs font-semibold text-text-primary truncate w-full text-center">
-          {member.username ?? 'jugador'}
-        </p>
-        <p className="text-xs tabular-nums font-black" style={{ color: 'var(--color-accent)' }}>
-          {member.xp_earned} XP
-        </p>
-        <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
-          {member.missions_completed} {member.missions_completed === 1 ? 'misión' : 'misiones'}
-        </p>
+      <div
+        className={`flex flex-col items-center gap-2 p-3 rounded-card border transition-colors${isFirst ? ' pb-4' : ''}`}
+        style={{
+          background: isMe
+            ? 'color-mix(in srgb, var(--color-accent) 8%, var(--color-background))'
+            : 'var(--color-background)',
+          borderColor: isFirst
+            ? 'color-mix(in srgb, var(--color-accent) 40%, transparent)'
+            : `color-mix(in srgb, ${color} 30%, transparent)`,
+          boxShadow: isFirst ? '0 0 12px rgba(127,119,221,0.3)' : undefined,
+        }}
+      >
+        <span className="text-xs font-black tabular-nums" style={{ color }}>
+          #{rank}
+        </span>
+        <AvatarDisplay config={member.avatar_config} size={avatarSize} />
+        <div className="flex flex-col items-center gap-0.5 w-full min-w-0">
+          <p className="text-xs font-semibold text-text-primary truncate w-full text-center">
+            {member.username ?? 'jugador'}
+          </p>
+          <p className="text-xs tabular-nums font-black" style={{ color: 'var(--color-accent)' }}>
+            {member.xp_earned} XP
+          </p>
+          <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+            {member.missions_completed} {member.missions_completed === 1 ? 'misión' : 'misiones'}
+          </p>
+        </div>
       </div>
-    </div>
+    </motion.div>
   )
 }
 
@@ -271,7 +286,7 @@ function RankRow({
       >
         {rank}
       </span>
-      <AvatarDisplay config={member.avatar_config} size={28} />
+      <AvatarDisplay config={member.avatar_config} size={36} />
       <span className="flex-1 text-sm font-medium text-text-primary truncate min-w-0">
         {member.username ?? 'jugador'}
         {isMe && (

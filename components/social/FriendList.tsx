@@ -83,7 +83,7 @@ function FriendRow({ friend }: { friend: Friend }) {
         aria-label={`Ver perfil de ${friend.username}`}
         className="flex-shrink-0 transition-opacity hover:opacity-75"
       >
-        <AvatarDisplay config={friend.avatar_config} size={32} />
+        <AvatarDisplay config={friend.avatar_config} size={40} />
       </Link>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-text-primary truncate">
