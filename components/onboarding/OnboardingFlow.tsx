@@ -72,6 +72,13 @@ const PACK_CLASS_COLORS: Record<PackId, string> = {
   heroe: 'var(--color-accent)',
 }
 
+const PACK_GLOW_COLORS: Record<PackId, string> = {
+  guerrero: 'rgba(29,158,117,0.35)',
+  sabio: 'rgba(127,119,221,0.35)',
+  monje: 'rgba(186,117,23,0.35)',
+  heroe: 'rgba(127,119,221,0.35)',
+}
+
 const PACK_ICONS: Record<PackId, React.ElementType> = {
   guerrero: Dumbbell,
   sabio: BookOpen,
@@ -468,12 +475,12 @@ function PackStep({
               style={{
                 background: 'var(--color-surface)',
                 border: isSelected
-                  ? '2px solid var(--color-accent)'
+                  ? `2px solid ${classColor}`
                   : '1px solid var(--color-border)',
                 borderLeft: `3px solid ${classColor}`,
                 outline: 'none',
                 transform: isSelected ? 'scale(1.02)' : 'scale(1)',
-                boxShadow: isSelected ? '0 0 16px rgba(127,119,221,0.2)' : 'none',
+                boxShadow: isSelected ? `0 0 16px ${PACK_GLOW_COLORS[pack.id]}` : 'none',
                 transition: 'transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease',
               }}
             >
@@ -485,7 +492,7 @@ function PackStep({
               <div className="flex flex-col gap-1">
                 <p
                   className="text-sm font-semibold"
-                  style={{ color: isSelected ? 'var(--color-accent)' : 'var(--color-text-primary)' }}
+                  style={{ color: isSelected ? classColor : 'var(--color-text-primary)' }}
                 >
                   {pack.label}
                 </p>
