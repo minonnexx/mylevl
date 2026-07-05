@@ -12,6 +12,7 @@ import { ShieldUsedBanner } from '@/components/dashboard/ShieldUsedBanner'
 import { Confetti } from '@/components/ui/Confetti'
 import { completeMission, markShieldNotificationSeen, type MissionActionResult } from '@/app/dashboard/actions'
 import { playLevelUp, playMissionComplete, playShieldGained, playDayComplete } from '@/lib/sounds'
+import { useStreak } from '@/components/dashboard/StreakContext'
 
 function getTodayKey(): string {
   const d = new Date()
@@ -28,6 +29,7 @@ export function MissionAreaWrapper({
   avatarConfig: AvatarConfig | null
 }) {
   const [result, formAction] = useActionState<MissionActionResult, FormData>(completeMission, null)
+  const { setStreak } = useStreak()
   const [levelUpData, setLevelUpData] = useState<{ level: number } | null>(null)
   const [recapData, setRecapData] = useState<DaySummary | null>(null)
   const [showConfetti, setShowConfetti] = useState(false)
@@ -90,6 +92,8 @@ export function MissionAreaWrapper({
       return
     }
 
+    if (result.currentStreak !== undefined) setStreak(result.currentStreak)
+
     // Sonido ya reproducido al hacer clic — solo efectos secundarios aquí
     if (result.shieldGranted) playShieldGained()
     if (result.levelUp) setTimeout(() => playLevelUp(), 300)
@@ -120,7 +124,7 @@ export function MissionAreaWrapper({
         }
       }
     }
-  }, [result])
+  }, [result, setStreak])
 
   const visibleMissions = missions.filter(m => !optimisticCompletedIds.has(m.id))
 

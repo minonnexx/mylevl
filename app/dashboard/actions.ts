@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { after } from 'next/server'
 import { computeLevelUp } from '@/lib/xp'
 import { updateStreak } from '@/lib/streaks'
 import { getDaySummary } from '@/lib/recap'
@@ -117,6 +118,7 @@ export type MissionActionResult = {
   newLevel: number
   xpReward: number
   shieldGranted: boolean
+  currentStreak?: number
   allMissionsCompleted: boolean
   daySummary?: DaySummary
   error?: boolean
@@ -152,7 +154,7 @@ export async function completeMission(
     if (existing) return null
 
     await supabase.from('completed_missions').insert({ user_id: user.id, mission_id: missionId })
-    const { shieldGranted } = await updateStreak(supabase, user.id)
+    const { shieldGranted, currentStreak } = await updateStreak(supabase, user.id)
 
     // Fetch current class points, global profile state, and mission title in parallel
     const [cpRes, profileRes, missionRes] = await Promise.all([
@@ -164,7 +166,7 @@ export async function completeMission(
         .maybeSingle(),
       supabase
         .from('profiles')
-        .select('current_xp, global_level')
+        .select('current_xp, global_level, active_pack')
         .eq('id', user.id)
         .single(),
       supabase
@@ -177,16 +179,22 @@ export async function completeMission(
     const difficultyPoints: Record<string, number> = { easy: 1, medium: 2, hard: 5, boss: 10 }
     const classPoints = difficultyPoints[difficulty] ?? 1
     const newPoints   = ((cpRes.data as { points: number } | null)?.points ?? 0) + classPoints
-    const oldProfile = profileRes.data as { current_xp: number; global_level: number } | null
+    const oldProfile = profileRes.data as { current_xp: number; global_level: number; active_pack: string | null } | null
     const newGlobal  = computeLevelUp(
       oldProfile?.global_level ?? 1,
       oldProfile?.current_xp   ?? 0,
       xpReward,
     )
     const didLevelUp = newGlobal.level > (oldProfile?.global_level ?? 1)
+    const activePack = oldProfile?.active_pack ?? null
 
-    // Persist both updates in parallel
-    await Promise.all([
+    // Persist both updates, and check same-day daily-mission completion, all in parallel
+    const dailyTotalQuery = supabase
+      .from('missions')
+      .select('id', { count: 'exact', head: true })
+      .eq('type', 'daily')
+
+    const [, , totalDailyRes, completedTodayCountRes] = await Promise.all([
       supabase
         .from('class_progress')
         .upsert(
@@ -201,6 +209,13 @@ export async function completeMission(
           xp_to_next_level: newGlobal.xp_to_next_level,
         })
         .eq('id', user.id),
+      activePack ? dailyTotalQuery.eq('pack', activePack) : dailyTotalQuery,
+      supabase
+        .from('completed_missions')
+        .select('id, missions!inner(type)', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('missions.type', 'daily')
+        .gte('completed_at', todayStart.toISOString()),
     ])
 
     revalidatePath('/dashboard')
@@ -230,19 +245,23 @@ export async function completeMission(
       } catch {}
     }
 
-    try { await checkAutoAchievements(supabase, user.id) } catch {}
+    // Auto-achievements don't affect this response — deferred to run after it's sent
+    after(() => checkAutoAchievements(supabase, user.id).catch(() => {}))
 
-    const summary = await getDaySummary(supabase, user.id)
-    const allMissionsCompleted =
-      summary.missionsTotal > 0 && summary.missionsCompleted >= summary.missionsTotal
+    const missionsTotal = totalDailyRes.count ?? 0
+    const missionsCompletedToday = completedTodayCountRes.count ?? 0
+    const allMissionsCompleted = missionsTotal > 0 && missionsCompletedToday >= missionsTotal
+
+    const summary = allMissionsCompleted ? await getDaySummary(supabase, user.id) : undefined
 
     return {
       levelUp: didLevelUp,
       newLevel: newGlobal.level,
       xpReward,
       shieldGranted,
+      currentStreak,
       allMissionsCompleted,
-      daySummary: allMissionsCompleted ? summary : undefined,
+      daySummary: summary,
       ts: Date.now(),
     }
   } catch {

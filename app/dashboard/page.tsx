@@ -5,7 +5,8 @@ import type { Mission, Profile } from '@/types/supabase'
 import Sidebar from '@/components/dashboard/Sidebar'
 import BottomNav from '@/components/dashboard/BottomNav'
 import { MissionAreaWrapper } from '@/components/dashboard/MissionAreaWrapper'
-import { PlayerCard } from '@/components/dashboard/PlayerCard'
+import { PlayerCardLive } from '@/components/dashboard/PlayerCardLive'
+import { StreakProvider } from '@/components/dashboard/StreakContext'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Sword } from 'lucide-react'
 import { AppHeader } from '@/components/ui/AppHeader'
@@ -196,6 +197,7 @@ export default async function DashboardPage() {
               <p className="text-sm text-text-muted mt-0.5">Bienvenido de vuelta, {profile.username ?? 'jugador'}</p>
             </div>
 
+            <StreakProvider initialStreak={profile.current_streak}>
             <div className="grid grid-cols-1 md:grid-cols-[1fr_360px] gap-6 items-start">
 
               {/* ── LEFT: Daily mission queue ───────────────────────────── */}
@@ -281,12 +283,11 @@ export default async function DashboardPage() {
               {/* ── RIGHT: Player + Stats ───────────────────────────────── */}
               <div className="flex flex-col gap-4">
 
-                <PlayerCard
+                <PlayerCardLive
                   username={profile.username}
                   globalLevel={profile.global_level}
                   currentXp={profile.current_xp}
                   xpToNextLevel={profile.xp_to_next_level}
-                  currentStreak={profile.current_streak}
                   shieldCount={profile.shield_count}
                   avatarConfig={profile.avatar_config}
                   classStats={classStats}
@@ -334,6 +335,7 @@ export default async function DashboardPage() {
               </div>
 
             </div>
+            </StreakProvider>
           </div>
         </main>
 

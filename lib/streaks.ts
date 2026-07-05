@@ -5,12 +5,12 @@ import { grantShieldIfEarned } from '@/lib/shields'
 export async function updateStreak(
   supabase: SupabaseClient,
   userId: string,
-): Promise<{ shieldGranted: boolean }> {
+): Promise<{ shieldGranted: boolean; currentStreak: number }> {
   const today = new Date().toISOString().slice(0, 10) // UTC YYYY-MM-DD
 
   const { data: existingStreak } = await supabase
     .from('streaks')
-    .select('id, missions_completed')
+    .select('id, missions_completed, streak_day')
     .eq('user_id', userId)
     .eq('date', today)
     .maybeSingle()
@@ -20,7 +20,7 @@ export async function updateStreak(
       .from('streaks')
       .update({ missions_completed: existingStreak.missions_completed + 1 })
       .eq('id', existingStreak.id)
-    return { shieldGranted: false }
+    return { shieldGranted: false, currentStreak: existingStreak.streak_day }
   }
 
   const { data: profile } = await supabase
@@ -65,7 +65,7 @@ export async function updateStreak(
     shieldGranted = granted
   }
 
-  return { shieldGranted }
+  return { shieldGranted, currentStreak: newStreak }
 }
 
 async function autoCompleteBossMission(
