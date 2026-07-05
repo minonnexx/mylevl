@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react'
 import Link from 'next/link'
 import { Zap } from 'lucide-react'
 import { useCountUp } from 'react-countup'
@@ -47,7 +48,12 @@ function LevelHex({ level }: { level: number }) {
 }
 
 function StreakBadge({ streak }: { streak: number }) {
-  useCountUp({ ref: 'streak-count', end: streak, duration: 1.0, delay: 0.3 })
+  const { update } = useCountUp({ ref: 'streak-count', end: streak, duration: 1.0, delay: 0.3 })
+
+  // useCountUp only animates to `end` on mount — later changes need an explicit update() call
+  useEffect(() => {
+    update(streak)
+  }, [streak, update])
 
   const isActive = streak > 0
   return (
