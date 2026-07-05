@@ -194,6 +194,8 @@ function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMi
     ? 'color-mix(in srgb, var(--color-text-muted) 40%, transparent)'
     : 'color-mix(in srgb, var(--color-border) 60%, transparent)'
 
+  const rarityColor = effectiveDone && medal ? RARITY_META[medal.rarity].color : null
+
   return (
     <div className={wrapperClass}>
       {medalUnlockData && (
@@ -216,12 +218,13 @@ function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMi
         />
       )}
       <article
-        className="bg-surface rounded-card rounded-l-none border border-l-0 p-4 flex flex-col gap-3 cursor-pointer h-full relative"
+        className={`${rarityColor ? '' : 'bg-surface'} rounded-card rounded-l-none border border-l-0 p-4 flex flex-col gap-3 cursor-pointer h-full relative`}
         style={{
-          borderColor: sideBorderColor,
+          backgroundColor: rarityColor ? `color-mix(in srgb, ${rarityColor} 8%, transparent)` : undefined,
+          borderColor: rarityColor ? `color-mix(in srgb, ${rarityColor} 30%, transparent)` : sideBorderColor,
           borderLeft: `3px solid ${classMeta.borderColor}`,
           opacity: effectiveDone ? 0.4 : 1,
-          transition: 'opacity 300ms ease, border-color 150ms ease',
+          transition: 'opacity 300ms ease, border-color 150ms ease, background-color 150ms ease',
         }}
         aria-label={mission.title}
         onClick={handleCardClick}
@@ -254,7 +257,7 @@ function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMi
 
         <p className="text-sm font-semibold text-text-primary leading-snug">{mission.title}</p>
 
-        <span className="text-xs font-bold tabular-nums" style={{ color: 'var(--color-accent)' }}>
+        <span className="text-xs font-black tabular-nums" style={{ color: 'var(--color-accent)' }}>
           +{mission.xp_reward} XP
         </span>
 
@@ -279,7 +282,7 @@ function AchievementCard({ mission, completedAt, medal, totalDaysActive, totalMi
             <div className="relative">
               <CompleteButton label="Completar" disabled={isProcessing} />
               {showXp && (
-                <span className="absolute left-1/2 bottom-full mb-1 text-sm font-bold pointer-events-none whitespace-nowrap" style={{ animation: 'xp-float 650ms ease forwards', color: 'var(--color-accent)' }} aria-hidden>
+                <span className="absolute left-1/2 bottom-full mb-1 text-sm font-black pointer-events-none whitespace-nowrap" style={{ animation: 'xp-float 650ms ease forwards', color: 'var(--color-accent)' }} aria-hidden>
                   +{mission.xp_reward} XP
                 </span>
               )}
@@ -382,7 +385,7 @@ function BossCard({ mission, completedAt, currentStreak, medal, avatarConfig, is
     <>
       {levelUpData && <LevelUpOverlay level={levelUpData.level} avatarConfig={avatarConfig} onClose={() => setLevelUpData(null)} />}
       <article
-        className={`rounded-card rounded-l-none overflow-hidden border border-l-0 bg-surface ${isActive && !effectiveDone ? 'boss-border-pulse' : ''}`}
+        className={`rounded-card rounded-l-none overflow-hidden border border-l-0 ${isActive && !effectiveDone ? 'bg-accent/5 boss-border-pulse' : 'bg-surface'}`}
         style={{
           borderColor: isActive && !effectiveDone
             ? 'var(--color-accent)'
@@ -415,7 +418,7 @@ function BossCard({ mission, completedAt, currentStreak, medal, avatarConfig, is
             </div>
 
             <div className="flex-shrink-0 text-right">
-              <p className="text-3xl font-bold tabular-nums" style={{ color: 'var(--color-accent)' }}>
+              <p className="text-3xl font-black tabular-nums" style={{ color: 'var(--color-accent)' }}>
                 +{mission.xp_reward}
               </p>
               <p className="text-xs text-text-muted font-medium mt-0.5">XP</p>
@@ -457,7 +460,7 @@ function BossCard({ mission, completedAt, currentStreak, medal, avatarConfig, is
                   <div className="relative">
                     <CompleteButton label="Reclamar recompensa" disabled={isProcessing} />
                     {showXp && (
-                      <span className="absolute left-1/2 bottom-full mb-1 text-sm font-bold pointer-events-none whitespace-nowrap" style={{ animation: 'xp-float 650ms ease forwards', color: 'var(--color-accent)' }} aria-hidden>
+                      <span className="absolute left-1/2 bottom-full mb-1 text-sm font-black pointer-events-none whitespace-nowrap" style={{ animation: 'xp-float 650ms ease forwards', color: 'var(--color-accent)' }} aria-hidden>
                         +{mission.xp_reward} XP
                       </span>
                     )}
@@ -480,7 +483,7 @@ function SectionHeader({ icon, title, count, total }: {
     <div className="border-b border-border/40 pb-3 flex items-center justify-between">
       <div className="flex items-center gap-2">
         <span style={{ color: 'var(--color-text-muted)' }}>{icon}</span>
-        <h2 className="text-sm font-semibold text-text-primary">{title}</h2>
+        <h2 className="text-[11px] font-medium text-text-muted uppercase tracking-wider">{title}</h2>
       </div>
       <span className="text-xs text-text-muted tabular-nums">{count}/{total}</span>
     </div>
@@ -547,8 +550,11 @@ export default function AchievementsClient({
     <div className="flex flex-col gap-8">
 
       <div>
-        <h1 className="text-2xl font-semibold text-text-primary">Logros</h1>
-        <p className="text-sm text-text-muted mt-1">Hitos únicos y desafíos semanales que demuestran tu progreso</p>
+        <div className="flex items-center gap-2">
+          <Trophy size={22} strokeWidth={1.75} style={{ color: 'var(--color-accent)' }} aria-hidden />
+          <h1 className="text-2xl font-black text-text-primary">Logros</h1>
+        </div>
+        <p className="text-sm text-text-secondary mt-1">Hitos únicos y desafíos semanales que demuestran tu progreso</p>
       </div>
 
       {achievements.length > 0 && (
@@ -568,12 +574,14 @@ export default function AchievementsClient({
                 type="button"
                 onClick={() => setClassFilter(value)}
                 aria-pressed={classFilter === value}
-                className="h-8 px-4 rounded-pill text-sm font-medium transition-all duration-150 cursor-pointer"
-                style={{
-                  backgroundColor: classFilter === value ? 'var(--color-accent)' : 'var(--color-surface)',
-                  color: classFilter === value ? 'var(--color-background)' : 'var(--color-text-muted)',
-                  border: classFilter === value ? '1px solid transparent' : '1px solid color-mix(in srgb, var(--color-border) 80%, transparent)',
-                }}
+                className={`
+                  h-8 px-4 rounded-pill text-sm font-medium
+                  transition-all duration-150 cursor-pointer
+                  ${classFilter === value
+                    ? 'bg-accent text-white'
+                    : 'bg-surface border border-border text-text-muted hover:text-text-secondary hover:border-border/80'
+                  }
+                `}
               >
                 {label}
               </button>

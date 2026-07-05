@@ -96,14 +96,14 @@ function WeeklyChallengeCard({ challenge, weekStart, progress, isCompleted, comp
       )}
 
       <article
-        className="rounded-card rounded-l-none overflow-hidden border border-l-0 bg-surface"
+        className={`rounded-card rounded-l-none overflow-hidden border border-l-0 ${effectiveDone ? 'bg-surface' : 'bg-accent/5'}`}
         style={{
           borderColor: effectiveDone
             ? 'color-mix(in srgb, var(--color-border) 60%, transparent)'
-            : 'var(--color-accent)',
+            : 'color-mix(in srgb, var(--color-accent) 30%, transparent)',
           borderLeft: '3px solid var(--color-accent)',
           opacity: effectiveDone ? 0.4 : 1,
-          transition: 'opacity 300ms ease, border-color 300ms ease',
+          transition: 'opacity 300ms ease, border-color 300ms ease, background-color 300ms ease',
         }}
         aria-label={challenge.title}
       >
@@ -196,7 +196,7 @@ export function WeeklyChallengeSection({ challenge, weekStart, progress, isCompl
           <span style={{ color: 'var(--color-text-muted)' }}>
             <Swords size={15} strokeWidth={1.75} aria-hidden />
           </span>
-          <h2 className="text-sm font-semibold text-text-primary" id="section-weekly-challenge">
+          <h2 className="text-[11px] font-medium text-text-muted uppercase tracking-wider" id="section-weekly-challenge">
             Desafío semanal
           </h2>
         </div>
