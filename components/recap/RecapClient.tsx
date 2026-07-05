@@ -5,8 +5,9 @@ import Link from 'next/link'
 import { motion, useReducedMotion } from 'motion/react'
 import { Brain, Dumbbell, Flame, Home, ShieldCheck, Swords, Sword, Target, Trophy } from 'lucide-react'
 import { CLASS_META } from '@/lib/constants/classes'
+import { AvatarSpeechBubble } from '@/components/ui/AvatarSpeechBubble'
 import type { DaySummary, MissionSummaryItem } from '@/lib/recap'
-import type { LifeClass, Profile } from '@/types/supabase'
+import type { AvatarConfig, LifeClass, Profile } from '@/types/supabase'
 
 // ─── Shared data types ────────────────────────────────────────────────────────
 
@@ -52,12 +53,15 @@ function getHeatLevel(count: number): 0 | 1 | 2 | 3 {
 }
 
 function heatCellStyle(level: 0 | 1 | 2 | 3): React.CSSProperties {
+  const base: React.CSSProperties = { borderRadius: '3px' }
   if (level === 0) return {
-    backgroundColor: 'var(--color-background)',
-    border: '1px solid color-mix(in srgb, var(--color-text-muted) 20%, transparent)',
+    ...base,
+    backgroundColor: 'color-mix(in srgb, var(--color-text-muted) 12%, var(--color-background))',
+    border: '1px solid color-mix(in srgb, var(--color-text-muted) 25%, transparent)',
   }
   const pct = level === 1 ? 30 : level === 2 ? 60 : 100
   return {
+    ...base,
     backgroundColor: `color-mix(in srgb, var(--color-accent) ${pct}%, transparent)`,
     border: '1px solid transparent',
   }
@@ -132,15 +136,13 @@ function MissionCard({
   icon,
   title,
   missions,
-  divider = false,
 }: {
   icon?: React.ReactNode
   title: string
   missions: MissionSummaryItem[]
-  divider?: boolean
 }) {
   return (
-    <div className={`bg-surface rounded-card border border-border/60 overflow-hidden ${divider ? 'mt-0' : ''}`}>
+    <div className="bg-surface rounded-card border border-border/60 overflow-hidden">
       <div className="flex items-center gap-2 px-6 pt-4 pb-2">
         {icon}
         <p className="text-[10px] font-medium text-text-muted uppercase tracking-wider">{title}</p>
@@ -165,7 +167,6 @@ function MiniHeatmap({ data, cols }: { data: DayActivity[]; cols: number }) {
       {data.map(day => (
         <div
           key={day.date}
-          className="rounded-sm"
           style={{ aspectRatio: '1', ...heatCellStyle(getHeatLevel(day.count)) }}
           title={`${day.date}: ${day.count} misiones`}
         />
@@ -174,41 +175,67 @@ function MiniHeatmap({ data, cols }: { data: DayActivity[]; cols: number }) {
   )
 }
 
-// ─── Motivational CTA ────────────────────────────────────────────────────────
+// ─── RPG call to action ───────────────────────────────────────────────────────
 
-function MotivationalCTA({ message, showButton }: { message: string; showButton: boolean }) {
+function RPGCallToAction({ message }: { message: string }) {
   return (
     <div
-      className="rounded-card p-6 border border-border/60 flex flex-col items-center gap-4 text-center"
-      style={{ backgroundColor: 'var(--color-surface)' }}
+      className="rounded-card border border-border/60 p-6 flex flex-col gap-4"
+      style={{
+        backgroundColor: 'color-mix(in srgb, var(--color-accent) 5%, var(--color-surface))',
+        borderLeft: '3px solid var(--color-accent)',
+      }}
     >
-      <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>{message}</p>
-      {showButton && (
-        <Link
-          href="/dashboard"
-          className="w-full flex items-center justify-center gap-2 rounded-component px-4 py-2 text-sm font-medium transition-colors"
-          style={{
-            border: '1px solid var(--color-border)',
-            color: 'var(--color-text-muted)',
-            backgroundColor: 'transparent',
-          }}
-        >
-          <Home size={14} aria-hidden />
-          Ir al dashboard
-        </Link>
-      )}
+      <div className="flex items-start gap-3">
+        <Swords size={18} style={{ color: 'var(--color-accent)', flexShrink: 0, marginTop: 1 }} aria-hidden />
+        <p className="text-sm font-medium text-text-primary">{message}</p>
+      </div>
+      <Link
+        href="/dashboard"
+        className="w-full flex items-center justify-center gap-2 rounded-component py-2.5 text-sm font-semibold transition-opacity duration-150 hover:opacity-90 active:scale-[0.98]"
+        style={{
+          backgroundColor: 'var(--color-accent)',
+          color: 'var(--color-background)',
+        }}
+      >
+        <Home size={14} aria-hidden />
+        Volver al dashboard
+      </Link>
     </div>
   )
 }
 
 // ─── Daily view ───────────────────────────────────────────────────────────────
 
-function DailyView({ daySummary, profile }: { daySummary: DaySummary; profile: Profile }) {
+function DailyView({ daySummary, profile, avatarConfig }: {
+  daySummary: DaySummary
+  profile: Profile
+  avatarConfig: AvatarConfig | null
+}) {
   const allDone = daySummary.missionsTotal > 0 && daySummary.missionsCompleted >= daySummary.missionsTotal
   const { dailyMissions, bossMission, achievements } = daySummary
 
+  const avatarMessage = allDone
+    ? 'Día perfecto. Así se forjan las leyendas.'
+    : daySummary.missionsCompleted > 0
+    ? 'Cada misión completada es un paso. Mañana, más.'
+    : 'Hoy no fue tu día. Mañana empieza de nuevo.'
+
+  const ctaMessage = allDone
+    ? 'Perfecto. Vuelve mañana y repítelo.'
+    : daySummary.missionsCompleted > 0
+    ? 'Todavía puedes completar tus misiones de hoy.'
+    : 'Mañana es otra oportunidad. No la desperdicies.'
+
   return (
     <div className="flex flex-col gap-8">
+      {/* Avatar narrador */}
+      <AvatarSpeechBubble
+        message={avatarMessage}
+        avatarConfig={avatarConfig}
+        size={48}
+      />
+
       {/* Stats */}
       <section>
         <SectionTitle>Resumen del día</SectionTitle>
@@ -241,18 +268,14 @@ function DailyView({ daySummary, profile }: { daySummary: DaySummary; profile: P
             sub={profile.current_streak === 1 ? 'día consecutivo' : 'días consecutivos'}
             borderColor="var(--color-disciplina)"
             valueColor={profile.current_streak > 0 ? 'var(--color-disciplina)' : 'var(--color-text-primary)'}
-            icon={
-              <Flame size={16} aria-hidden />
-            }
+            icon={<Flame size={16} aria-hidden />}
           />
           <StatCard
             label="Escudos disponibles"
             value={profile.shield_count}
             sub={profile.shield_count === 1 ? 'escudo de racha' : 'escudos de racha'}
             borderColor="var(--color-accent)"
-            icon={
-              <ShieldCheck size={16} aria-hidden />
-            }
+            icon={<ShieldCheck size={16} aria-hidden />}
           />
         </div>
       </section>
@@ -302,26 +325,33 @@ function DailyView({ daySummary, profile }: { daySummary: DaySummary; profile: P
         </section>
       )}
 
-      {/* Motivational CTA */}
-      <MotivationalCTA
-        message={
-          daySummary.missionsCompleted === 0
-            ? 'Hoy no has completado ninguna misión — mañana es otro día'
-            : allDone
-            ? 'Lo has dado todo hoy. Vuelve mañana para seguir.'
-            : 'Todavía puedes completar tus misiones de hoy'
-        }
-        showButton={!allDone}
-      />
+      <RPGCallToAction message={ctaMessage} />
     </div>
   )
 }
 
 // ─── Weekly view ──────────────────────────────────────────────────────────────
 
-function WeeklyView({ weekData }: { weekData: WeekData }) {
+function WeeklyView({ weekData, avatarConfig }: { weekData: WeekData; avatarConfig: AvatarConfig | null }) {
+  const avatarMessage = weekData.currentStreak >= 7
+    ? 'Siete días sin rendirte. Eso no es suerte, eres tú.'
+    : weekData.missionsCompleted > 0
+    ? 'Esta semana dejaste huella. Sigue construyendo.'
+    : 'La semana se fue. La próxima es tuya.'
+
+  const ctaMessage = weekData.currentStreak > 0
+    ? `No rompas la racha. Sigue hoy.`
+    : 'Esta semana aún puedes cambiar el marcador.'
+
   return (
     <div className="flex flex-col gap-8">
+      {/* Avatar narrador */}
+      <AvatarSpeechBubble
+        message={avatarMessage}
+        avatarConfig={avatarConfig}
+        size={48}
+      />
+
       {/* Stats */}
       <section>
         <SectionTitle>Esta semana</SectionTitle>
@@ -363,30 +393,22 @@ function WeeklyView({ weekData }: { weekData: WeekData }) {
       </section>
 
       {/* Top class */}
-      {weekData.topClass && (() => {
-        const meta = CLASS_META[weekData.topClass.lc]
+      {weekData.topClass !== null && (() => {
+        const { lc, points } = weekData.topClass!
+        const meta = CLASS_META[lc]
         return (
           <section>
             <SectionTitle>Clase más trabajada</SectionTitle>
             <div
               className="rounded-card border border-border/60 p-6 flex items-center gap-4"
-              style={{
-                backgroundColor: 'color-mix(in srgb, var(--color-surface) 100%, transparent)',
-                borderLeft: `3px solid ${meta.color}`,
-              }}
+              style={{ borderLeft: `3px solid ${meta.color}` }}
             >
-              {getClassIcon(weekData.topClass.lc, 18, { color: meta.color })}
-              <span
-                className="text-base font-black flex-1"
-                style={{ color: meta.color }}
-              >
+              {getClassIcon(lc, 18, { color: meta.color })}
+              <span className="text-base font-black flex-1" style={{ color: meta.color }}>
                 {meta.label}
               </span>
-              <span
-                className="text-sm font-black tabular-nums"
-                style={{ color: 'var(--color-accent)' }}
-              >
-                {weekData.topClass.points} pts
+              <span className="text-sm font-black tabular-nums" style={{ color: 'var(--color-accent)' }}>
+                {points} pts
               </span>
             </div>
           </section>
@@ -420,8 +442,8 @@ function WeeklyView({ weekData }: { weekData: WeekData }) {
       <section>
         <SectionTitle>Actividad de la semana</SectionTitle>
         <div className="bg-surface rounded-card border border-border/60 p-6">
-          <MiniHeatmap data={weekData.heatmap} cols={7} />
-          <div className="flex justify-between mt-2">
+          {/* Day labels — above grid */}
+          <div className="flex justify-between mb-1.5">
             {weekData.heatmap.map(day => {
               const d = new Date(day.date + 'T00:00:00')
               return (
@@ -435,30 +457,39 @@ function WeeklyView({ weekData }: { weekData: WeekData }) {
               )
             })}
           </div>
+          <MiniHeatmap data={weekData.heatmap} cols={7} />
         </div>
       </section>
 
-      {/* Motivational CTA */}
-      <MotivationalCTA
-        message={
-          weekData.currentStreak > 0
-            ? `Llevas ${weekData.currentStreak} días consecutivos — no lo rompas`
-            : 'Esta semana puedes hacerlo mejor. Empieza hoy.'
-        }
-        showButton
-      />
+      <RPGCallToAction message={ctaMessage} />
     </div>
   )
 }
 
 // ─── Monthly view ─────────────────────────────────────────────────────────────
 
-function MonthlyView({ monthData }: { monthData: MonthData }) {
+function MonthlyView({ monthData, avatarConfig }: { monthData: MonthData; avatarConfig: AvatarConfig | null }) {
   const reduced = useReducedMotion()
   const maxPts = Math.max(monthData.classPoints.fisico, monthData.classPoints.mental, monthData.classPoints.disciplina, 1)
 
+  const topClassEntry = (['fisico', 'mental', 'disciplina'] as LifeClass[])
+    .map(lc => ({ lc, points: monthData.classPoints[lc] }))
+    .filter(e => e.points > 0)
+    .sort((a, b) => b.points - a.points)[0] ?? null
+
+  const avatarMessage = topClassEntry
+    ? `Tu clase ${CLASS_META[topClassEntry.lc].label} está dominando. El camino se ve.`
+    : 'Un mes más de progreso real. No pares.'
+
   return (
     <div className="flex flex-col gap-8">
+      {/* Avatar narrador */}
+      <AvatarSpeechBubble
+        message={avatarMessage}
+        avatarConfig={avatarConfig}
+        size={48}
+      />
+
       {/* Stats */}
       <section>
         <SectionTitle>Este mes</SectionTitle>
@@ -574,11 +605,7 @@ function MonthlyView({ monthData }: { monthData: MonthData }) {
         </div>
       </section>
 
-      {/* Motivational CTA */}
-      <MotivationalCTA
-        message={`Llevas ${monthData.activeDays} días activos este mes. Sigue construyendo tu mejor versión.`}
-        showButton
-      />
+      <RPGCallToAction message={avatarMessage} />
     </div>
   )
 }
@@ -594,6 +621,7 @@ interface RecapClientProps {
 
 export function RecapClient({ daySummary, weekData, monthData, profile }: RecapClientProps) {
   const [period, setPeriod] = useState<Period>('today')
+  const avatarConfig = profile.avatar_config as AvatarConfig | null
 
   const tabs: { id: Period; label: string }[] = [
     { id: 'today', label: 'Hoy' },
@@ -631,10 +659,37 @@ export function RecapClient({ daySummary, weekData, monthData, profile }: RecapC
         ))}
       </div>
 
-      {/* Content */}
-      {period === 'today' && <DailyView daySummary={daySummary} profile={profile} />}
-      {period === 'week' && <WeeklyView weekData={weekData} />}
-      {period === 'month' && <MonthlyView monthData={monthData} />}
+      {/* Content — fade in on tab change */}
+      {period === 'today' && (
+        <motion.div
+          key="today"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          <DailyView daySummary={daySummary} profile={profile} avatarConfig={avatarConfig} />
+        </motion.div>
+      )}
+      {period === 'week' && (
+        <motion.div
+          key="week"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          <WeeklyView weekData={weekData} avatarConfig={avatarConfig} />
+        </motion.div>
+      )}
+      {period === 'month' && (
+        <motion.div
+          key="month"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          <MonthlyView monthData={monthData} avatarConfig={avatarConfig} />
+        </motion.div>
+      )}
     </div>
   )
 }
