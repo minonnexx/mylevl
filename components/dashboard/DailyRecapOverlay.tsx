@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 'motion/react'
 import Link from 'next/link'
-import { Flame, ShieldCheck, Swords, Trophy } from 'lucide-react'
+import { CheckCircle2, Flame, ShieldCheck, Swords, Trophy, Zap } from 'lucide-react'
 import { CLASS_META } from '@/lib/constants/classes'
 import { AvatarSpeechBubble } from '@/components/ui/AvatarSpeechBubble'
 import type { DaySummary, MissionSummaryItem } from '@/lib/recap'
@@ -47,14 +47,12 @@ function MissionRow({ item }: { item: MissionSummaryItem }) {
   const lc = item.life_class as LifeClass
   const meta = CLASS_META[lc] ?? CLASS_META.fisico
   return (
-    <div className="flex items-center gap-2.5">
-      <div
-        className="w-2 h-2 rounded-full flex-shrink-0"
-        style={{ backgroundColor: meta.color }}
-        aria-hidden
-      />
+    <div
+      className="flex items-center gap-2.5 pl-3"
+      style={{ borderLeft: `3px solid ${meta.color}` }}
+    >
       <span className="text-sm text-text-muted flex-1 min-w-0 truncate">{item.title}</span>
-      <span className="text-sm font-bold tabular-nums flex-shrink-0" style={{ color: 'var(--color-accent)' }}>
+      <span className="text-sm font-black tabular-nums flex-shrink-0" style={{ color: 'var(--color-accent)' }}>
         +{item.xp_reward} XP
       </span>
     </div>
@@ -76,11 +74,11 @@ export function DailyRecapOverlay({ daySummary, avatarConfig, onClose }: Props) 
   const content = (
     <div
       className="fixed inset-0 z-[10000] flex items-center justify-center"
-      style={{ background: 'rgba(0,0,0,0.6)' }}
+      style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)' }}
       onClick={onClose}
     >
       <motion.div
-        className="bg-surface border border-border/60 rounded-card p-6 max-w-sm w-full mx-4 flex flex-col gap-5"
+        className="bg-surface border border-border/60 rounded-card p-6 max-w-sm w-full mx-4 flex flex-col gap-5 max-h-[90vh] overflow-y-auto"
         initial={shouldReduceMotion ? { opacity: 0 } : { scale: 0.9, opacity: 0 }}
         animate={shouldReduceMotion ? { opacity: 1 } : { scale: 1, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 300, damping: 25 }}
@@ -88,30 +86,64 @@ export function DailyRecapOverlay({ daySummary, avatarConfig, onClose }: Props) 
       >
         {/* Title */}
         <div className="text-center">
-          <p className="text-[11px] font-medium text-text-muted uppercase tracking-widest mb-2">
+          <p className="text-xs font-medium text-text-muted tracking-widest mb-2">
             Resumen del día
           </p>
-          <h2 className="text-2xl font-bold text-text-primary">Día completado</h2>
+          <div className="flex items-center justify-center gap-2">
+            <CheckCircle2 size={20} style={{ color: 'var(--color-accent)' }} aria-hidden />
+            <h2 className="text-2xl font-black text-text-primary">Misión diaria completada</h2>
+          </div>
         </div>
 
-        {/* XP */}
+        {/* Avatar — protagonista */}
+        <AvatarSpeechBubble
+          message={avatarMessage}
+          avatarConfig={avatarConfig}
+          size={48}
+        />
+
+        {/* XP pill */}
         <div className="flex flex-col items-center gap-1">
-          <XpCounter value={daySummary.xpEarnedToday} />
-          <p className="text-xs text-text-muted">XP ganados hoy</p>
+          <div
+            className="flex items-center gap-2 px-4 py-2 rounded-pill"
+            style={{
+              backgroundColor: 'color-mix(in srgb, var(--color-accent) 10%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--color-accent) 30%, transparent)',
+            }}
+          >
+            <Zap size={16} style={{ color: 'var(--color-accent)' }} aria-hidden />
+            <XpCounter value={daySummary.xpEarnedToday} />
+          </div>
+          <p className="text-xs text-text-muted">XP ganada</p>
         </div>
 
         {/* Stats row */}
         <div className="grid grid-cols-3 gap-2">
-          <div className="flex flex-col items-center gap-1 bg-background rounded-component p-3">
-            <span className="text-xl font-bold text-text-primary tabular-nums">
+          {/* Missions — fisico green */}
+          <div
+            className="flex flex-col items-center gap-1 rounded-component p-3"
+            style={{
+              backgroundColor: 'color-mix(in srgb, var(--color-fisico) 10%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--color-fisico) 30%, transparent)',
+            }}
+          >
+            <span className="text-xl font-black tabular-nums" style={{ color: 'var(--color-fisico)' }}>
               {daySummary.missionsCompleted}/{daySummary.missionsTotal}
             </span>
             <span className="text-[10px] text-text-muted text-center leading-tight">diarias</span>
           </div>
-          <div className="flex flex-col items-center gap-1 bg-background rounded-component p-3">
+
+          {/* Streak — disciplina amber */}
+          <div
+            className="flex flex-col items-center gap-1 rounded-component p-3"
+            style={{
+              backgroundColor: 'color-mix(in srgb, var(--color-disciplina) 10%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--color-disciplina) 30%, transparent)',
+            }}
+          >
             <div className="flex items-center gap-1">
               <Flame size={14} style={{ color: 'var(--color-disciplina)' }} aria-hidden />
-              <span className="text-xl font-bold text-text-primary tabular-nums">
+              <span className="text-xl font-black tabular-nums" style={{ color: 'var(--color-disciplina)' }}>
                 {daySummary.currentStreak}
               </span>
             </div>
@@ -119,10 +151,18 @@ export function DailyRecapOverlay({ daySummary, avatarConfig, onClose }: Props) 
               {daySummary.currentStreak === 1 ? 'día racha' : 'días racha'}
             </span>
           </div>
-          <div className="flex flex-col items-center gap-1 bg-background rounded-component p-3">
+
+          {/* Shields — accent purple */}
+          <div
+            className="flex flex-col items-center gap-1 rounded-component p-3"
+            style={{
+              backgroundColor: 'color-mix(in srgb, var(--color-accent) 10%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--color-accent) 30%, transparent)',
+            }}
+          >
             <div className="flex items-center gap-1">
               <ShieldCheck size={14} style={{ color: 'var(--color-accent)' }} aria-hidden />
-              <span className="text-xl font-bold text-text-primary tabular-nums">
+              <span className="text-xl font-black tabular-nums" style={{ color: 'var(--color-accent)' }}>
                 {daySummary.shieldCount}
               </span>
             </div>
@@ -186,15 +226,6 @@ export function DailyRecapOverlay({ daySummary, avatarConfig, onClose }: Props) 
           >
             Continuar
           </button>
-        </div>
-
-        {/* Avatar speech bubble */}
-        <div className="border-t border-border/40 pt-4">
-          <AvatarSpeechBubble
-            message={avatarMessage}
-            avatarConfig={avatarConfig}
-            size={48}
-          />
         </div>
       </motion.div>
     </div>

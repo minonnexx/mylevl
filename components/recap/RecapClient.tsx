@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Flame, ShieldCheck, Swords, Trophy, Dumbbell, Sword, Home } from 'lucide-react'
+import { motion, useReducedMotion } from 'motion/react'
+import { Brain, Dumbbell, Flame, Home, ShieldCheck, Swords, Sword, Target, Trophy } from 'lucide-react'
 import { CLASS_META } from '@/lib/constants/classes'
 import type { DaySummary, MissionSummaryItem } from '@/lib/recap'
 import type { LifeClass, Profile } from '@/types/supabase'
@@ -37,6 +38,12 @@ const DIFF_LABEL: Record<string, string> = {
   easy: 'Fácil', medium: 'Medio', hard: 'Difícil', boss: 'Jefe',
 }
 
+function getClassIcon(lc: LifeClass, size: number, style?: React.CSSProperties) {
+  if (lc === 'fisico') return <Dumbbell size={size} style={style} aria-hidden />
+  if (lc === 'mental') return <Brain size={size} style={style} aria-hidden />
+  return <Target size={size} style={style} aria-hidden />
+}
+
 function getHeatLevel(count: number): 0 | 1 | 2 | 3 {
   if (count === 0) return 0
   if (count === 1) return 1
@@ -68,18 +75,22 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   )
 }
 
-function StatCard({ label, value, sub, icon, valueColor }: {
+function StatCard({ label, value, sub, icon, valueColor, borderColor }: {
   label: string
   value: string | number
   sub: string
   icon: React.ReactNode
   valueColor?: string
+  borderColor?: string
 }) {
   return (
-    <div className="bg-surface rounded-card p-6 border border-border/60 flex flex-col gap-3">
+    <div
+      className="bg-surface rounded-card p-6 border border-border/60 flex flex-col gap-3"
+      style={borderColor ? { borderLeft: `3px solid ${borderColor}` } : undefined}
+    >
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium text-text-muted">{label}</span>
-        <span className="text-text-muted">{icon}</span>
+        <span style={{ color: borderColor ?? 'var(--color-text-muted)' }}>{icon}</span>
       </div>
       <div>
         <p
@@ -203,9 +214,10 @@ function DailyView({ daySummary, profile }: { daySummary: DaySummary; profile: P
         <SectionTitle>Resumen del día</SectionTitle>
         <div className="grid grid-cols-2 gap-3">
           <StatCard
-            label="XP ganados hoy"
+            label="XP ganada hoy"
             value={`+${daySummary.xpEarnedToday}`}
             sub="puntos de experiencia"
+            borderColor="var(--color-accent)"
             icon={
               <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
@@ -216,6 +228,7 @@ function DailyView({ daySummary, profile }: { daySummary: DaySummary; profile: P
             label="Misiones diarias"
             value={`${daySummary.missionsCompleted}/${daySummary.missionsTotal}`}
             sub={allDone ? 'todas completadas' : 'completadas hoy'}
+            borderColor="var(--color-fisico)"
             icon={
               <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <polyline points="20 6 9 17 4 12" />
@@ -226,15 +239,17 @@ function DailyView({ daySummary, profile }: { daySummary: DaySummary; profile: P
             label="Racha actual"
             value={profile.current_streak}
             sub={profile.current_streak === 1 ? 'día consecutivo' : 'días consecutivos'}
+            borderColor="var(--color-disciplina)"
             valueColor={profile.current_streak > 0 ? 'var(--color-disciplina)' : 'var(--color-text-primary)'}
             icon={
-              <Flame size={16} aria-hidden style={{ color: profile.current_streak > 0 ? 'var(--color-disciplina)' : undefined }} />
+              <Flame size={16} aria-hidden />
             }
           />
           <StatCard
             label="Escudos disponibles"
             value={profile.shield_count}
             sub={profile.shield_count === 1 ? 'escudo de racha' : 'escudos de racha'}
+            borderColor="var(--color-accent)"
             icon={
               <ShieldCheck size={16} aria-hidden />
             }
@@ -315,6 +330,7 @@ function WeeklyView({ weekData }: { weekData: WeekData }) {
             label="Días activos"
             value={`${weekData.activeDays}/7`}
             sub="de 7 días"
+            borderColor="var(--color-accent)"
             icon={
               <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
@@ -322,9 +338,10 @@ function WeeklyView({ weekData }: { weekData: WeekData }) {
             }
           />
           <StatCard
-            label="XP ganado"
+            label="XP ganada"
             value={`+${weekData.xpEarned}`}
             sub="puntos de XP"
+            borderColor="var(--color-accent)"
             icon={
               <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
@@ -335,6 +352,7 @@ function WeeklyView({ weekData }: { weekData: WeekData }) {
             label="Misiones"
             value={weekData.missionsCompleted}
             sub="completadas"
+            borderColor="var(--color-fisico)"
             icon={
               <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <polyline points="20 6 9 17 4 12" />
@@ -345,35 +363,49 @@ function WeeklyView({ weekData }: { weekData: WeekData }) {
       </section>
 
       {/* Top class */}
-      {weekData.topClass && (
-        <section>
-          <SectionTitle>Clase más trabajada</SectionTitle>
-          <div className="bg-surface rounded-card border border-border/60 p-6 flex items-center gap-4">
+      {weekData.topClass && (() => {
+        const meta = CLASS_META[weekData.topClass.lc]
+        return (
+          <section>
+            <SectionTitle>Clase más trabajada</SectionTitle>
             <div
-              className="w-3 h-3 rounded-full flex-shrink-0"
-              style={{ backgroundColor: CLASS_META[weekData.topClass.lc].color }}
-              aria-hidden
-            />
-            <span className="text-base font-semibold text-text-primary flex-1">
-              {CLASS_META[weekData.topClass.lc].label}
-            </span>
-            <span
-              className="text-sm font-bold tabular-nums"
-              style={{ color: CLASS_META[weekData.topClass.lc].color }}
+              className="rounded-card border border-border/60 p-6 flex items-center gap-4"
+              style={{
+                backgroundColor: 'color-mix(in srgb, var(--color-surface) 100%, transparent)',
+                borderLeft: `3px solid ${meta.color}`,
+              }}
             >
-              {weekData.topClass.points} {weekData.topClass.points === 1 ? 'punto' : 'puntos'}
-            </span>
-          </div>
-        </section>
-      )}
+              {getClassIcon(weekData.topClass.lc, 18, { color: meta.color })}
+              <span
+                className="text-base font-black flex-1"
+                style={{ color: meta.color }}
+              >
+                {meta.label}
+              </span>
+              <span
+                className="text-sm font-black tabular-nums"
+                style={{ color: 'var(--color-accent)' }}
+              >
+                {weekData.topClass.points} pts
+              </span>
+            </div>
+          </section>
+        )
+      })()}
 
       {/* Streak */}
       <section>
         <SectionTitle>Racha al cierre</SectionTitle>
-        <div className="bg-surface rounded-card border border-border/60 p-6 flex items-center gap-3">
-          <Flame size={18} style={{ color: 'var(--color-disciplina)' }} aria-hidden />
+        <div
+          className="rounded-card border border-border/60 p-6 flex items-center gap-3"
+          style={{
+            backgroundColor: 'color-mix(in srgb, var(--color-disciplina) 5%, var(--color-surface))',
+            borderLeft: '3px solid var(--color-disciplina)',
+          }}
+        >
+          <Flame size={24} style={{ color: 'var(--color-disciplina)' }} aria-hidden />
           <span
-            className="text-2xl font-black tabular-nums"
+            className="text-4xl font-black tabular-nums"
             style={{ color: weekData.currentStreak > 0 ? 'var(--color-disciplina)' : 'var(--color-text-primary)' }}
           >
             {weekData.currentStreak}
@@ -422,6 +454,7 @@ function WeeklyView({ weekData }: { weekData: WeekData }) {
 // ─── Monthly view ─────────────────────────────────────────────────────────────
 
 function MonthlyView({ monthData }: { monthData: MonthData }) {
+  const reduced = useReducedMotion()
   const maxPts = Math.max(monthData.classPoints.fisico, monthData.classPoints.mental, monthData.classPoints.disciplina, 1)
 
   return (
@@ -434,6 +467,7 @@ function MonthlyView({ monthData }: { monthData: MonthData }) {
             label="Días activos"
             value={`${monthData.activeDays}/30`}
             sub="de 30 días"
+            borderColor="var(--color-accent)"
             icon={
               <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
@@ -441,9 +475,10 @@ function MonthlyView({ monthData }: { monthData: MonthData }) {
             }
           />
           <StatCard
-            label="XP ganado"
+            label="XP ganada"
             value={`+${monthData.xpEarned}`}
             sub="puntos de XP"
+            borderColor="var(--color-accent)"
             icon={
               <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
@@ -454,6 +489,7 @@ function MonthlyView({ monthData }: { monthData: MonthData }) {
             label="Misiones"
             value={monthData.missionsCompleted}
             sub="completadas"
+            borderColor="var(--color-fisico)"
             icon={
               <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <polyline points="20 6 9 17 4 12" />
@@ -471,21 +507,31 @@ function MonthlyView({ monthData }: { monthData: MonthData }) {
             const pts = monthData.classPoints[lc]
             const pct = Math.round((pts / maxPts) * 100)
             const meta = CLASS_META[lc]
+            const target = `${pct}%`
             return (
               <div key={lc} className="flex flex-col gap-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: meta.color }} aria-hidden />
+                    {getClassIcon(lc, 14, { color: meta.color })}
                     <span className="text-sm text-text-muted">{meta.label}</span>
                   </div>
-                  <span className="text-sm font-bold tabular-nums" style={{ color: meta.color }}>
+                  <span className="text-sm font-black tabular-nums" style={{ color: meta.color }}>
                     {pts} {pts === 1 ? 'punto' : 'puntos'}
                   </span>
                 </div>
-                <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--color-background)' }}>
-                  <div
-                    className="h-full rounded-full transition-all duration-500"
-                    style={{ width: `${pct}%`, backgroundColor: meta.color }}
+                <div
+                  className="h-3 rounded-full overflow-hidden"
+                  style={{
+                    backgroundColor: 'var(--color-background)',
+                    boxShadow: `0 4px 14px color-mix(in srgb, ${meta.color} 20%, transparent)`,
+                  }}
+                >
+                  <motion.div
+                    className="h-full rounded-full"
+                    style={{ backgroundColor: meta.color }}
+                    initial={{ width: reduced ? target : '0%' }}
+                    animate={{ width: target }}
+                    transition={{ duration: 0.6, ease: 'easeOut' }}
                   />
                 </div>
               </div>
@@ -497,10 +543,16 @@ function MonthlyView({ monthData }: { monthData: MonthData }) {
       {/* Best streak */}
       <section>
         <SectionTitle>Mejor racha del mes</SectionTitle>
-        <div className="bg-surface rounded-card border border-border/60 p-6 flex items-center gap-3">
-          <Flame size={18} style={{ color: 'var(--color-disciplina)' }} aria-hidden />
+        <div
+          className="rounded-card border border-border/60 p-6 flex items-center gap-3"
+          style={{
+            backgroundColor: 'color-mix(in srgb, var(--color-disciplina) 5%, var(--color-surface))',
+            borderLeft: '3px solid var(--color-disciplina)',
+          }}
+        >
+          <Flame size={24} style={{ color: 'var(--color-disciplina)' }} aria-hidden />
           <span
-            className="text-2xl font-black tabular-nums"
+            className="text-4xl font-black tabular-nums"
             style={{ color: monthData.bestStreak > 0 ? 'var(--color-disciplina)' : 'var(--color-text-primary)' }}
           >
             {monthData.bestStreak}
@@ -558,22 +610,23 @@ export function RecapClient({ daySummary, weekData, monthData, profile }: RecapC
             key={tab.id}
             type="button"
             onClick={() => setPeriod(tab.id)}
-            className="px-4 py-1.5 rounded-pill text-sm font-medium transition-colors"
-            style={
-              period === tab.id
-                ? {
-                    backgroundColor: 'var(--color-accent)',
-                    color: 'var(--color-background)',
-                    border: '1px solid transparent',
-                  }
-                : {
-                    backgroundColor: 'transparent',
-                    color: 'var(--color-text-muted)',
-                    border: '1px solid var(--color-border)',
-                  }
-            }
+            className="relative px-4 py-1.5 rounded-pill text-sm font-medium"
+            style={{
+              color: period === tab.id ? 'var(--color-background)' : 'var(--color-text-muted)',
+              border: period === tab.id ? '1px solid transparent' : '1px solid var(--color-border)',
+              transition: 'color 0.15s, border-color 0.15s',
+            }}
           >
-            {tab.label}
+            {period === tab.id && (
+              <motion.span
+                layoutId="recap-tab-indicator"
+                className="absolute inset-0 rounded-pill"
+                style={{ backgroundColor: 'var(--color-accent)' }}
+                transition={{ type: 'spring', stiffness: 400, damping: 35 }}
+                aria-hidden
+              />
+            )}
+            <span className="relative" style={{ zIndex: 1 }}>{tab.label}</span>
           </button>
         ))}
       </div>
