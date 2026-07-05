@@ -18,6 +18,7 @@ import { AUTO_ACHIEVEMENT_TITLES } from '@/lib/constants/achievements'
 import { MedalUnlockOverlay } from '@/components/ui/MedalUnlockOverlay'
 import { MedalDetailModal } from '@/components/ui/MedalDetailModal'
 import { WeeklyChallengeSection } from '@/components/achievements/WeeklyChallengeSection'
+import { AvatarSpeechBubble } from '@/components/ui/AvatarSpeechBubble'
 import type { ChallengeDefinition } from '@/lib/constants/challenges'
 
 const DIFF_META: Record<MissionDifficulty, { label: string; text: string; bg: string; border: string }> = {
@@ -546,6 +547,18 @@ export default function AchievementsClient({
     return at && isWithinLastWeek(at)
   }).length
 
+  const hasLegendary = Object.keys(completedMap).some(id => medalsMap[id]?.rarity === 'legendary')
+  const completedThisWeek = Object.values(completedMap).some(isWithinLastWeek)
+  const achievementCompletionRatio = achievements.length > 0 ? completedAchievementsCount / achievements.length : 0
+
+  const avatarMessage = hasLegendary
+    ? 'Legendario. Pocos llegan hasta aquí.'
+    : completedThisWeek
+    ? 'Estás en racha. No pares ahora.'
+    : achievementCompletionRatio > 0.5
+    ? 'Ya eres de los mejores. Sigue.'
+    : 'Cada logro es una prueba superada. ¿Cuál es la siguiente?'
+
   return (
     <div className="flex flex-col gap-8">
 
@@ -556,6 +569,13 @@ export default function AchievementsClient({
         </div>
         <p className="text-sm text-text-secondary mt-1">Hitos únicos y desafíos semanales que demuestran tu progreso</p>
       </div>
+
+      <AvatarSpeechBubble
+        message={avatarMessage}
+        avatarConfig={avatarConfig}
+        size={44}
+        skipAnimation
+      />
 
       {achievements.length > 0 && (
         <section aria-labelledby="section-achievements" className="flex flex-col gap-4">

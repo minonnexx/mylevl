@@ -1,11 +1,13 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { AnimatePresence, motion } from 'motion/react'
 import { Swords } from 'lucide-react'
 import { HexMedal } from '@/components/ui/HexMedal'
 import { AnimatedBar } from '@/components/ui/AnimatedBar'
 import { MedalUnlockOverlay } from '@/components/ui/MedalUnlockOverlay'
 import { LevelUpOverlay } from '@/components/LevelUpOverlay'
+import { AvatarSpeechBubble } from '@/components/ui/AvatarSpeechBubble'
 import { RARITY_META } from '@/lib/constants/medals'
 import { toast } from 'sonner'
 import { playLevelUp, playMissionComplete } from '@/lib/sounds'
@@ -42,6 +44,7 @@ function WeeklyChallengeCard({ challenge, weekStart, progress, isCompleted, comp
   const [completersCountState, setCompletersCountState] = useState(completersCount)
   const [medalUnlockData, setMedalUnlockData] = useState<Medal | null>(null)
   const [levelUpData, setLevelUpData] = useState<{ level: number } | null>(null)
+  const [showCelebration, setShowCelebration] = useState(false)
   const hasAutoCompleted = useRef(false)
 
   const isReady = progress >= challenge.target
@@ -60,6 +63,8 @@ function WeeklyChallengeCard({ challenge, weekStart, progress, isCompleted, comp
       setCompletersCountState(c => c + 1)
       playMissionComplete()
       toast('Desafío semanal completado', { description: `+${result.xpReward} XP`, duration: 3000 })
+      setShowCelebration(true)
+      setTimeout(() => setShowCelebration(false), 4000)
 
       const medal: Medal = {
         id: 'weekly-challenge',
@@ -110,6 +115,24 @@ function WeeklyChallengeCard({ challenge, weekStart, progress, isCompleted, comp
         <div className="h-[2px] w-full" style={{ backgroundColor: 'var(--color-accent)' }} aria-hidden />
 
         <div className="p-6 flex flex-col gap-5">
+          <AnimatePresence>
+            {showCelebration && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.4 }}
+              >
+                <AvatarSpeechBubble
+                  message="Desafío completado. Esta semana ha sido tuya."
+                  avatarConfig={avatarConfig}
+                  size={44}
+                  skipAnimation
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           <div className="flex items-start gap-5">
             <HexMedal
               locked={!effectiveDone}

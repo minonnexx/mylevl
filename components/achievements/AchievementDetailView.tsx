@@ -10,6 +10,7 @@ import { LevelUpOverlay } from '@/components/LevelUpOverlay'
 import { AvatarConfirmModal } from '@/components/achievements/AvatarConfirmModal'
 import { MedalUnlockOverlay } from '@/components/ui/MedalUnlockOverlay'
 import { RARITY_META } from '@/lib/constants/medals'
+import { CLASS_META } from '@/lib/constants/classes'
 import { toast } from 'sonner'
 import { playLevelUp, playMissionComplete, playShieldGained } from '@/lib/sounds'
 import { completeAchievementAction, markAvatarConfirmationShown, type AchievementActionResult } from '@/app/achievements/actions'
@@ -25,6 +26,12 @@ function bossThreshold(title: string): number {
   if (t.includes('imparable'))    return 30
   if (t.includes('gran desafío')) return 14
   return 7
+}
+
+function unlockPercentageMessage(pct: number): string {
+  if (pct < 5) return `Solo el ${pct}% de jugadores la tiene. Eres de los pocos.`
+  if (pct < 20) return `El ${pct}% lo ha conseguido. No está al alcance de todos.`
+  return `El ${pct}% de jugadores ya la tiene. Tú también puedes.`
 }
 
 function progressForAchievement(
@@ -162,22 +169,36 @@ export default function AchievementDetailView({
 
         {/* Medal + name */}
         <div className="flex flex-col items-center gap-4 text-center">
-          <HexMedal
-            locked={!isCompleted && !completing}
-            icon={medal?.icon}
-            rarity={rarity}
-            size={96}
-          />
+          <div
+            style={
+              rarity && (isCompleted || completing)
+                ? { filter: `drop-shadow(0 0 16px color-mix(in srgb, ${RARITY_META[rarity].color} 25%, transparent))` }
+                : undefined
+            }
+          >
+            <HexMedal
+              locked={!isCompleted && !completing}
+              icon={medal?.icon}
+              rarity={rarity}
+              size={96}
+            />
+          </div>
           <div className="flex flex-col items-center gap-2">
-            <h1 className="text-2xl font-semibold text-text-primary">{mission.title}</h1>
+            <h1 className="text-2xl font-black text-text-primary">{mission.title}</h1>
             {rarity && (
-              <span className="text-sm font-semibold" style={{ color: RARITY_META[rarity].color }}>
+              <span
+                className="inline-flex text-xs font-semibold px-2.5 py-1 rounded-pill"
+                style={{
+                  color: RARITY_META[rarity].color,
+                  backgroundColor: `color-mix(in srgb, ${RARITY_META[rarity].color} 15%, transparent)`,
+                }}
+              >
                 {RARITY_META[rarity].label}
               </span>
             )}
             {medal && medal.unlock_percentage > 0 && (
-              <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
-                {medal.unlock_percentage}% de jugadores la tienen
+              <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                {unlockPercentageMessage(medal.unlock_percentage)}
               </p>
             )}
             <div className="flex items-center gap-1.5">
@@ -191,8 +212,12 @@ export default function AchievementDetailView({
 
         {/* Body */}
         <div
-          className="rounded-card border p-6 flex flex-col gap-5"
-          style={{ backgroundColor: 'var(--color-surface)', borderColor: 'color-mix(in srgb, var(--color-border) 60%, transparent)' }}
+          className="rounded-card rounded-l-none border border-l-0 p-6 flex flex-col gap-5"
+          style={{
+            backgroundColor: 'var(--color-surface)',
+            borderColor: 'color-mix(in srgb, var(--color-border) 60%, transparent)',
+            borderLeft: `3px solid ${CLASS_META[mission.life_class].borderColor}`,
+          }}
         >
 
           {/* Completed state */}
