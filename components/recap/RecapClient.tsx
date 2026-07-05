@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { motion, useReducedMotion } from 'motion/react'
 import { Brain, Dumbbell, Flame, Home, ShieldCheck, Swords, Sword, Target, Trophy } from 'lucide-react'
@@ -207,10 +207,11 @@ function RPGCallToAction({ message }: { message: string }) {
 
 // ─── Daily view ───────────────────────────────────────────────────────────────
 
-function DailyView({ daySummary, profile, avatarConfig }: {
+function DailyView({ daySummary, profile, avatarConfig, skipAvatarAnimation }: {
   daySummary: DaySummary
   profile: Profile
   avatarConfig: AvatarConfig | null
+  skipAvatarAnimation: boolean
 }) {
   const allDone = daySummary.missionsTotal > 0 && daySummary.missionsCompleted >= daySummary.missionsTotal
   const { dailyMissions, bossMission, achievements } = daySummary
@@ -234,6 +235,7 @@ function DailyView({ daySummary, profile, avatarConfig }: {
         message={avatarMessage}
         avatarConfig={avatarConfig}
         size={48}
+        skipAnimation={skipAvatarAnimation}
       />
 
       {/* Stats */}
@@ -332,7 +334,11 @@ function DailyView({ daySummary, profile, avatarConfig }: {
 
 // ─── Weekly view ──────────────────────────────────────────────────────────────
 
-function WeeklyView({ weekData, avatarConfig }: { weekData: WeekData; avatarConfig: AvatarConfig | null }) {
+function WeeklyView({ weekData, avatarConfig, skipAvatarAnimation }: {
+  weekData: WeekData
+  avatarConfig: AvatarConfig | null
+  skipAvatarAnimation: boolean
+}) {
   const avatarMessage = weekData.currentStreak >= 7
     ? 'Siete días sin rendirte. Eso no es suerte, eres tú.'
     : weekData.missionsCompleted > 0
@@ -350,6 +356,7 @@ function WeeklyView({ weekData, avatarConfig }: { weekData: WeekData; avatarConf
         message={avatarMessage}
         avatarConfig={avatarConfig}
         size={48}
+        skipAnimation={skipAvatarAnimation}
       />
 
       {/* Stats */}
@@ -468,7 +475,11 @@ function WeeklyView({ weekData, avatarConfig }: { weekData: WeekData; avatarConf
 
 // ─── Monthly view ─────────────────────────────────────────────────────────────
 
-function MonthlyView({ monthData, avatarConfig }: { monthData: MonthData; avatarConfig: AvatarConfig | null }) {
+function MonthlyView({ monthData, avatarConfig, skipAvatarAnimation }: {
+  monthData: MonthData
+  avatarConfig: AvatarConfig | null
+  skipAvatarAnimation: boolean
+}) {
   const reduced = useReducedMotion()
   const maxPts = Math.max(monthData.classPoints.fisico, monthData.classPoints.mental, monthData.classPoints.disciplina, 1)
 
@@ -488,6 +499,7 @@ function MonthlyView({ monthData, avatarConfig }: { monthData: MonthData; avatar
         message={avatarMessage}
         avatarConfig={avatarConfig}
         size={48}
+        skipAnimation={skipAvatarAnimation}
       />
 
       {/* Stats */}
@@ -621,7 +633,14 @@ interface RecapClientProps {
 
 export function RecapClient({ daySummary, weekData, monthData, profile }: RecapClientProps) {
   const [period, setPeriod] = useState<Period>('today')
+  const [seenTabs, setSeenTabs] = useState<Set<Period>>(new Set())
   const avatarConfig = profile.avatar_config as AvatarConfig | null
+
+  // Marca la tab actual como vista una vez montada — las siguientes visitas
+  // a esa misma tab no repetirán la animación del avatar
+  useEffect(() => {
+    setSeenTabs(prev => (prev.has(period) ? prev : new Set(prev).add(period)))
+  }, [period])
 
   const tabs: { id: Period; label: string }[] = [
     { id: 'today', label: 'Hoy' },
@@ -667,7 +686,7 @@ export function RecapClient({ daySummary, weekData, monthData, profile }: RecapC
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3 }}
         >
-          <DailyView daySummary={daySummary} profile={profile} avatarConfig={avatarConfig} />
+          <DailyView daySummary={daySummary} profile={profile} avatarConfig={avatarConfig} skipAvatarAnimation={seenTabs.has('today')} />
         </motion.div>
       )}
       {period === 'week' && (
@@ -677,7 +696,7 @@ export function RecapClient({ daySummary, weekData, monthData, profile }: RecapC
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3 }}
         >
-          <WeeklyView weekData={weekData} avatarConfig={avatarConfig} />
+          <WeeklyView weekData={weekData} avatarConfig={avatarConfig} skipAvatarAnimation={seenTabs.has('week')} />
         </motion.div>
       )}
       {period === 'month' && (
@@ -687,7 +706,7 @@ export function RecapClient({ daySummary, weekData, monthData, profile }: RecapC
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3 }}
         >
-          <MonthlyView monthData={monthData} avatarConfig={avatarConfig} />
+          <MonthlyView monthData={monthData} avatarConfig={avatarConfig} skipAvatarAnimation={seenTabs.has('month')} />
         </motion.div>
       )}
     </div>

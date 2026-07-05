@@ -11,14 +11,21 @@ interface Props {
   message: string
   avatarConfig: AvatarConfig | null
   size?: number
+  skipAnimation?: boolean
 }
 
-export function AvatarSpeechBubble({ message, avatarConfig, size = 48 }: Props) {
-  const [text, setText] = useState('')
-  const [done, setDone] = useState(false)
+export function AvatarSpeechBubble({ message, avatarConfig, size = 48, skipAnimation = false }: Props) {
+  const [text, setText] = useState(skipAnimation ? message : '')
+  const [done, setDone] = useState(skipAnimation)
   const { playTick } = useTypewriterSound()
 
   useEffect(() => {
+    if (skipAnimation) {
+      setText(message)
+      setDone(true)
+      return
+    }
+
     let cancelled = false
     setText('')
     setDone(false)
@@ -38,7 +45,7 @@ export function AvatarSpeechBubble({ message, avatarConfig, size = 48 }: Props) 
 
     run()
     return () => { cancelled = true }
-  }, [message, playTick])
+  }, [message, playTick, skipAnimation])
 
   return (
     <div style={{ display: 'flex', alignItems: 'flex-end', gap: '12px' }}>
