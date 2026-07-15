@@ -20,14 +20,35 @@ import {
   Rocket,
   Compass,
   CheckCircle2,
+  Check,
   Mail,
   Menu,
   X,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { HexMedal } from '@/components/ui/HexMedal'
+import AvatarDisplay from '@/components/avatar/AvatarDisplay'
+import { XpBar } from '@/components/dashboard/XpBar'
+import { CLASS_META } from '@/lib/constants/classes'
+import type { AvatarConfig } from '@/types/supabase'
 
 const DISCORD_URL = 'https://discord.gg/atbMCn7HVA'
+
+const MOCK_AVATAR_CONFIG: AvatarConfig = {
+  style: 'adventurer',
+  gender: 'male',
+  skin: 'medium',
+  hair: 'short02',
+  hairColor: 'brown',
+  eyes: 'variant02',
+  mouth: 'variant03',
+}
+
+const MOCK_MISSIONS = [
+  { lifeClass: 'fisico' as const, title: 'Entrena 30 minutos', xp: 15, completed: true },
+  { lifeClass: 'mental' as const, title: 'Lee 20 páginas', xp: 15, completed: false },
+  { lifeClass: 'disciplina' as const, title: 'Meditar 10 minutos', xp: 10, completed: false },
+]
 
 const NAV_LINKS = [
   { href: '#como-funciona', label: 'Cómo funciona' },
@@ -210,7 +231,7 @@ function FunnelStepper() {
   ]
 
   return (
-    <div className="mt-8 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full max-w-lg mx-auto">
+    <div className="mt-8 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full max-w-lg mx-auto lg:mx-0">
       {steps.map((step, i) => {
         const content = (
           <div
@@ -302,6 +323,72 @@ function MedalShowcase() {
       <HexMedal icon="Trophy" rarity="legendary" size={96} />
       <div style={{ opacity: 0.55 }}>
         <HexMedal icon="Flame" rarity="epic" size={52} />
+      </div>
+    </div>
+  )
+}
+
+// ── Dashboard mockup (real components, example data — not a live account) ──
+function DashboardMockup() {
+  return (
+    <div className="w-full max-w-sm mx-auto lg:mx-0">
+      <p className="text-xs text-text-muted mb-2 text-center lg:text-left">Así se ve por dentro</p>
+      <div
+        className="rounded-card p-5 flex flex-col gap-4"
+        style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
+      >
+        <div className="flex items-center gap-3">
+          <AvatarDisplay config={MOCK_AVATAR_CONFIG} size={48} />
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-text-primary text-sm leading-snug">Kaelen</p>
+            <p className="text-xs text-text-muted">Aventurero</p>
+          </div>
+          <span
+            className="text-[10px] font-black tabular-nums rounded px-1.5 py-0.5 leading-none flex-shrink-0"
+            style={{
+              color: 'var(--color-accent)',
+              background: 'color-mix(in srgb, var(--color-accent) 10%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--color-accent) 25%, transparent)',
+            }}
+          >
+            LVL 7
+          </span>
+        </div>
+
+        <XpBar current={320} total={520} />
+
+        <div
+          className="flex items-center gap-2 px-3 py-2 rounded-component"
+          style={{
+            background: 'color-mix(in srgb, var(--color-disciplina) 8%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--color-disciplina) 22%, transparent)',
+          }}
+        >
+          <Zap size={14} style={{ color: 'var(--color-disciplina)' }} aria-hidden />
+          <span className="text-xs font-black tabular-nums" style={{ color: 'var(--color-disciplina)' }}>12</span>
+          <span className="text-[11px] text-text-muted">días de racha</span>
+        </div>
+
+        <div className="flex flex-col gap-2 pt-1 border-t border-border/40">
+          {MOCK_MISSIONS.map((mission) => {
+            const meta = CLASS_META[mission.lifeClass]
+            return (
+              <div
+                key={mission.title}
+                className={`flex items-center gap-2.5 px-3 py-2 rounded-component ${mission.completed ? 'opacity-40' : ''}`}
+                style={{ background: 'var(--color-surface-elevated)', borderLeft: `3px solid ${meta.color}` }}
+              >
+                {mission.completed ? (
+                  <Check size={14} style={{ color: 'var(--color-success)' }} aria-hidden />
+                ) : (
+                  <span className="w-3.5 h-3.5 rounded-full border flex-shrink-0" style={{ borderColor: meta.color }} aria-hidden />
+                )}
+                <span className="text-xs text-text-primary flex-1 truncate">{mission.title}</span>
+                <span className="text-xs font-black tabular-nums" style={{ color: meta.color }}>+{mission.xp}</span>
+              </div>
+            )
+          })}
+        </div>
       </div>
     </div>
   )
@@ -417,54 +504,68 @@ export default function LandingPage() {
       <LandingNav />
 
       {/* ── 1. Hero ── */}
-      <section className="relative z-10 flex flex-col items-center text-center px-6 pt-16 pb-28 max-w-4xl mx-auto">
-        <FadeSection delay={0.03}>
-          <div
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-pill text-xs font-medium text-accent mb-8"
-            style={{ background: 'rgba(127,119,221,0.1)', border: '1px solid rgba(127,119,221,0.2)' }}
-          >
-            <Swords size={12} />
-            En desarrollo activo, construido junto a la comunidad
-          </div>
-        </FadeSection>
+      <section className="relative z-10 flex flex-col lg:flex-row items-center lg:items-center gap-12 px-6 pt-16 pb-28 max-w-5xl mx-auto">
+        <div className="flex flex-col items-center text-center lg:items-start lg:text-left flex-1 min-w-0">
+          <FadeSection delay={0.03}>
+            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 mb-8">
+              <div
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-pill text-xs font-medium text-accent"
+                style={{ background: 'rgba(127,119,221,0.1)', border: '1px solid rgba(127,119,221,0.2)' }}
+              >
+                <Swords size={12} />
+                En desarrollo activo, construido junto a la comunidad
+              </div>
+              <div
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-pill text-xs font-medium text-accent"
+                style={{ background: 'rgba(127,119,221,0.1)', border: '1px solid rgba(127,119,221,0.2)' }}
+              >
+                Beta cerrada — entra antes de que esto se llene
+              </div>
+            </div>
+          </FadeSection>
 
-        <FadeSection delay={0.05}>
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight text-text-primary leading-tight">
-            Deja de intentar crear hábitos.
-            <br />
-            Empieza a subir de nivel.
-          </h1>
-        </FadeSection>
+          <FadeSection delay={0.05}>
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight text-text-primary leading-tight">
+              Deja de intentar crear hábitos.
+              <br />
+              Empieza a subir de nivel.
+            </h1>
+          </FadeSection>
 
-        <FadeSection delay={0.1}>
-          <p className="mt-6 text-base sm:text-lg text-text-muted max-w-xl leading-relaxed mx-auto">
-            Tu cerebro pide recompensa ahora, no en tres semanas — por eso abandonas
-            los hábitos antes de que funcionen. MyLevl le da a cada misión su XP al
-            instante: creas tu personaje, subes de nivel, y la constancia se convierte
-            en progreso que se ve y se siente hoy mismo.
-          </p>
-        </FadeSection>
-
-        <FadeSection delay={0.15}>
-          <div className="mt-10 flex flex-col items-center gap-3">
-            <DiscordCta />
-            <p className="text-xs text-text-muted max-w-sm leading-relaxed">
-              El código de acceso está ahí dentro — es la forma de entrar en la beta ahora mismo.
+          <FadeSection delay={0.1}>
+            <p className="mt-6 text-base sm:text-lg text-text-muted max-w-xl leading-relaxed">
+              Tu cerebro pide recompensa ahora, no en tres semanas — por eso abandonas
+              los hábitos antes de que funcionen. MyLevl le da a cada misión su XP al
+              instante: creas tu personaje, subes de nivel, y la constancia se convierte
+              en progreso que se ve y se siente hoy mismo.
             </p>
-          </div>
-        </FadeSection>
+          </FadeSection>
 
-        <FadeSection delay={0.2} className="w-full">
-          <FunnelStepper />
-        </FadeSection>
+          <FadeSection delay={0.15} className="w-full">
+            <div className="mt-10 flex flex-col items-center lg:items-start gap-3">
+              <DiscordCta />
+              <p className="text-xs text-text-muted max-w-sm leading-relaxed">
+                El código de acceso está ahí dentro — es la forma de entrar en la beta ahora mismo.
+              </p>
+            </div>
+          </FadeSection>
 
-        <FadeSection delay={0.25}>
-          <a
-            href="#actualizaciones"
-            className="mt-6 inline-block text-xs text-text-muted hover:text-text-primary transition-colors underline underline-offset-4"
-          >
-            ¿Sin Discord? Recibe las actualizaciones por email
-          </a>
+          <FadeSection delay={0.2} className="w-full">
+            <FunnelStepper />
+          </FadeSection>
+
+          <FadeSection delay={0.25}>
+            <a
+              href="#actualizaciones"
+              className="mt-6 inline-block text-xs text-text-muted hover:text-text-primary transition-colors underline underline-offset-4"
+            >
+              ¿Sin Discord? Recibe las actualizaciones por email
+            </a>
+          </FadeSection>
+        </div>
+
+        <FadeSection delay={0.12} className="flex-1 w-full max-w-sm lg:max-w-md">
+          <DashboardMockup />
         </FadeSection>
       </section>
 
@@ -694,6 +795,24 @@ export default function LandingPage() {
             </FadeSection>
           ))}
         </div>
+
+        <FadeSection delay={0.08}>
+          <div className="flex items-center gap-3 mb-6 justify-center">
+            <div
+              className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-black"
+              style={{
+                background: 'color-mix(in srgb, var(--color-accent) 15%, transparent)',
+                color: 'var(--color-accent)',
+              }}
+              aria-hidden
+            >
+              M
+            </div>
+            <p className="text-sm text-text-muted">
+              <span className="text-text-primary font-medium">Minonne</span> — construyo MyLevl yo solo, y leo cada mensaje del Discord.
+            </p>
+          </div>
+        </FadeSection>
 
         <FadeSection delay={0.1}>
           <blockquote
