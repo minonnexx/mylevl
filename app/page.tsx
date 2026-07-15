@@ -1,11 +1,10 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { motion, useInView } from 'motion/react'
 import {
   Dumbbell,
-  Brain,
   Shield,
   TrendingUp,
   Users,
@@ -22,11 +21,19 @@ import {
   Compass,
   CheckCircle2,
   Mail,
+  Menu,
+  X,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { HexMedal } from '@/components/ui/HexMedal'
 
 const DISCORD_URL = 'https://discord.gg/atbMCn7HVA'
+
+const NAV_LINKS = [
+  { href: '#como-funciona', label: 'Cómo funciona' },
+  { href: '#que-hay-dentro', label: 'Qué hay dentro' },
+  { href: '#comunidad', label: 'Comunidad' },
+]
 
 // ── Animation helpers ────────────────────────────────────────────
 const FADE_UP = {
@@ -194,6 +201,53 @@ function DiscordCta({ compact = false }: { compact?: boolean }) {
   )
 }
 
+// ── Post-Discord funnel stepper ──────────────────────────────────
+function FunnelStepper() {
+  const steps = [
+    { label: 'Entra al Discord', href: DISCORD_URL, external: true },
+    { label: 'Coge tu código', href: DISCORD_URL, external: true },
+    { label: 'Vuelve aquí y regístrate', href: '/auth', external: false },
+  ]
+
+  return (
+    <div className="mt-8 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full max-w-lg mx-auto">
+      {steps.map((step, i) => {
+        const content = (
+          <div
+            className="flex items-center gap-3 px-4 py-3 rounded-component flex-1 w-full transition-colors hover:border-accent/40"
+            style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
+          >
+            <span
+              className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-black flex-shrink-0"
+              style={{ background: 'color-mix(in srgb, var(--color-accent) 15%, transparent)', color: 'var(--color-accent)' }}
+            >
+              {i + 1}
+            </span>
+            <span className="text-xs text-text-secondary text-left">{step.label}</span>
+          </div>
+        )
+
+        return (
+          <div key={step.label} className="flex items-center gap-2 w-full sm:w-auto sm:flex-1">
+            {step.external ? (
+              <a href={step.href} target="_blank" rel="noopener noreferrer" className="w-full">
+                {content}
+              </a>
+            ) : (
+              <Link href={step.href} className="w-full">
+                {content}
+              </Link>
+            )}
+            {i < steps.length - 1 && (
+              <ArrowRight size={14} className="hidden sm:block text-text-muted flex-shrink-0" aria-hidden />
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 // ── Step / mechanic card ─────────────────────────────────────────
 function BorderCard({
   color,
@@ -238,14 +292,45 @@ function BorderCard({
   )
 }
 
-// ── Page ─────────────────────────────────────────────────────────
-export default function LandingPage() {
+// ── Medal showcase (HexMedal, protagonist size) ──────────────────
+function MedalShowcase() {
   return (
-    <div className="min-h-screen bg-background text-text-primary">
-      <GridTexture />
+    <div className="flex items-end justify-center gap-5 mb-14" aria-hidden>
+      <div style={{ opacity: 0.55 }}>
+        <HexMedal icon="Shield" rarity="rare" size={52} />
+      </div>
+      <HexMedal icon="Trophy" rarity="legendary" size={96} />
+      <div style={{ opacity: 0.55 }}>
+        <HexMedal icon="Flame" rarity="epic" size={52} />
+      </div>
+    </div>
+  )
+}
 
-      {/* ── Nav ── */}
-      <nav className="relative z-10 flex items-center justify-between px-6 py-5 max-w-5xl mx-auto">
+// ── Nav with anchors (desktop inline, mobile dropdown) ───────────
+function LandingNav() {
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!menuOpen) return
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setMenuOpen(false)
+    }
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false)
+    }
+    document.addEventListener('keydown', handleKey)
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('keydown', handleKey)
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [menuOpen])
+
+  return (
+    <nav ref={menuRef} className="relative z-20 max-w-5xl mx-auto">
+      <div className="flex items-center justify-between px-6 py-5">
         <div style={{ height: 32, overflow: 'hidden' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -254,7 +339,20 @@ export default function LandingPage() {
             style={{ display: 'block', height: 55, width: 55 }}
           />
         </div>
-        <div className="flex items-center gap-2">
+
+        <div className="hidden md:flex items-center gap-6">
+          {NAV_LINKS.map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
+              className="text-sm text-text-muted hover:text-text-primary transition-colors"
+            >
+              {link.label}
+            </a>
+          ))}
+        </div>
+
+        <div className="hidden md:flex items-center gap-2">
           <Link
             href="/auth"
             className="text-sm text-text-muted hover:text-text-primary transition-colors px-3 py-2"
@@ -263,7 +361,60 @@ export default function LandingPage() {
           </Link>
           <DiscordCta compact />
         </div>
-      </nav>
+
+        <button
+          type="button"
+          onClick={() => setMenuOpen((v) => !v)}
+          aria-label={menuOpen ? 'Cerrar menú' : 'Abrir menú'}
+          aria-expanded={menuOpen}
+          className="md:hidden flex items-center justify-center w-11 h-11 rounded-component text-text-primary"
+          style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
+        >
+          {menuOpen ? <X size={18} /> : <Menu size={18} />}
+        </button>
+      </div>
+
+      {menuOpen && (
+        <div
+          className="md:hidden absolute right-6 left-6 top-full mt-2 rounded-card p-4 flex flex-col gap-1"
+          style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
+        >
+          {NAV_LINKS.map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
+              onClick={() => setMenuOpen(false)}
+              className="px-3 py-3 rounded-component text-sm text-text-primary hover:bg-surface-elevated transition-colors"
+              style={{ minHeight: '44px', display: 'flex', alignItems: 'center' }}
+            >
+              {link.label}
+            </a>
+          ))}
+          <div className="border-t border-border/60 my-2" />
+          <Link
+            href="/auth"
+            onClick={() => setMenuOpen(false)}
+            className="px-3 py-3 rounded-component text-sm text-text-muted hover:text-text-primary transition-colors"
+            style={{ minHeight: '44px', display: 'flex', alignItems: 'center' }}
+          >
+            Iniciar sesión
+          </Link>
+          <div className="px-3 pt-2">
+            <DiscordCta compact />
+          </div>
+        </div>
+      )}
+    </nav>
+  )
+}
+
+// ── Page ─────────────────────────────────────────────────────────
+export default function LandingPage() {
+  return (
+    <div className="min-h-screen bg-background text-text-primary">
+      <GridTexture />
+
+      <LandingNav />
 
       {/* ── 1. Hero ── */}
       <section className="relative z-10 flex flex-col items-center text-center px-6 pt-16 pb-28 max-w-4xl mx-auto">
@@ -295,28 +446,35 @@ export default function LandingPage() {
         </FadeSection>
 
         <FadeSection delay={0.15}>
-          <div className="mt-10 flex flex-col items-center gap-4">
+          <div className="mt-10 flex flex-col items-center gap-3">
             <DiscordCta />
-            <p className="text-xs text-text-muted max-w-xs leading-relaxed">
-              El código de acceso está dentro. Entra, cógelo y empieza hoy.
+            <p className="text-xs text-text-muted max-w-sm leading-relaxed">
+              El código de acceso está ahí dentro — es la forma de entrar en la beta ahora mismo.
             </p>
-            <a
-              href="#actualizaciones"
-              className="mt-2 text-xs text-text-muted hover:text-text-primary transition-colors underline underline-offset-4"
-            >
-              ¿Sin Discord? Recibe las actualizaciones por email
-            </a>
           </div>
+        </FadeSection>
+
+        <FadeSection delay={0.2} className="w-full">
+          <FunnelStepper />
+        </FadeSection>
+
+        <FadeSection delay={0.25}>
+          <a
+            href="#actualizaciones"
+            className="mt-6 inline-block text-xs text-text-muted hover:text-text-primary transition-colors underline underline-offset-4"
+          >
+            ¿Sin Discord? Recibe las actualizaciones por email
+          </a>
         </FadeSection>
       </section>
 
       <div className="w-full" style={{ borderTop: '1px solid var(--color-border)' }} />
 
       {/* ── 2. Cómo funciona ── */}
-      <section className="relative z-10 px-6 py-24 max-w-4xl mx-auto">
+      <section id="como-funciona" className="relative z-10 px-6 py-24 max-w-4xl mx-auto">
         <SectionHeader
           title="Cómo funciona"
-          subtitle="Tres pasos. Sin curva de aprendizaje, sin fricción — solo tu personaje y tus misiones."
+          subtitle="Crea tu personaje, completa misiones reales, sube de nivel. Así de directo."
         />
 
         <div className="grid sm:grid-cols-3 gap-6">
@@ -350,11 +508,13 @@ export default function LandingPage() {
       <div className="w-full" style={{ borderTop: '1px solid var(--color-border)' }} />
 
       {/* ── 3. Qué hay dentro ── */}
-      <section className="relative z-10 px-6 py-24 max-w-5xl mx-auto">
+      <section id="que-hay-dentro" className="relative z-10 px-6 py-24 max-w-5xl mx-auto">
         <SectionHeader
           title="Qué hay dentro"
-          subtitle="Nada inventado para una demo — esto ya funciona en la app hoy."
+          subtitle="Misiones, XP, rachas y ligas — la progresión completa de tu personaje."
         />
+
+        <MedalShowcase />
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[
@@ -424,73 +584,7 @@ export default function LandingPage() {
 
       <div className="w-full" style={{ borderTop: '1px solid var(--color-border)' }} />
 
-      {/* ── 4. La comunidad ── */}
-      <section className="relative z-10 px-6 py-24 max-w-4xl mx-auto">
-        <SectionHeader
-          title="Esto se construye en comunidad"
-          subtitle="MyLevl lo hace un desarrollador en solitario. El Discord es donde pasa todo."
-        />
-
-        <div className="grid sm:grid-cols-2 gap-4 mb-10">
-          {[
-            {
-              icon: <MessageCircle size={16} />,
-              title: 'Canal de beta testers',
-              desc: 'El código de acceso está ahí dentro. Sin esperas ni lista.',
-            },
-            {
-              icon: <Heart size={16} />,
-              title: 'Feedback directo con el fundador',
-              desc: 'Sin equipos de soporte ni bots — hablas conmigo.',
-            },
-            {
-              icon: <Sparkles size={16} />,
-              title: 'Influencia real',
-              desc: 'Tus ideas pueden acabar en la próxima actualización.',
-            },
-            {
-              icon: <Rocket size={16} />,
-              title: 'Novedades antes que nadie',
-              desc: 'Te enteras de cada cambio antes de que salga a la web.',
-            },
-          ].map((item, i) => (
-            <FadeSection key={item.title} delay={i * 0.06}>
-              <div
-                className="flex items-start gap-3 px-4 py-3.5 rounded-component h-full"
-                style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
-              >
-                <span className="text-accent flex-shrink-0 mt-0.5">{item.icon}</span>
-                <div>
-                  <p className="text-sm font-medium text-text-primary mb-0.5">{item.title}</p>
-                  <p className="text-xs text-text-muted leading-relaxed">{item.desc}</p>
-                </div>
-              </div>
-            </FadeSection>
-          ))}
-        </div>
-
-        <FadeSection delay={0.1}>
-          <blockquote
-            className="px-5 py-4 rounded-component mb-10 text-sm text-text-secondary italic"
-            style={{ borderLeft: '3px solid var(--color-accent)', background: 'var(--color-surface)' }}
-          >
-            No solo uses MyLevl. Ayúdame a construirlo.
-          </blockquote>
-        </FadeSection>
-
-        <FadeSection delay={0.15}>
-          <div className="flex flex-col items-center gap-4">
-            <DiscordCta />
-            <p className="text-xs text-text-muted max-w-sm text-center leading-relaxed">
-              Ahora mismo somos pocos — así es como empiezan las comunidades que de verdad importan.
-            </p>
-          </div>
-        </FadeSection>
-      </section>
-
-      <div className="w-full" style={{ borderTop: '1px solid var(--color-border)' }} />
-
-      {/* ── 5. Roadmap ── */}
+      {/* ── 4. Roadmap ── */}
       <section className="relative z-10 px-6 py-24 max-w-4xl mx-auto">
         <SectionHeader
           title="El camino por delante"
@@ -556,33 +650,65 @@ export default function LandingPage() {
 
       <div className="w-full" style={{ borderTop: '1px solid var(--color-border)' }} />
 
-      {/* ── 6. Apoya el proyecto ── */}
-      <section className="relative z-10 px-6 py-24 max-w-4xl mx-auto text-center">
-        <FadeSection>
-          <div
-            className="max-w-md mx-auto p-8 rounded-card"
-            style={{
-              background: 'var(--color-surface)',
-              border: '1px solid var(--color-border)',
-              borderLeft: '3px solid var(--color-disciplina)',
-            }}
+      {/* ── 5. La comunidad ── */}
+      <section id="comunidad" className="relative z-10 px-6 py-24 max-w-4xl mx-auto">
+        <SectionHeader
+          title="Esto se construye en comunidad"
+          subtitle="MyLevl lo hace un desarrollador en solitario. El Discord es donde pasa todo."
+        />
+
+        <div className="grid sm:grid-cols-2 gap-4 mb-10">
+          {[
+            {
+              icon: <MessageCircle size={16} />,
+              title: 'Canal de beta testers',
+              desc: 'El código de acceso está ahí dentro. Sin esperas ni lista.',
+            },
+            {
+              icon: <Heart size={16} />,
+              title: 'Feedback directo con el fundador',
+              desc: 'Sin equipos de soporte ni bots — hablas conmigo.',
+            },
+            {
+              icon: <Sparkles size={16} />,
+              title: 'Influencia real',
+              desc: 'Tus ideas pueden acabar en la próxima actualización.',
+            },
+            {
+              icon: <Rocket size={16} />,
+              title: 'Novedades antes que nadie',
+              desc: 'Te enteras de cada cambio antes de que salga a la web.',
+            },
+          ].map((item, i) => (
+            <FadeSection key={item.title} delay={i * 0.06}>
+              <div
+                className="flex items-start gap-3 px-4 py-3.5 rounded-component h-full"
+                style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
+              >
+                <span className="text-accent flex-shrink-0 mt-0.5">{item.icon}</span>
+                <div>
+                  <p className="text-sm font-medium text-text-primary mb-0.5">{item.title}</p>
+                  <p className="text-xs text-text-muted leading-relaxed">{item.desc}</p>
+                </div>
+              </div>
+            </FadeSection>
+          ))}
+        </div>
+
+        <FadeSection delay={0.1}>
+          <blockquote
+            className="px-5 py-4 rounded-component mb-10 text-sm text-text-secondary italic"
+            style={{ borderLeft: '3px solid var(--color-accent)', background: 'var(--color-surface)' }}
           >
-            <h2 className="text-2xl sm:text-3xl font-semibold mb-4">Apoya MyLevl</h2>
-            <p className="text-text-muted text-sm sm:text-base mb-8 leading-relaxed">
-              MyLevl es un proyecto independiente en desarrollo. Tu apoyo hace posible que siga creciendo.
-            </p>
-            <a
-              href="https://www.patreon.com/cw/mylevl"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-component text-sm font-medium text-white transition-opacity hover:opacity-90"
-              style={{ background: 'var(--color-disciplina)', minHeight: '44px' }}
-            >
-              <Heart size={16} />
-              Apoyar en Patreon
-            </a>
-            <p className="mt-5 text-xs text-text-muted leading-relaxed">
-              Los mecenas tendrán acceso anticipado y ventajas exclusivas en la versión final.
+            No solo uses MyLevl. Ayúdame a construirlo.
+          </blockquote>
+        </FadeSection>
+
+        <FadeSection delay={0.15}>
+          <div className="flex flex-col items-center gap-4">
+            <DiscordCta />
+            <p className="text-xs text-text-muted max-w-sm text-center leading-relaxed">
+              Ahora mismo somos pocos — así es como empiezan las comunidades que de verdad importan.
             </p>
           </div>
         </FadeSection>
@@ -590,7 +716,7 @@ export default function LandingPage() {
 
       <div className="w-full" style={{ borderTop: '1px solid var(--color-border)' }} />
 
-      {/* ── 7. Actualizaciones (newsletter, secundario) ── */}
+      {/* ── 6. Actualizaciones (newsletter, secundario) ── */}
       <section id="actualizaciones" className="relative z-10 px-6 py-24 max-w-4xl mx-auto text-center">
         <FadeSection>
           <div
@@ -613,7 +739,7 @@ export default function LandingPage() {
         style={{ borderTop: '1px solid var(--color-border)' }}
       >
         <span className="text-xs text-text-muted">MyLevl © 2026</span>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center justify-center gap-4">
           <a
             href={DISCORD_URL}
             target="_blank"
@@ -621,6 +747,14 @@ export default function LandingPage() {
             className="text-xs text-text-muted hover:text-text-primary transition-colors"
           >
             Discord
+          </a>
+          <a
+            href="https://www.patreon.com/cw/mylevl"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-text-muted hover:text-text-primary transition-colors"
+          >
+            ¿Quieres apoyar el proyecto? Patreon
           </a>
           <Link href="/auth?mode=login" className="text-xs text-text-muted hover:text-text-primary transition-colors">
             Iniciar sesión
